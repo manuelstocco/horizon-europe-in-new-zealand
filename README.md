@@ -1,7 +1,3 @@
-shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
-/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
-job-working-directory: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
-shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
 # Horizon Europe in New Zealand
 
 Interactive website presenting New Zealand participation in Horizon Europe.
