@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore New Zealand's Horizon Europe portfolio by partner country.">
+  <title>Partnership overview · Horizon Europe in New Zealand</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="page-shell" data-page="overview">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a>
+    <nav class="primary-nav" aria-label="Main navigation"><a href="index.html">Story</a><a class="active" href="overview.html">Partnership overview</a><a href="cluster-overview.html">Cluster overview</a><a href="funding-flows.html">Funding flows</a><a href="cluster-country.html">Cluster &amp; country</a><a href="network-map.html">Network map</a><a href="projects.html">Project explorer</a><a href="ncp.html">Get support</a></nav>
+  </header>
+  <section class="page-hero">
+    <p class="eyebrow">Partnership overview</p>
+    <h1>Horizon Europe in New Zealand</h1>
+    <p data-narrative>Explore the portfolio and the organisations, countries and resources connected through it.</p>
+  </section>
+  <main class="page-content">
+    <div class="data-strip"><span>Filter the complete signed portfolio by one or more partner countries.</span></div>
+    <section class="filter-panel"><div class="filter-field"><label>Partner countries</label><div data-filter="countries"></div></div></section>
+    <div class="selection-line" data-selection></div>
+    <section class="metric-grid" data-metrics></section>
+    <section class="dashboard-grid">
+      <article class="panel third"><h2>Projects by starting year</h2><p class="panel-subtitle">Distinct projects, including signed projects starting later in the year.</p><div data-chart="years"></div></article>
+      <article class="panel third"><h2>Cluster mix</h2><p class="panel-subtitle">Thematic distribution of the selected projects.</p><div data-chart="clusters"></div></article>
+      <article class="panel third leading-countries-panel"><div class="panel-heading-row"><div><h2>Leading partner countries</h2><p class="panel-subtitle">All distinct project–country connections.</p></div><div class="country-scope-control" data-country-scope aria-label="Country group"><button class="active" type="button" data-country-group="all" aria-pressed="true">All</button><button type="button" data-country-group="eu" aria-pressed="false">EU27</button><button type="button" data-country-group="non-eu" aria-pressed="false">Non-EU</button></div></div><div class="leading-country-scroll"><div data-chart="countries"></div></div></article>
+      <article class="panel wide nz-organisations-panel"><h2>New Zealand organisations</h2><p class="panel-subtitle">Funded New Zealand organisations in the selected projects, with their head office city, role and cumulative EU contribution.</p><div data-chart="nz-orgs"></div></article>
+      <article class="panel wide table-panel project-scope-panel"><h2>Projects in scope</h2><p class="panel-subtitle">All projects matching the current country selection.</p><div data-project-table></div></article>
+    </section>
+  </main>
+  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
+  <script src="assets/data.js"></script><script src="assets/common.js"></script><script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Select a New Zealand-linked Horizon Europe project and generate a presentation-ready project focus page.">
+  <title>Project explorer · Horizon Europe in New Zealand</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="page-shell focus-explorer" data-page="projects">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a>
+    <nav class="primary-nav" aria-label="Main navigation"><a href="index.html">Story</a><a href="overview.html">Partnership overview</a><a href="cluster-overview.html">Cluster overview</a><a href="funding-flows.html">Funding flows</a><a href="cluster-country.html">Cluster &amp; country</a><a href="network-map.html">Network map</a><a class="active" href="projects.html">Project explorer</a><a href="ncp.html">Get support</a></nav>
+  </header>
+
+  <section class="page-hero focus-hero">
+    <p class="eyebrow">Project explorer</p>
+    <h1>Move from the portfolio to each project.</h1>
+    <p>Select a project to generate a concise, presentation-ready focus page with its funding context, consortium, objective and country participation.</p>
+  </section>
+
+  <main class="page-content focus-page-content">
+    <div class="data-strip"><span data-result-count>38 projects</span></div>
+
+    <div class="focus-workspace">
+      <aside class="focus-sidebar" aria-label="Project selector">
+        <div class="focus-filters">
+          <div class="filter-field focus-search-field"><label for="project-search">Search projects</label><input id="project-search" class="text-search" data-filter="search" type="search" placeholder="Acronym, title, ID or coordinator…" autocomplete="off"></div>
+          <div class="filter-field"><label>Clusters</label><div data-filter="clusters"></div></div>
+          <div class="filter-field"><label>Funding schemes</label><div data-filter="schemes"></div></div>
+          <div class="filter-field"><label>Partner countries</label><div data-filter="countries"></div></div>
+          <div class="focus-results-meta"><span data-list-count aria-live="polite"></span><button class="focus-clear" data-clear-filters type="button">Clear filters</button></div>
+        </div>
+        <div class="focus-project-list" data-project-list role="listbox" aria-label="Projects"></div>
+      </aside>
+
+      <section class="focus-content" aria-label="Selected project focus">
+        <div class="focus-toolbar">
+          <div class="focus-toolbar-group"><button class="focus-tool-button" data-previous type="button">← Previous</button><span class="focus-position" data-position></span><button class="focus-tool-button" data-next type="button">Next →</button></div>
+          <div class="focus-toolbar-group"><button class="focus-tool-button" data-copy-link type="button">Copy project link</button><button class="focus-tool-button" data-print type="button">Print / save PDF</button></div>
+        </div>
+
+        <article class="focus-slide" data-focus-slide>
+          <div class="focus-accent"></div>
+          <div class="focus-slide-inner">
+            <header class="focus-slide-header">
+              <div>
+                <div class="focus-kicker-row"><span class="focus-label">Project focus</span><span class="focus-cluster-badge" data-project-cluster></span></div>
+                <h2 class="focus-slide-title" data-project-acronym></h2>
+                <p class="focus-slide-subtitle" data-project-title></p>
+              </div>
+              <div class="focus-identity"><div class="focus-project-number" data-project-id></div><div class="focus-status"><span class="focus-status-dot"></span><span data-project-status></span></div></div>
+            </header>
+
+            <section class="focus-metric-grid" aria-label="Project metrics">
+              <div class="focus-metric"><span>Maximum EU contribution</span><strong data-project-contribution></strong><small data-project-cost></small></div>
+              <div class="focus-metric"><span>Timeline</span><strong data-project-duration></strong><small data-project-dates></small></div>
+              <div class="focus-metric"><span>Consortium</span><strong data-project-organisations></strong><small data-project-countries></small></div>
+              <div class="focus-metric"><span>NZ participation</span><strong data-project-nz-funding></strong><small data-project-nz-count></small></div>
+            </section>
+
+            <div class="focus-slide-grid">
+              <div>
+                <section class="focus-section"><h3><span></span>Project objective</h3><p class="focus-copy" data-project-focus></p><div class="focus-keywords" data-project-keywords></div></section>
+                <section class="focus-section"><h3><span></span>Funding context</h3><div class="focus-context-list">
+                  <div class="focus-context-row"><span>Funding scheme</span><div><i class="focus-scheme-dot"></i><b data-project-scheme></b><small data-project-scheme-code></small></div></div>
+                  <div class="focus-context-row"><span>Call</span><div><b data-project-call></b></div></div>
+                  <div class="focus-context-row"><span>Topic</span><div><b data-project-topic></b><small data-project-topic-code></small></div></div>
+                </div></section>
+              </div>
+              <div>
+                <section class="focus-section"><h3><span></span>Coordinator</h3><div class="focus-coordinator"><strong data-coordinator-name></strong><small data-coordinator-meta></small></div></section>
+                <section class="focus-section"><h3><span></span>New Zealand participation</h3><div data-nz-participation></div></section>
+              </div>
+            </div>
+
+            <section class="focus-footprint"><div class="focus-footprint-head"><strong>Consortium footprint</strong><span>Number of organisations shown per country</span></div><div class="focus-country-chips" data-country-chips></div></section>
+            <section class="focus-consortium" aria-labelledby="consortium-organisations-title">
+              <div class="focus-consortium-head"><div><strong id="consortium-organisations-title">Consortium organisations</strong><span data-consortium-summary></span></div><span>Role, head-office location and recorded EU contribution</span></div>
+              <div class="organisation-table-wrap focus-consortium-table-wrap">
+                <table class="organisation-table project-consortium-table"><thead><tr><th>Organisation</th><th>Country</th><th>Head office city</th><th>Role</th><th>EU contribution</th></tr></thead><tbody data-consortium-list></tbody></table>
+              </div>
+            </section>
+            <footer class="focus-slide-footer"><span>Source: CORDIS project records. Financial values and participant roles reflect the source data.</span><a data-cordis-link href="#" target="_blank" rel="noopener">Open project on CORDIS ↗</a></footer>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <div class="focus-toast" data-toast role="status" aria-live="polite"></div>
+  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
+  <script src="assets/data.js"></script><script src="assets/common.js"></script><script src="assets/app.js"></script>
+</body>
+</html>
