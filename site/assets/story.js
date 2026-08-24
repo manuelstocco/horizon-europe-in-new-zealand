@@ -2,7 +2,6 @@
   const D = window.HE_DATA;
   const H = window.HE;
   const steps = [...document.querySelectorAll('[data-bubble-step]')];
-  const bubbles = [...document.querySelectorAll('.bubble')];
   const stage = document.querySelector('.bubble-stage');
   const timeline = [...document.querySelectorAll('[data-timeline]')];
   const progress = document.querySelector('.timeline-line span');
@@ -26,8 +25,8 @@
     },null);
     const index=Number(nearest.step.dataset.bubbleStep);if(index===activeBubbleIndex)return;activeBubbleIndex=index;
     steps.forEach(step=>step.classList.toggle('active',step===nearest.step));
+    if(stage)stage.dataset.stageStep=String(index);
     stage?.classList.toggle('show-clusters',index===3);
-    bubbles.forEach(bubble=>{bubble.style.opacity=index===0||bubble.classList.contains('pillar-two')?'1':'.24';});
   };
   const queueBubbleUpdate=()=>{if(!bubbleFrame)bubbleFrame=requestAnimationFrame(updateBubbleStep)};
   document.addEventListener('scroll',queueBubbleUpdate,{passive:true});window.addEventListener('resize',queueBubbleUpdate);updateBubbleStep();
@@ -50,9 +49,20 @@
 
   function drawNewZealand() {
     const canvas = document.querySelector('[data-hero-nz-map]');
+    const shell = canvas?.closest('.hero-nz-map');
+    const tooltip = shell?.querySelector('[data-hero-city-tooltip]');
     const feature = window.HE_WORLD?.features?.find(item => item.properties?.code === 'NZ');
     if (!canvas || !feature) return;
     const context = canvas.getContext('2d');
+    const cities = [
+      {name:'Auckland',lon:174.7633,lat:-36.8485},
+      {name:'Hamilton',lon:175.2793,lat:-37.7870},
+      {name:'Palmerston North',lon:175.6111,lat:-40.3523},
+      {name:'Wellington',lon:174.7762,lat:-41.2866},
+      {name:'Christchurch',lon:172.6362,lat:-43.5321},
+      {name:'Dunedin',lon:170.5028,lat:-45.8788}
+    ];
+    let hoveredCity=null,projectPoint=null;
     const polygons = feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates : [feature.geometry.coordinates];
     const points = polygons.flat(2);
     const longitudes = points.map(point => point[0]);
@@ -91,7 +101,29 @@
         context.stroke();
       }));
       context.restore();
+      cities.forEach(city=>{
+        const [x,y]=project([city.lon,city.lat]),active=hoveredCity===city;
+        context.beginPath();context.arc(x,y,active?7:4.5,0,Math.PI*2);context.fillStyle=active?'#f4b84a':'#d9efff';context.fill();
+        context.lineWidth=active?3:2;context.strokeStyle=active?'rgba(244,184,74,.4)':'rgba(16,43,76,.9)';context.stroke();
+        if(active){context.beginPath();context.arc(x,y,12,0,Math.PI*2);context.strokeStyle='rgba(244,184,74,.34)';context.lineWidth=2;context.stroke();}
+      });
+      projectPoint=project;
     };
+    const showCity=(city,x,y)=>{
+      hoveredCity=city;render();
+      if(!tooltip)return;
+      tooltip.classList.toggle('show',Boolean(city));
+      tooltip.setAttribute('aria-hidden',String(!city));
+      if(city){tooltip.style.left=`${x}px`;tooltip.style.top=`${y}px`;tooltip.textContent=city.name;}
+    };
+    canvas.addEventListener('pointermove',event=>{
+      if(!projectPoint)return;
+      const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;
+      const nearest=cities.map(city=>{const [cx,cy]=projectPoint([city.lon,city.lat]);return{city,cx,cy,distance:Math.hypot(x-cx,y-cy)};}).sort((a,b)=>a.distance-b.distance)[0];
+      if(nearest&&nearest.distance<20){canvas.style.cursor='pointer';if(nearest.city!==hoveredCity)showCity(nearest.city,nearest.cx,nearest.cy);}
+      else{canvas.style.cursor='default';if(hoveredCity)showCity(null,0,0);}
+    });
+    canvas.addEventListener('pointerleave',()=>showCity(null,0,0));
     new ResizeObserver(render).observe(canvas);
     render();
   }

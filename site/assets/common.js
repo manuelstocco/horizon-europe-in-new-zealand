@@ -336,7 +336,6 @@
 
   function updateFooters() {
     document.querySelectorAll('[data-project-updated]').forEach(el => el.textContent=formatDate(D.metadata.projectDataUpdated));
-    document.querySelectorAll('[data-ncp-updated]').forEach(el => el.textContent=formatDate(D.metadata.ncpDataVerified));
   }
   updateFooters();
 

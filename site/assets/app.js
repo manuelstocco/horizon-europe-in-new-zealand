@@ -342,16 +342,9 @@
     const requested=location.hash.slice(1);state.selectedId=D.projects.some(project=>project.id===requested)?requested:D.projects[0]?.id||'';applyFilters();
   }
 
-  function initNcps(){
-    const search=document.querySelector('[data-filter="search"]'); const area=document.querySelector('[data-filter="area"]');
-    const render=()=>{const term=search.value.trim().toLowerCase(),value=area.value;const rows=D.ncps.filter(n=>(!value||n.pillar===value)&&(!term||`${n.name} ${n.role} ${n.coverage}`.toLowerCase().includes(term)));document.querySelector('[data-ncp-count]').textContent=`${rows.length} contacts`;document.querySelector('[data-ncp-list]').innerHTML=rows.map(n=>`<article class="ncp-card"><span class="ncp-area">${n.pillar}</span><h2>${n.name}</h2><span class="ncp-role">${n.role}</span><p class="ncp-coverage">${n.coverage}</p><a href="mailto:${n.email}">${n.email}</a></article>`).join('')||'<div class="chart-empty">No contact matches the selection.</div>';};
-    search.addEventListener('input',render);area.addEventListener('change',render);render();
-  }
-
   if(page==='overview') initOverview();
   if(page==='cluster-overview') initClusterOverview();
   if(page==='funding-flows') initFlow(['cluster','scheme','country'],{eu27Only:true});
   if(page==='cluster-country') initFlow(['cluster','country'],{eu27Only:true});
   if(page==='projects') initProjects();
-  if(page==='ncp') initNcps();
 })();
