@@ -6,9 +6,9 @@
     const state={countries:[],clusters:[],schemes:[],search:''};
     const update=()=>onUpdate({...state});
     const countryOptions=uniqueOptions('countries').filter(option=>!eu27OnlyCountries||option.eu);
-    if(countries) mountMultiSelect(document.querySelector('[data-filter="countries"]'),{options:countryOptions,placeholder:eu27OnlyCountries?'All EU27 partner countries':'All partner countries',searchable:true,countryActions:!eu27OnlyCountries,onChange:v=>{state.countries=v;update();}});
-    if(clusters) state.clusterControl=mountMultiSelect(document.querySelector('[data-filter="clusters"]'),{options:uniqueOptions('clusters'),placeholder:'All clusters',onChange:v=>{state.clusters=v;update();}});
-    if(schemes) mountMultiSelect(document.querySelector('[data-filter="schemes"]'),{options:uniqueOptions('schemes'),placeholder:'All funding schemes',onChange:v=>{state.schemes=v;update();}});
+    if(countries) mountMultiSelect(document.querySelector('[data-filter="countries"]'),{options:countryOptions,placeholder:eu27OnlyCountries?'All EU27 partner countries':'All partner countries',searchable:true,countryActions:!eu27OnlyCountries,clearAction:true,onChange:v=>{state.countries=v;update();}});
+    if(clusters) state.clusterControl=mountMultiSelect(document.querySelector('[data-filter="clusters"]'),{options:uniqueOptions('clusters'),placeholder:'All clusters',clearAction:true,onChange:v=>{state.clusters=v;update();}});
+    if(schemes) mountMultiSelect(document.querySelector('[data-filter="schemes"]'),{options:uniqueOptions('schemes'),placeholder:'All funding schemes',clearAction:true,onChange:v=>{state.schemes=v;update();}});
     if(search) document.querySelector('[data-filter="search"]').addEventListener('input',event=>{state.search=event.target.value;update();});
     update();
     return state;
@@ -160,16 +160,42 @@
   }
 
   function initClusterOverview(){
+    const dashboard=document.querySelector('.dashboard-grid'),metricElement=document.querySelector('[data-metrics]'),clusterPanel=document.querySelector('[data-chart="cluster-bubbles"]').closest('.panel');
+    const spotlight=document.createElement('section');spotlight.className='cluster-overview-spotlight';dashboard.insertBefore(spotlight,clusterPanel);spotlight.append(clusterPanel,metricElement);
     let stateRef;
     stateRef=commonFilters({countries:true,clusters:true,eu27OnlyCountries:true,onUpdate:state=>{
       const projects=filterProjects(state), allowedCountries=visibleCountryCodes(state.countries,true), m=scopedMetrics(projects,allowedCountries);
-      setMetrics(document.querySelector('[data-metrics]'),m); renderChips(document.querySelector('[data-selection]'),selectedLabels(state),'All clusters and EU27 partner countries');
+      setMetrics(metricElement,m);
+      const countryCard=[...metricElement.querySelectorAll('.metric-card')].find(card=>card.querySelector('.metric-label')?.textContent.trim()==='Partner countries');
+      if(countryCard){countryCard.querySelector('.metric-label').textContent='EU27 partner countries';countryCard.querySelector('small').textContent='EU member states connected to New Zealand';}
+      const participatingOrganisations=new Set();projects.forEach(project=>project.organisations.forEach(org=>participatingOrganisations.add(`${org.countryCode}|${org.id||org.name}`)));
+      metricElement.firstElementChild?.insertAdjacentHTML('afterend',`<article class="metric-card"><span class="metric-label">Organisations</span><strong>${fmtNumber(participatingOrganisations.size)}</strong><small>Distinct New Zealand and partner organisations</small></article>`);
+      const metricOrder=['Distinct projects','EU27 partner countries','Organisations','NZ organisations','Project value','Allocated to NZ'];
+      metricOrder.forEach(label=>{const card=[...metricElement.children].find(item=>item.querySelector('.metric-label')?.textContent.trim()===label);if(card)metricElement.append(card);});
+      const scopedNzOrganisations=new Set(),scopedEuOrganisations=new Set();
+      let organisationConnections=0,countryConnections=0;
+      projects.forEach(project=>{
+        const projectOrganisations=new Set(),projectCountries=new Set();
+        project.organisations.forEach(org=>{
+          if(org.countryCode!=='NZ'&&!allowedCountries.has(org.countryCode))return;
+          const key=`${org.countryCode}|${org.id||org.name}`;projectOrganisations.add(key);
+          if(org.countryCode==='NZ')scopedNzOrganisations.add(key);else{scopedEuOrganisations.add(key);projectCountries.add(org.countryCode);}
+        });
+        organisationConnections+=projectOrganisations.size;countryConnections+=projectCountries.size;
+      });
+      const averageOrganisations=projects.length?organisationConnections/projects.length:0,averageCountries=projects.length?countryConnections/projects.length:0,nzShare=m.projectValue?m.nzFunding/m.projectValue*100:0,networkReach=Math.min(100,m.partnerCountries/27*100);
+      const decimal=value=>new Intl.NumberFormat('en-NZ',{maximumFractionDigits:1}).format(value);
+      const summary=projects.length?`${fmtNumber(projects.length)} selected ${projects.length===1?'project connects':'projects connect'} ${fmtNumber(scopedNzOrganisations.size)} New Zealand ${scopedNzOrganisations.size===1?'organisation':'organisations'} with ${fmtNumber(scopedEuOrganisations.size)} EU27 ${scopedEuOrganisations.size===1?'organisation':'organisations'} across ${fmtNumber(m.partnerCountries)} member ${m.partnerCountries===1?'state':'states'}.`:'No projects match the current selection.';
+      metricElement.insertAdjacentHTML('beforeend',`<article class="collaboration-intensity"><div class="intensity-heading"><span>Collaboration intensity</span><p>${summary}</p></div><div class="intensity-grid"><div><strong>${decimal(averageOrganisations)}</strong><span>organisations per project</span></div><div><strong>${decimal(averageCountries)}</strong><span>EU27 countries per project</span></div><div><strong>${decimal(nzShare)}%</strong><span>NZ allocation of project value</span></div></div><div class="intensity-reach"><div><span>EU27 network reach</span><strong>${fmtNumber(m.partnerCountries)} of 27 member states</strong></div><div class="intensity-track" aria-hidden="true"><i style="width:${networkReach}%"></i></div></div></article>`);
+      renderChips(document.querySelector('[data-selection]'),selectedLabels(state),'All clusters and EU27 partner countries');
       const selected=state.clusters.length?state.clusters.map(code=>D.clusters.find(c=>c.code===code)?.short).join(', '):'the six Pillar II clusters';
       document.querySelector('[data-narrative]').textContent=`Explore how New Zealand participation is distributed across ${selected}, then refine the picture by EU27 partner country.`;
-      renderClusterBubbles(document.querySelector('[data-chart="cluster-bubbles"]'),projects,code=>{
+      const clusterBubbleElement=document.querySelector('[data-chart="cluster-bubbles"]'),activeClusterCodes=[...new Set(projects.map(project=>project.clusterCode))];
+      if(activeClusterCodes.length)renderClusterBubbles(clusterBubbleElement,projects,code=>{
         const next=new Set(stateRef.clusterControl.values); next.has(code)?next.delete(code):next.add(code); stateRef.clusterControl.set([...next]);
-      },state.clusters);
-      renderBars(document.querySelector('[data-chart="years"]'),yearRows(projects),{color:row=>'#25b6a5'});
+      },activeClusterCodes,{maxSize:330,emptySize:72,packAspect:.8,fit:true});
+      else{clusterBubbleElement.className='cluster-bubbles';clusterBubbleElement.innerHTML='<div class="chart-empty">No clusters have projects in the current selection.</div>';}
+      renderBars(document.querySelector('[data-chart="years"]'),yearRows(projects),{color:row=>'#397fd8'});
       renderSchemeMix(document.querySelector('[data-chart="schemes"]'),projects);
       const countries=scopedCountryRows(projects,state.countries,true);
       renderHbars(document.querySelector('[data-chart="countries"]'),countries,{label:r=>D.countries.find(c=>c.code===r.key)?.name||r.key,color:r=>countryColor(r.key),limit:countries.length});

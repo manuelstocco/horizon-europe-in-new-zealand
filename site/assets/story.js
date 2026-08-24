@@ -12,21 +12,25 @@
     clusterLayer.className = 'story-cluster-layer';
     clusterLayer.innerHTML = '<p class="story-cluster-caption">Signed projects involving New Zealand</p><div data-story-cluster-pack></div>';
     stage.append(clusterLayer);
-    H.renderClusterBubbles(clusterLayer.querySelector('[data-story-cluster-pack]'), D.projects);
+    const activeClusterCodes=[...new Set(D.projects.map(project=>project.clusterCode))];
+    H.renderClusterBubbles(clusterLayer.querySelector('[data-story-cluster-pack]'), D.projects, ()=>{}, activeClusterCodes, {maxSize:285,emptySize:72,packAspect:1,fit:true});
   }
 
-  const stepObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      steps.forEach(step => step.classList.toggle('active', step === entry.target));
-      const index = Number(entry.target.dataset.bubbleStep);
-      stage?.classList.toggle('show-clusters', index === 3);
-      bubbles.forEach(bubble => {
-        bubble.style.opacity = index === 0 || bubble.classList.contains('pillar-two') ? '1' : '.24';
-      });
-    });
-  }, { rootMargin: '-38% 0px -38% 0px', threshold: 0 });
-  steps.forEach(step => stepObserver.observe(step));
+  let activeBubbleIndex=-1,bubbleFrame=0;
+  const updateBubbleStep=()=>{
+    bubbleFrame=0;if(!steps.length)return;
+    const focusY=window.innerHeight*.48;
+    const nearest=steps.reduce((best,step)=>{
+      const rect=step.getBoundingClientRect(),distance=Math.abs(rect.top+rect.height*.5-focusY);
+      return !best||distance<best.distance?{step,distance}:best;
+    },null);
+    const index=Number(nearest.step.dataset.bubbleStep);if(index===activeBubbleIndex)return;activeBubbleIndex=index;
+    steps.forEach(step=>step.classList.toggle('active',step===nearest.step));
+    stage?.classList.toggle('show-clusters',index===3);
+    bubbles.forEach(bubble=>{bubble.style.opacity=index===0||bubble.classList.contains('pillar-two')?'1':'.24';});
+  };
+  const queueBubbleUpdate=()=>{if(!bubbleFrame)bubbleFrame=requestAnimationFrame(updateBubbleStep)};
+  document.addEventListener('scroll',queueBubbleUpdate,{passive:true});window.addEventListener('resize',queueBubbleUpdate);updateBubbleStep();
 
   const timelineObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => entry.target.classList.toggle('active', entry.isIntersecting));

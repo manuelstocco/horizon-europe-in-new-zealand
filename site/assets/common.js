@@ -76,10 +76,10 @@
     return [];
   }
 
-  function mountMultiSelect(element, { options, placeholder='All', searchable=false, searchPlaceholder='Search…', countryActions=false, onChange=()=>{} }) {
+  function mountMultiSelect(element, { options, placeholder='All', searchable=false, searchPlaceholder='Search…', countryActions=false, clearAction=false, onChange=()=>{} }) {
     const selected = new Set();
     element.classList.add('multi-select');
-    element.innerHTML = `<button class="multi-trigger" type="button" aria-expanded="false"><span class="multi-label">${placeholder}</span><span class="count" hidden>0</span></button><div class="multi-menu">${searchable?`<div class="multi-search-wrap"><input class="multi-search" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}"></div>`:''}${countryActions?'<div class="multi-actions"><button type="button" data-action="eu">Select EU27</button><button type="button" data-action="non-eu">Select non-EU</button><button type="button" data-action="clear">Clear</button></div>':''}<div class="multi-options"></div></div>`;
+    element.innerHTML = `<button class="multi-trigger" type="button" aria-expanded="false"><span class="multi-label">${placeholder}</span><span class="count" hidden>0</span></button><div class="multi-menu">${searchable?`<div class="multi-search-wrap"><input class="multi-search" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}"></div>`:''}${countryActions||clearAction?`<div class="multi-actions">${countryActions?'<button type="button" data-action="eu">Select EU27</button><button type="button" data-action="non-eu">Select non-EU</button>':''}<button type="button" data-action="clear">Clear all</button></div>`:''}<div class="multi-options"></div></div>`;
     const trigger = element.querySelector('.multi-trigger');
     const label = element.querySelector('.multi-label');
     const count = element.querySelector('.count');
@@ -154,14 +154,14 @@
     return [...map].map(([key,value]) => ({key,value})).sort((a,b) => b.value-a.value || a.key.localeCompare(b.key));
   }
 
-  function renderBars(element, rows, { color='#25b6a5' }={}) {
+  function renderBars(element, rows, { color='#397fd8' }={}) {
     if (!rows.length) { element.innerHTML='<div class="chart-empty">No projects match the selection.</div>'; return; }
     const max = Math.max(...rows.map(r => r.value),1);
     element.className='bar-chart';
     element.innerHTML = rows.map(row => `<div class="bar-item"><span class="bar-value">${fmtNumber(row.value)}</span><span class="bar-column" style="height:${Math.max(4,row.value/max*140)}px;background:${typeof color==='function'?color(row):color}"></span><span class="bar-label">${row.label || row.key}</span></div>`).join('');
   }
 
-  function renderHbars(element, rows, { label=v=>v.key, value=v=>v.value, color=()=> '#25b6a5', formatter=fmtNumber, limit=8 }={}) {
+  function renderHbars(element, rows, { label=v=>v.key, value=v=>v.value, color=()=> '#397fd8', formatter=fmtNumber, limit=8 }={}) {
     rows = rows.slice(0,limit);
     if (!rows.length) { element.innerHTML='<div class="chart-empty">No projects match the selection.</div>'; return; }
     const max = Math.max(...rows.map(value),1);
@@ -194,7 +194,7 @@
     element.innerHTML = `<table class="project-table"><thead><tr><th>Project</th><th>Cluster</th><th>Funding scheme</th><th>Start</th><th>Partner countries</th><th>EU contribution</th></tr></thead><tbody>${projects.slice(0,limit).map(p => `<tr><td class="project-title-cell"><a href="projects.html#${p.id}">${p.acronym}</a><span>${p.title}</span></td><td>${clusterMap.get(p.clusterCode)?.short || p.cluster}</td><td>${p.scheme}</td><td>${formatDate(p.start)}</td><td>${partnerCount(p)}</td><td>${fmtMoney(p.ecContribution)}</td></tr>`).join('')}</tbody></table>${projects.length>limit?`<p class="panel-subtitle">Showing ${limit} of ${projects.length} projects. Open Project explorer for the complete list.</p>`:''}`;
   }
 
-  function packBubbleNodes(nodes, gap=4) {
+  function packBubbleNodes(nodes, gap=4, targetAspect=null) {
     const placed=[];
     [...nodes].sort((a,b)=>b.size-a.size||a.order-b.order).forEach((node,index)=>{
       const radius=node.size/2;
@@ -212,7 +212,10 @@
           const trial=[...placed,{radius,x,y}];
           const minX=Math.min(...trial.map(item=>item.x-item.radius)),maxX=Math.max(...trial.map(item=>item.x+item.radius));
           const minY=Math.min(...trial.map(item=>item.y-item.radius)),maxY=Math.max(...trial.map(item=>item.y+item.radius));
-          candidates.push({x,y,score:(maxX-minX)*(maxY-minY)+Math.abs(y)*.2});
+          const width=maxX-minX,height=maxY-minY,area=width*height;
+          const aspectPenalty=targetAspect?area*Math.abs(Math.log((width/height)/targetAspect))*.72:0;
+          const axisPenalty=targetAspect?Math.abs(x)*.16:Math.abs(y)*.2;
+          candidates.push({x,y,score:area+aspectPenalty+axisPenalty});
         }
         if(candidates.length)choice=candidates.sort((a,b)=>a.score-b.score)[0];
       }
@@ -232,7 +235,7 @@
     };
   }
 
-  function renderClusterBubbles(element, projects, onSelect=()=>{}, visibleClusterCodes=[]) {
+  function renderClusterBubbles(element, projects, onSelect=()=>{}, visibleClusterCodes=[], {maxSize=214,emptySize=72,packAspect=null,fit=false}={}) {
     const counts = new Map(groupCount(projects,p=>p.clusterCode).map(r=>[r.key,r.value]));
     const funding = new Map();
     projects.forEach(project=>{
@@ -242,19 +245,30 @@
     const visible=new Set(visibleClusterCodes||[]);
     const clusters=visible.size?D.clusters.filter(cluster=>visible.has(cluster.code)):D.clusters;
     const maxCount=Math.max(1,...clusters.map(cluster=>counts.get(cluster.code)||0));
-    const maxSize=214, emptySize=72;
     element.className='cluster-bubbles';
     const bubbleData=clusters.map((cluster,order)=>{
       const count=counts.get(cluster.code)||0;
       const size=count?Math.round(maxSize*Math.sqrt(count/maxCount)):emptySize;
-      const labelSize=size<100?8.5:size<130?10.5:13;
-      const countSize=size<100?16:size<130?20:24;
-      const padding=size<100?6:size<130?10:16;
+      const labelSize=size<100?8.5:size<130?10.5:size<210?13:16;
+      const countSize=size<100?16:size<130?20:size<210?24:31;
+      const padding=size<100?6:size<130?10:size<210?16:22;
       const detail=`${cluster.name} · ${count} distinct ${count===1?'project':'projects'} · ${fmtMoney(funding.get(cluster.code)||0)} allocated to New Zealand`.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
       return {cluster,count,size,labelSize,countSize,padding,detail,order};
     });
-    const packed=packBubbleNodes(bubbleData);
+    const packed=packBubbleNodes(bubbleData,4,packAspect);
     element.innerHTML=`<div class="cluster-pack-inner" style="width:${packed.width}px;height:${packed.height}px">${packed.nodes.map(node=>`<button class="cluster-profile-bubble" type="button" data-cluster="${node.cluster.code}" data-count="${node.count}" data-tooltip="${node.detail}" title="${node.detail}" aria-label="${node.detail}. Select to filter." style="--bubble-left:${node.left}px;--bubble-top:${node.top}px;--bubble-size:${node.size}px;--bubble-label-size:${node.labelSize}px;--bubble-count-size:${node.countSize}px;--bubble-padding:${node.padding}px;background:${node.cluster.color}"><strong>${node.cluster.short}</strong><span>${node.count}</span><small>${node.count===1?'project':'projects'}</small></button>`).join('')}</div>`;
+    element._clusterPackObserver?.disconnect();
+    if(fit&&typeof ResizeObserver!=='undefined'){
+      const inner=element.querySelector('.cluster-pack-inner'),buttons=[...inner.querySelectorAll('.cluster-profile-bubble')];
+      const fitPack=()=>{
+        const styles=getComputedStyle(element),horizontal=parseFloat(styles.paddingLeft)+parseFloat(styles.paddingRight),vertical=parseFloat(styles.paddingTop)+parseFloat(styles.paddingBottom);
+        const scale=Math.min(1,(element.clientWidth-horizontal)/packed.width,(element.clientHeight-vertical)/packed.height);
+        const safeScale=Math.max(.1,scale*.96);
+        inner.style.width=`${Math.ceil(packed.width*safeScale)}px`;inner.style.height=`${Math.ceil(packed.height*safeScale)}px`;inner.style.transform='none';
+        buttons.forEach((button,index)=>{const node=packed.nodes[index];button.style.setProperty('--bubble-left',`${node.left*safeScale}px`);button.style.setProperty('--bubble-top',`${node.top*safeScale}px`);button.style.setProperty('--bubble-size',`${node.size*safeScale}px`);button.style.setProperty('--bubble-label-size',`${node.labelSize*safeScale}px`);button.style.setProperty('--bubble-count-size',`${node.countSize*safeScale}px`);button.style.setProperty('--bubble-padding',`${node.padding*safeScale}px`);});
+      };
+      fitPack(); element._clusterPackObserver=new ResizeObserver(fitPack); element._clusterPackObserver.observe(element);
+    }
     element.onclick = event => { const button=event.target.closest('[data-cluster]'); if(button) onSelect(button.dataset.cluster); };
   }
 
@@ -325,6 +339,13 @@
     document.querySelectorAll('[data-ncp-updated]').forEach(el => el.textContent=formatDate(D.metadata.ncpDataVerified));
   }
   updateFooters();
+
+  document.querySelectorAll('.primary-nav').forEach(nav => {
+    const projectsLink = nav.querySelector('a[href="projects.html"]');
+    if (!projectsLink) return;
+    if (!nav.querySelector('a[href="eu27-network.html"]')) projectsLink.insertAdjacentHTML('beforebegin','<a href="eu27-network.html">EU27 network</a>');
+    if (!nav.querySelector('a[href="repository.html"]')) projectsLink.insertAdjacentHTML('afterend','<a href="repository.html">Repository</a>');
+  });
 
   window.HE = { D, EU27, clusterMap, countryMap, uniqueOptions, filterProjects, metrics, projectPartnerCodes, projectPartnerNames, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, formatDate, fmtMoney, fmtNumber, updateFooters };
 })();

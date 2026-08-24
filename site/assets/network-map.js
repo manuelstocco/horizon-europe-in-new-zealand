@@ -233,7 +233,7 @@
     network.nodes.forEach(node=>{
       const active=hover===node,r=node.radius*(active?1.35:1);
       ctx.beginPath();ctx.arc(node.screen.x,node.screen.y,r,0,Math.PI*2);
-      ctx.fillStyle=node.countryCode==='NZ'?'#77ddd2':'#f3f8f8';ctx.fill();
+      ctx.fillStyle=node.countryCode==='NZ'?'#8bc0ef':'#f3f8f8';ctx.fill();
       ctx.lineWidth=node.countryCode==='NZ'?2.2:1.2;ctx.strokeStyle=node.countryCode==='NZ'?'#09223a':'rgba(11,24,48,.55)';ctx.stroke();
       if(active){ctx.beginPath();ctx.arc(node.screen.x,node.screen.y,r+4,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
     });
