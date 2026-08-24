@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore New Zealand's Horizon Europe collaboration network across the EU27 by cluster, project and participation measure.">
+  <title>EU27 network · Horizon Europe in New Zealand</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/orbit-network.css">
+</head>
+<body class="circle-study-page" data-page="eu27-network">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a>
+    <nav class="primary-nav" aria-label="Main navigation"><a href="index.html">Story</a><a href="overview.html">Partnership overview</a><a href="cluster-overview.html">Cluster overview</a><a href="funding-flows.html">Funding flows</a><a href="cluster-country.html">Cluster &amp; country</a><a class="active" href="eu27-network.html">EU27 network</a><a href="projects.html">Project explorer</a></nav>
+  </header>
+
+  <main class="circle-study-main">
+    <section class="circle-study-heading">
+      <p class="eyebrow">A European network takes shape</p>
+      <h1>One centre. Twenty-seven perspectives.</h1>
+      <p>New Zealand's Horizon Europe portfolio creates a growing circle of collaboration across the European Union.</p>
+    </section>
+
+    <section class="circle-controls" aria-label="Network controls">
+      <div class="circle-filter cluster-filter"><label>Clusters</label><div data-circle-filter="clusters"></div></div>
+      <div class="circle-filter project-filter"><label for="circle-project-search">Search projects</label><div class="circle-search"><input id="circle-project-search" data-project-search type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="circle-project-results" autocomplete="off" placeholder="Type a project name or acronym"><button type="button" data-project-clear hidden aria-label="Clear selected project">×</button></div><div class="circle-search-results" id="circle-project-results" data-project-results role="listbox" hidden></div></div>
+      <fieldset class="circle-measure"><legend>Measure</legend><label><input type="radio" name="circle-measure" value="projects" checked><span>Projects</span></label><label><input type="radio" name="circle-measure" value="organisations"><span>Organisations</span></label></fieldset>
+      <button class="circle-reset" type="button" data-circle-reset>Reset</button>
+    </section>
+    <div class="circle-selection" data-circle-selection>All clusters · All projects</div>
+
+    <section class="circle-figure" aria-label="EU27 collaboration network">
+      <div class="circle-stage" data-circle-stage>
+        <canvas data-circle-canvas role="img" aria-label="Perfect circular network connecting New Zealand with EU27 countries"></canvas>
+        <div class="circle-country-layer" data-circle-country-layer></div>
+        <div class="circle-nz-label"><span>Aotearoa</span><strong>New Zealand</strong><small data-circle-nz-summary></small></div>
+        <div class="circle-empty" data-circle-empty hidden>No EU27 connections match the current selection.</div>
+      </div>
+
+      <div class="circle-readout" data-circle-readout>
+        <div><span class="readout-kicker">Network in view</span><strong data-readout-title>EU27 collaboration</strong><p data-readout-copy></p></div>
+        <div class="readout-metrics" data-readout-metrics></div>
+        <div class="readout-clusters" data-readout-clusters></div>
+      </div>
+      <p class="circle-instruction">Hover over a country to trace its relationship with New Zealand. Select it to hold the focus; press Esc to release.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
+  <script src="assets/data.js"></script>
+  <script src="assets/common.js"></script>
+  <script src="assets/world-map.js"></script>
+  <script src="assets/orbit-network.js"></script>
+</body>
+</html>
