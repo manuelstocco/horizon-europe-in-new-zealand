@@ -1,4 +1,82 @@
 (() => {
+  function mountNavigationDrawer() {
+    const header = document.querySelector('.site-header');
+    const nav = header?.querySelector('.primary-nav');
+    if (!header || !nav || header.dataset.drawerReady === 'true') return;
+
+    header.dataset.drawerReady = 'true';
+    const currentFile = location.pathname.split('/').pop() || 'index.html';
+    const navigationGroups = [
+      { label:'Discover', pages:[
+        ['index.html','The Story'],
+        ['overview.html','Partnership Overview']
+      ]},
+      { label:'Explore the Portfolio', pages:[
+        ['cluster-overview.html','Portfolio by Cluster'],
+        ['funding-flows.html','Funding Schemes & Countries'],
+        ['cluster-country.html','Cluster–Country Connections']
+      ]},
+      { label:'Explore the Network', pages:[
+        ['eu27-network.html','EU27 Collaboration Network'],
+        ['projects.html','Project Explorer']
+      ]},
+      { label:'Resources', pages:[
+        ['repository.html','Country Presentations'],
+        ['methodology.html','Data & Methodology']
+      ]}
+    ];
+    nav.innerHTML = navigationGroups.map(group => `<section class="site-nav-group"><h2>${group.label}</h2>${group.pages.map(([href,label]) => `<a href="${href}"${currentFile === href ? ' class="active" aria-current="page"' : ''}>${label}</a>`).join('')}</section>`).join('');
+    const menuButton = document.createElement('button');
+    menuButton.className = 'site-menu-button';
+    menuButton.type = 'button';
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.setAttribute('aria-controls', 'site-navigation-drawer');
+    menuButton.innerHTML = '<span class="site-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Explore</span>';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'site-nav-overlay';
+    overlay.hidden = true;
+
+    const drawer = document.createElement('aside');
+    drawer.className = 'site-nav-drawer';
+    drawer.id = 'site-navigation-drawer';
+    drawer.setAttribute('aria-label', 'Main navigation');
+    drawer.setAttribute('aria-hidden', 'true');
+    drawer.innerHTML = '<div class="site-nav-drawer-head"><div><span>Explore</span><strong>Horizon Europe in New Zealand</strong></div><button class="site-nav-close" type="button" aria-label="Close menu">&times;</button></div>';
+    nav.removeAttribute('aria-label');
+    drawer.appendChild(nav);
+    document.body.append(overlay, drawer);
+    header.appendChild(menuButton);
+
+    let previousFocus = null;
+    let closeTimer = null;
+    const setOpen = open => {
+      window.clearTimeout(closeTimer);
+      if (open) {
+        previousFocus = document.activeElement;
+        overlay.hidden = false;
+        requestAnimationFrame(() => document.body.classList.add('site-menu-open'));
+      } else {
+        document.body.classList.remove('site-menu-open');
+        closeTimer = window.setTimeout(() => { overlay.hidden = true; }, 260);
+      }
+      menuButton.setAttribute('aria-expanded', String(open));
+      drawer.setAttribute('aria-hidden', String(!open));
+      if (open) drawer.querySelector('.site-nav-close').focus();
+      else if (previousFocus) previousFocus.focus();
+    };
+
+    menuButton.addEventListener('click', () => setOpen(true));
+    drawer.querySelector('.site-nav-close').addEventListener('click', () => setOpen(false));
+    overlay.addEventListener('click', () => setOpen(false));
+    nav.addEventListener('click', event => { if (event.target.closest('a')) setOpen(false); });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && document.body.classList.contains('site-menu-open')) setOpen(false);
+    });
+  }
+
+  mountNavigationDrawer();
+
   const D = window.HE_DATA;
   const EU27 = new Set(['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','EL','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE']);
   const money = new Intl.NumberFormat('en-NZ', { style:'currency', currency:'EUR', notation:'compact', maximumFractionDigits:1 });
