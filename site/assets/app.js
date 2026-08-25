@@ -128,10 +128,49 @@
     table.append(thead,tbody);element.appendChild(table);
   }
 
+  function renderOrganisationTable(element, projects, scope='nz') {
+    const rows=organisationRows(projects).filter(row=>{
+      const code=row.key.split('|')[0];
+      if(row.funding<=0)return false;
+      if(scope==='nz')return code==='NZ';
+      if(scope==='eu')return window.HE.EU27.has(code);
+      return code!=='NZ'&&!window.HE.EU27.has(code);
+    });
+    element.replaceChildren();
+    element.className='organisation-table-wrap';
+    const scopeName=scope==='nz'?'New Zealand':scope==='eu'?'EU27':'non-EU';
+    if(!rows.length){element.innerHTML=`<div class="chart-empty">No funded ${scopeName} organisations match the selection.</div>`;return;}
+    const exactMoney=new Intl.NumberFormat('en-NZ',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+    const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
+    const table=document.createElement('table');table.className='organisation-table eu27-organisation-table';
+    const thead=document.createElement('thead');thead.innerHTML='<tr><th>Organisation</th><th>Country</th><th>Head office city</th><th>Role</th><th>Projects</th><th>Total EU contribution</th></tr>';
+    const tbody=document.createElement('tbody');
+    rows.forEach(row=>{
+      const tr=document.createElement('tr');
+      const name=document.createElement('td');name.className='organisation-name';name.textContent=row.name;
+      const country=document.createElement('td');country.textContent=row.country||'Not reported';
+      const city=document.createElement('td');city.textContent=row.city||'Not reported';
+      const role=document.createElement('td');role.className='organisation-role';role.textContent=row.roles.map(value=>roleNames[value]||value).join(', ');
+      const projectsCell=document.createElement('td');projectsCell.textContent=fmtNumber(row.projectCount);
+      const funding=document.createElement('td');funding.className='organisation-funding';funding.textContent=exactMoney.format(row.funding);
+      tr.append(name,country,city,role,projectsCell,funding);tbody.appendChild(tr);
+    });
+    table.append(thead,tbody);element.appendChild(table);
+  }
+
   function initOverview(){
     let countryScope='all';
+    let organisationScope='nz';
     let currentProjects=D.projects;
+    const dashboard=document.querySelector('.dashboard-grid');
+    const metricElement=document.querySelector('[data-metrics]');
+    const clusterPanel=document.querySelector('[data-chart="cluster-bubbles"]').closest('.panel');
+    const spotlight=document.createElement('section');
+    spotlight.className='cluster-overview-spotlight';
+    dashboard.insertBefore(spotlight,clusterPanel);
+    spotlight.append(clusterPanel,metricElement);
     const scopeControl=document.querySelector('[data-country-scope]');
+    const organisationScopeControl=document.querySelector('[data-organisation-scope]');
     const renderLeadingCountries=()=>{
       let rows=countryRows(currentProjects);
       if(countryScope==='eu') rows=rows.filter(row=>window.HE.EU27.has(row.key));
@@ -145,17 +184,80 @@
       scopeControl.querySelectorAll('[data-country-group]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active));});
       renderLeadingCountries();
     });
-    commonFilters({countries:true,onUpdate:state=>{
-      const projects=filterProjects(state), m=metrics(projects);
+    const renderOrganisations=()=>{
+      const subtitles={
+        nz:'Funded New Zealand organisations in the selected scope, with country, head office city, role, projects and cumulative EU contribution.',
+        eu:'Funded EU27 organisations in the selected scope, with country, head office city, role, projects and cumulative EU contribution.',
+        'non-eu':'Funded non-EU organisations in the selected scope, with country, head office city, role, projects and cumulative EU contribution.'
+      };
+      document.querySelector('[data-organisation-subtitle]').textContent=subtitles[organisationScope];
+      renderOrganisationTable(document.querySelector('[data-chart="organisations"]'),currentProjects,organisationScope);
+    };
+    organisationScopeControl.addEventListener('click',event=>{
+      const button=event.target.closest('[data-organisation-group]');
+      if(!button)return;
+      organisationScope=button.dataset.organisationGroup;
+      organisationScopeControl.querySelectorAll('[data-organisation-group]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active));});
+      renderOrganisations();
+    });
+    let stateRef;
+    stateRef=commonFilters({countries:true,clusters:true,schemes:true,onUpdate:state=>{
+      const projects=filterProjects(state),m=metrics(projects);
       currentProjects=projects;
-      setMetrics(document.querySelector('[data-metrics]'),m); renderChips(document.querySelector('[data-selection]'),selectedLabels(state),'All partner countries');
-      const names=state.countries.map(code=>D.countries.find(c=>c.code===code)?.name).filter(Boolean);
-      document.querySelector('[data-narrative]').textContent=names.length?`${fmtNumber(projects.length)} projects connect New Zealand with ${names.join(names.length>2?', ': ' and ')}${names.length>2?' and other selected partners':''}.`:`Across ${fmtNumber(projects.length)} signed projects, New Zealand organisations collaborate with partners in ${fmtNumber(m.partnerCountries)} countries.`;
-      renderBars(document.querySelector('[data-chart="years"]'),yearRows(projects));
-      renderClusterMix(document.querySelector('[data-chart="clusters"]'),projects);
+      setMetrics(metricElement,m);
+      const participatingOrganisations=new Set();
+      projects.forEach(project=>project.organisations.forEach(org=>participatingOrganisations.add(`${org.countryCode}|${org.id||org.name}`)));
+      metricElement.firstElementChild?.insertAdjacentHTML('afterend',`<article class="metric-card"><span class="metric-label">Organisations</span><strong>${fmtNumber(participatingOrganisations.size)}</strong><small>Distinct New Zealand and partner organisations</small></article>`);
+      const metricOrder=['Distinct projects','Partner countries','Organisations','NZ organisations','Project value','Allocated to NZ'];
+      metricOrder.forEach(label=>{const card=[...metricElement.children].find(item=>item.querySelector('.metric-label')?.textContent.trim()===label);if(card)metricElement.append(card);});
+
+      const scopedNzOrganisations=new Set(),scopedPartnerOrganisations=new Set(),eu27Countries=new Set();
+      let organisationConnections=0,countryConnections=0;
+      projects.forEach(project=>{
+        const projectOrganisations=new Set(),projectCountries=new Set();
+        project.organisations.forEach(org=>{
+          const key=`${org.countryCode}|${org.id||org.name}`;projectOrganisations.add(key);
+          if(org.countryCode==='NZ')scopedNzOrganisations.add(key);
+          else{scopedPartnerOrganisations.add(key);projectCountries.add(org.countryCode);if(window.HE.EU27.has(org.countryCode))eu27Countries.add(org.countryCode);}
+        });
+        organisationConnections+=projectOrganisations.size;countryConnections+=projectCountries.size;
+      });
+      const averageOrganisations=projects.length?organisationConnections/projects.length:0;
+      const averageCountries=projects.length?countryConnections/projects.length:0;
+      const nzShare=m.projectValue?m.nzFunding/m.projectValue*100:0;
+      const networkReach=Math.min(100,eu27Countries.size/27*100);
+      const decimal=value=>new Intl.NumberFormat('en-NZ',{maximumFractionDigits:1}).format(value);
+      const summary=projects.length?`${fmtNumber(projects.length)} selected ${projects.length===1?'project connects':'projects connect'} ${fmtNumber(scopedNzOrganisations.size)} New Zealand ${scopedNzOrganisations.size===1?'organisation':'organisations'} with ${fmtNumber(scopedPartnerOrganisations.size)} partner ${scopedPartnerOrganisations.size===1?'organisation':'organisations'} across ${fmtNumber(m.partnerCountries)} ${m.partnerCountries===1?'country':'countries'}.`:'No projects match the current selection.';
+      metricElement.insertAdjacentHTML('beforeend',`<article class="collaboration-intensity"><div class="intensity-heading"><span>Collaboration intensity</span><p>${summary}</p></div><div class="intensity-grid"><div><strong>${decimal(averageOrganisations)}</strong><span>organisations per project</span></div><div><strong>${decimal(averageCountries)}</strong><span>partner countries per project</span></div><div><strong>${decimal(nzShare)}%</strong><span>NZ allocation of project value</span></div></div><div class="intensity-reach"><div><span>EU27 network reach</span><strong>${fmtNumber(eu27Countries.size)} of 27 member states</strong></div><div class="intensity-track" aria-hidden="true"><i style="width:${networkReach}%"></i></div></div></article>`);
+
+      renderChips(document.querySelector('[data-selection]'),selectedLabels(state),'All clusters, funding schemes and partner countries');
+      const selectedClusters=state.clusters.length?state.clusters.map(code=>D.clusters.find(c=>c.code===code)?.short).filter(Boolean):[];
+      const selectedCountries=state.countries.length?state.countries.map(code=>D.countries.find(c=>c.code===code)?.name).filter(Boolean):[];
+      const selectedSchemes=state.schemes.length?state.schemes.map(code=>D.projects.find(project=>project.schemeCode===code)?.scheme).filter(Boolean):[];
+      if(selectedClusters.length||selectedCountries.length||selectedSchemes.length){
+        const parts=[];
+        if(selectedClusters.length)parts.push(selectedClusters.join(', '));
+        if(selectedCountries.length)parts.push(selectedCountries.join(', '));
+        if(selectedSchemes.length)parts.push(selectedSchemes.join(', '));
+        document.querySelector('[data-narrative]').textContent=`The selected portfolio brings ${fmtNumber(projects.length)} projects into focus across ${parts.join(' and ')}.`;
+      }else{
+        document.querySelector('[data-narrative]').textContent=`Across ${fmtNumber(projects.length)} signed projects, New Zealand organisations collaborate through the Pillar II portfolio and its European partner network.`;
+      }
+
+      const clusterBubbleElement=document.querySelector('[data-chart="cluster-bubbles"]');
+      const activeClusterCodes=[...new Set(projects.map(project=>project.clusterCode))];
+      if(activeClusterCodes.length)renderClusterBubbles(clusterBubbleElement,projects,code=>{
+        const next=new Set(stateRef.clusterControl.values);next.has(code)?next.delete(code):next.add(code);stateRef.clusterControl.set([...next]);
+      },activeClusterCodes,{maxSize:330,emptySize:72,packAspect:.8,fit:true});
+      else{clusterBubbleElement.className='cluster-bubbles';clusterBubbleElement.innerHTML='<div class="chart-empty">No clusters have projects in the current selection.</div>';}
+      renderBars(document.querySelector('[data-chart="years"]'),yearRows(projects),{color:row=>'#397fd8'});
+      renderSchemeMix(document.querySelector('[data-chart="schemes"]'),projects);
       renderLeadingCountries();
-      renderNzOrganisationTable(document.querySelector('[data-chart="nz-orgs"]'),projects);
+      renderOrganisations();
       renderProjectTable(document.querySelector('[data-project-table]'),projects,projects.length);
+
+      window.HE_PARTNERSHIP_EXPORT_STATE={projects:[...projects],filters:{clusters:[...state.clusters],countries:[...state.countries],schemes:[...state.schemes]},updated:D.updated||'22 August 2026'};
+      window.dispatchEvent(new CustomEvent('he:partnership-export-ready'));
     }});
   }
 
@@ -342,9 +444,16 @@
     const requested=location.hash.slice(1);state.selectedId=D.projects.some(project=>project.id===requested)?requested:D.projects[0]?.id||'';applyFilters();
   }
 
+  function initNcps(){
+    const search=document.querySelector('[data-filter="search"]'); const area=document.querySelector('[data-filter="area"]');
+    const render=()=>{const term=search.value.trim().toLowerCase(),value=area.value;const rows=D.ncps.filter(n=>(!value||n.pillar===value)&&(!term||`${n.name} ${n.role} ${n.coverage}`.toLowerCase().includes(term)));document.querySelector('[data-ncp-count]').textContent=`${rows.length} contacts`;document.querySelector('[data-ncp-list]').innerHTML=rows.map(n=>`<article class="ncp-card"><span class="ncp-area">${n.pillar}</span><h2>${n.name}</h2><span class="ncp-role">${n.role}</span><p class="ncp-coverage">${n.coverage}</p><a href="mailto:${n.email}">${n.email}</a></article>`).join('')||'<div class="chart-empty">No contact matches the selection.</div>';};
+    search.addEventListener('input',render);area.addEventListener('change',render);render();
+  }
+
   if(page==='overview') initOverview();
   if(page==='cluster-overview') initClusterOverview();
   if(page==='funding-flows') initFlow(['cluster','scheme','country'],{eu27Only:true});
   if(page==='cluster-country') initFlow(['cluster','country'],{eu27Only:true});
   if(page==='projects') initProjects();
+  if(page==='ncp') initNcps();
 })();

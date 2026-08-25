@@ -8,11 +8,10 @@
     const currentFile = location.pathname.split('/').pop() || 'index.html';
     const navigationGroups = [
       { label:'Discover', pages:[
-        ['index.html','The Story'],
-        ['overview.html','Partnership Overview']
+        ['index.html','The Story']
       ]},
       { label:'Explore the Portfolio', pages:[
-        ['cluster-overview.html','Portfolio by Cluster'],
+        ['overview.html','Partnership Overview'],
         ['funding-flows.html','Funding Schemes & Countries'],
         ['cluster-country.html','Cluster–Country Connections']
       ]},
@@ -26,6 +25,7 @@
       ]}
     ];
     nav.innerHTML = navigationGroups.map(group => `<section class="site-nav-group"><h2>${group.label}</h2>${group.pages.map(([href,label]) => `<a href="${href}"${currentFile === href ? ' class="active" aria-current="page"' : ''}>${label}</a>`).join('')}</section>`).join('');
+    const activeLink = nav.querySelector('a.active');
     const menuButton = document.createElement('button');
     menuButton.className = 'site-menu-button';
     menuButton.type = 'button';
@@ -414,6 +414,7 @@
 
   function updateFooters() {
     document.querySelectorAll('[data-project-updated]').forEach(el => el.textContent=formatDate(D.metadata.projectDataUpdated));
+    document.querySelectorAll('[data-ncp-updated]').forEach(el => el.textContent=formatDate(D.metadata.ncpDataVerified));
   }
   updateFooters();
 
