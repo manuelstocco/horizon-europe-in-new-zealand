@@ -12,8 +12,7 @@
       ]},
       { label:'Explore the Portfolio', pages:[
         ['overview.html','Partnership Overview'],
-        ['funding-flows.html','Funding Schemes & Countries'],
-        ['cluster-country.html','Cluster–Country Connections']
+        ['funding-flows.html','Funding & Country Flows']
       ]},
       { label:'Explore the Network', pages:[
         ['eu27-network.html','EU27 Collaboration Network'],
@@ -103,7 +102,15 @@
     return palette[Math.abs(hash) % palette.length];
   }
   function clusterColor(code) { return clusterMap.get(code)?.color || '#708398'; }
-  function countryColor(code) { return hashColor(`country-${code}`); }
+  const eu27CountryPalette = new Map([
+    ['AT','#397fd8'],['BE','#8d67ce'],['BG','#22a99a'],['HR','#e5a63b'],['CY','#ec6c5f'],
+    ['CZ','#77a84b'],['DK','#c0649c'],['EE','#4e9bb8'],['FI','#c07a4e'],['FR','#2e5aac'],
+    ['DE','#d8433e'],['EL','#008c76'],['GR','#008c76'],['HU','#b88a00'],['IE','#6f4fb3'],
+    ['IT','#e07b39'],['LV','#4e8a3a'],['LT','#a83e78'],['LU','#24758f'],['MT','#9a5435'],
+    ['NL','#d62f6a'],['PL','#5e7fd0'],['PT','#f08a76'],['RO','#39b9a5'],['SK','#ebc05a'],
+    ['SI','#9f7dda'],['ES','#8fb963'],['SE','#d77daf']
+  ]);
+  function countryColor(code) { return eu27CountryPalette.get(code) || hashColor(`country-${code}`); }
   function schemeColor(code) { return schemePalette.get(code) || hashColor(`scheme-${code}`); }
   function projectPartnerCodes(project) { return project.countryCodes.filter(code => code !== 'NZ'); }
   function projectPartnerNames(project) { return project.countries.filter(name => name !== 'New Zealand'); }

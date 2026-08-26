@@ -307,13 +307,46 @@
     }});
   }
 
-  function initFlow(levels,{eu27Only=false}={}){
-    commonFilters({countries:true,clusters:true,schemes:levels.includes('scheme'),eu27OnlyCountries:eu27Only,onUpdate:state=>{
-      const projects=filterProjects(state), countryScope=visibleCountryCodes(state.countries,eu27Only);
-      const allLabel=eu27Only?(levels.includes('scheme')?'All clusters, funding schemes and EU27 partner countries':'All clusters and EU27 partner countries'):'All filters';
-      setMetrics(document.querySelector('[data-metrics]'),scopedMetrics(projects,countryScope)); renderChips(document.querySelector('[data-selection]'),selectedLabels(state),allLabel);
-      renderFlow(document.querySelector('[data-flow]'),projects,levels,{countryCodes:countryScope,countryValueRight:eu27Only});
-    }});
+  function initFundingCountryFlows(){
+    let mode=location.hash==='#cluster-country'?'simple':'detailed';
+    let currentState={countries:[],clusters:[],schemes:[],search:''};
+    const modeControl=document.querySelector('[data-flow-mode-control]');
+    const content={
+      simple:{
+        levels:['cluster','country'],hash:'#cluster-country',
+        title:'Cluster → country',
+        hero:'See the direct connection between themes and countries.',
+        subtitle:'Hover over a flow or node for its value. The funding scheme filter still narrows the project scope without adding a middle layer.'
+      },
+      detailed:{
+        levels:['cluster','scheme','country'],hash:'#funding-schemes',
+        title:'Cluster → funding scheme → country',
+        hero:'Explore how distinct project-country connections move through Horizon Europe clusters, funding schemes and EU27 partner countries.',
+        subtitle:'Hover over a flow or node for its value. Filters show only the selected clusters, funding schemes and EU27 countries.'
+      }
+    };
+    const render=()=>{
+      const view=content[mode],projects=filterProjects(currentState),countryScope=visibleCountryCodes(currentState.countries,true);
+      setMetrics(document.querySelector('[data-metrics]'),scopedMetrics(projects,countryScope));
+      renderChips(document.querySelector('[data-selection]'),selectedLabels(currentState),'All clusters, funding schemes and EU27 partner countries');
+      renderFlow(document.querySelector('[data-flow]'),projects,view.levels,{countryCodes:countryScope,countryValueRight:true});
+    };
+    const setMode=(next,{updateUrl=true}={})=>{
+      mode=next==='simple'?'simple':'detailed';
+      const view=content[mode];
+      modeControl.querySelectorAll('[data-flow-mode]').forEach(button=>{const active=button.dataset.flowMode===mode;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+      document.querySelector('[data-flow-title]').textContent=view.title;
+      document.querySelector('[data-flow-hero-title]').textContent=view.title;
+      document.querySelector('[data-flow-hero-copy]').textContent=view.hero;
+      document.querySelector('[data-flow-subtitle]').textContent=view.subtitle;
+      document.querySelector('[data-flow-legend-scheme]').hidden=mode==='simple';
+      if(updateUrl&&location.hash!==view.hash)history.replaceState(null,'',`${location.pathname}${location.search}${view.hash}`);
+      render();
+    };
+    modeControl.addEventListener('click',event=>{const button=event.target.closest('[data-flow-mode]');if(button)setMode(button.dataset.flowMode);});
+    window.addEventListener('hashchange',()=>setMode(location.hash==='#cluster-country'?'simple':'detailed',{updateUrl:false}));
+    setMode(mode,{updateUrl:false});
+    commonFilters({countries:true,clusters:true,schemes:true,eu27OnlyCountries:true,onUpdate:state=>{currentState=state;render();}});
   }
 
   function initProjects(){
@@ -452,8 +485,7 @@
 
   if(page==='overview') initOverview();
   if(page==='cluster-overview') initClusterOverview();
-  if(page==='funding-flows') initFlow(['cluster','scheme','country'],{eu27Only:true});
-  if(page==='cluster-country') initFlow(['cluster','country'],{eu27Only:true});
+  if(page==='funding-flows') initFundingCountryFlows();
   if(page==='projects') initProjects();
   if(page==='ncp') initNcps();
 })();

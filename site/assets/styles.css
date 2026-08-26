@@ -287,6 +287,18 @@ body[data-page="story"] .story-network{margin-top:8px}
 /* Compact Cluster overview opening section */
 body[data-page="overview"] .page-content{padding-top:28px}
 body[data-page="overview"] .filter-panel{margin-bottom:17px;padding:16px}
+
+/* Unified Funding & Country Flows */
+.flow-page-content{max-width:1480px}
+.flow-mode-panel{position:relative;z-index:18;display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 14px;padding:15px 17px;border:1px solid #d8e3ee;border-radius:16px;background:#f7fafd;box-shadow:0 8px 24px rgba(23,58,94,.05)}
+.flow-mode-panel>div:first-child{min-width:220px}.flow-mode-label{display:block;color:#567187;font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}.flow-mode-panel p{margin:4px 0 0;color:#768797;font-size:10px}
+.flow-mode-control{display:grid;grid-template-columns:1fr 1fr;min-width:min(100%,650px);padding:4px;border:1px solid #cfdeeb;border-radius:12px;background:#e8f0f7}
+.flow-mode-control button{min-height:42px;padding:8px 16px;border:0;border-radius:9px;background:transparent;color:#536d82;font-size:10px;font-weight:850;line-height:1.25;cursor:pointer;transition:background .16s,color .16s,box-shadow .16s}
+.flow-mode-control button:hover{color:#173a5e;background:rgba(255,255,255,.62)}.flow-mode-control button.active{background:#fff;color:#2f72b8;box-shadow:0 3px 12px rgba(23,58,94,.12)}
+.flow-filter-panel{z-index:17;margin-bottom:17px}.flow-panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.flow-panel-heading>div{min-width:0}.flow-measure{flex:none;padding:8px 10px;border-left:3px solid #397fd8;background:#edf4fa;color:#4b6b84;font-size:9px;font-weight:850;letter-spacing:.04em;text-transform:uppercase}
+.flow-panel [data-flow-legend-scheme][hidden]{display:none}.flow-panel .legend-inline{margin-top:11px}.flow-panel .flow-wrap{min-height:560px}
+@media(max-width:900px){.flow-mode-panel{align-items:stretch;flex-direction:column}.flow-mode-control{width:100%;min-width:0}.flow-panel-heading{flex-direction:column}.flow-measure{align-self:flex-start}}
+@media(max-width:620px){.flow-mode-control{grid-template-columns:1fr}.flow-mode-panel{padding:13px}.flow-mode-control button{min-height:38px}.flow-panel .flow-wrap{min-height:500px}}
 body[data-page="overview"] .selection-line{margin-bottom:15px}
 body[data-page="overview"] .metric-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
 body[data-page="overview"] .metric-card{min-height:108px;padding:16px}

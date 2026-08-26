@@ -1,3 +1,67 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Interactive Sankey showing Cluster to Funding scheme to Country for Horizon Europe projects involving New Zealand."><title>Funding Schemes &amp; Countries · Horizon Europe in New Zealand</title><link rel="stylesheet" href="assets/styles.css?v=20260825-eyebrow1"></head>
-<body class="page-shell" data-page="funding-flows"><header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a><nav class="primary-nav" aria-label="Main navigation"><a href="index.html">Story</a><a href="overview.html">Partnership overview</a><a class="active" href="funding-flows.html">Funding flows</a><a href="cluster-country.html">Cluster & country</a><a href="eu27-network.html">EU27 network</a><a href="projects.html">Project explorer</a></nav></header><section class="page-hero"><p class="eyebrow">Funding Schemes &amp; Countries</p><h1>Cluster → funding scheme → country</h1><p>Follow distinct project–country connections across the six clusters, the full Horizon Europe Type of Action names and EU27 partner countries.</p></section><main class="page-content"><div class="data-strip"><span>Each Project–Country pair is counted once, even when several organisations from that country participate. Only EU27 partner countries are shown.</span></div><section class="filter-panel"><div class="filter-field"><label>Clusters</label><div data-filter="clusters"></div></div><div class="filter-field"><label>Funding schemes</label><div data-filter="schemes"></div></div><div class="filter-field"><label>EU27 partner countries</label><div data-filter="countries"></div></div></section><div class="selection-line" data-selection></div><section class="metric-grid" data-metrics></section><article class="panel wide"><h2>Distinct EU27 project–country flows</h2><p class="panel-subtitle">Hover over a flow or node for its value. Selecting filters shows only the chosen clusters, schemes and countries.</p><div class="legend-inline"><span><i style="background:#25b6a5"></i>Cluster</span><span><i style="background:#8d67ce"></i>Funding scheme</span><span><i style="background:#397fd8"></i>EU27 country</span></div><div class="flow-wrap" data-flow></div></article></main><footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer><script src="assets/data.js"></script><script src="assets/common.js?v=20260825-unified1"></script><script src="assets/app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Switch between Cluster to Country and Cluster to Funding scheme to Country flows for Horizon Europe projects involving New Zealand.">
+  <meta http-equiv="cache-control" content="no-cache">
+  <title>Funding &amp; Country Flows · Horizon Europe in New Zealand</title>
+  <link rel="stylesheet" href="assets/styles.css?v=20260826-flowmerge1">
+</head>
+<body class="page-shell" data-page="funding-flows">
+  <header class="site-header">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a>
+    <nav class="primary-nav" aria-label="Main navigation"><a href="index.html">Story</a><a href="overview.html">Partnership Overview</a><a class="active" href="funding-flows.html">Funding &amp; Country Flows</a><a href="eu27-network.html">EU27 Collaboration Network</a><a href="projects.html">Project Explorer</a></nav>
+  </header>
+
+  <section class="page-hero">
+    <p class="eyebrow">Funding &amp; Country Flows</p>
+    <h1 data-flow-hero-title>Cluster → funding scheme → country</h1>
+    <p data-flow-hero-copy>Explore how distinct project-country connections move through Horizon Europe clusters, funding schemes and EU27 partner countries.</p>
+  </section>
+
+  <main class="page-content flow-page-content">
+    <div class="data-strip"><span>Each Project-Country pair is counted once, even when several organisations from that country participate. Only EU27 partner countries are shown.</span></div>
+
+    <section class="flow-mode-panel" aria-labelledby="flow-mode-label">
+      <div>
+        <span class="flow-mode-label" id="flow-mode-label">Choose the structure</span>
+        <p>The active filters remain unchanged when you switch between views.</p>
+      </div>
+      <div class="flow-mode-control" data-flow-mode-control role="group" aria-label="Sankey structure">
+        <button type="button" data-flow-mode="simple" aria-pressed="false">Cluster → country</button>
+        <button class="active" type="button" data-flow-mode="detailed" aria-pressed="true">Cluster → funding scheme → country</button>
+      </div>
+    </section>
+
+    <section class="filter-panel flow-filter-panel">
+      <div class="filter-field"><label>Clusters</label><div data-filter="clusters"></div></div>
+      <div class="filter-field"><label>Funding schemes</label><div data-filter="schemes"></div></div>
+      <div class="filter-field"><label>EU27 partner countries</label><div data-filter="countries"></div></div>
+    </section>
+    <div class="selection-line" data-selection></div>
+    <section class="metric-grid" data-metrics></section>
+
+    <article class="panel wide flow-panel">
+      <div class="flow-panel-heading">
+        <div>
+          <h2 data-flow-title>Cluster → funding scheme → country</h2>
+          <p class="panel-subtitle" data-flow-subtitle>Hover over a flow or node for its value. Filters show only the selected clusters, funding schemes and EU27 countries.</p>
+        </div>
+        <span class="flow-measure">Distinct Project-Country connections</span>
+      </div>
+      <div class="legend-inline" data-flow-legend>
+        <span><i style="background:#397fd8"></i>Cluster</span>
+        <span data-flow-legend-scheme><i style="background:#8d67ce"></i>Funding scheme</span>
+        <span><i style="background:#22a99a"></i>EU27 country</span>
+      </div>
+      <div class="flow-wrap" data-flow></div>
+    </article>
+  </main>
+
+  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
+  <script src="assets/data.js"></script>
+  <script src="assets/common.js?v=20260826-eu27palette1"></script>
+  <script src="assets/app.js?v=20260826-flowmerge1"></script>
+</body>
+</html>
