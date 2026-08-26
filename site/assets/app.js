@@ -256,7 +256,7 @@
       renderOrganisations();
       renderProjectTable(document.querySelector('[data-project-table]'),projects,projects.length);
 
-      window.HE_PARTNERSHIP_EXPORT_STATE={projects:[...projects],filters:{clusters:[...state.clusters],countries:[...state.countries],schemes:[...state.schemes]},updated:D.updated||'22 August 2026'};
+      window.HE_PARTNERSHIP_EXPORT_STATE={projects:[...projects],filters:{clusters:[...state.clusters],countries:[...state.countries],schemes:[...state.schemes]},updated:formatDate(D.metadata.projectDataUpdated)};
       window.dispatchEvent(new CustomEvent('he:partnership-export-ready'));
     }});
   }

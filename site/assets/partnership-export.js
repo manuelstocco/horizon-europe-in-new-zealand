@@ -20,7 +20,8 @@
     projects.forEach(project=>[...new Set(values(project).filter(Boolean))].forEach(value=>counts.set(value,(counts.get(value)||0)+1)));
     return [...counts].map(([key,value])=>({key,value})).sort((a,b)=>b.value-a.value||String(a.key).localeCompare(String(b.key)));
   };
-  const snapshot=()=>window.HE_PARTNERSHIP_EXPORT_STATE||{projects:D.projects,filters:{clusters:[],countries:[],schemes:[]},updated:'22 August 2026'};
+  const dataUpdated=()=>HE.formatDate(D.metadata.projectDataUpdated);
+  const snapshot=()=>window.HE_PARTNERSHIP_EXPORT_STATE||{projects:D.projects,filters:{clusters:[],countries:[],schemes:[]},updated:dataUpdated()};
   const selectionLabel=state=>{
     const clusters=(state.filters.clusters||[]).map(clusterName);
     const countries=(state.filters.countries||[]).map(countryName);
@@ -132,7 +133,7 @@
     pptText(slide,String(page).padStart(2,'0'),12.2,7.09,.55,.2,{fontSize:9,bold:true,color:muted,align:'right'});
   }
   function pptFooter(slide,state){
-    pptText(slide,`Last update: ${state.updated||'22 August 2026'}`,.55,7.09,4,.2,{fontSize:9,color:muted});
+    pptText(slide,`Last update: ${state.updated||dataUpdated()}`,.55,7.09,4,.2,{fontSize:9,color:muted});
     pptText(slide,selectionLabel(state),4.1,7.06,7.95,.26,{fontSize:9,color:muted,align:'right'});
   }
   function pptPanel(pptx,slide,x,y,w,h,title,subtitle){
@@ -252,7 +253,7 @@
     const fitText=(page,value,x,top,size,color,font,maxWidth,minSize=6.5)=>{const raw=String(value),width=font.widthOfTextAtSize(raw,size),actual=Math.max(minSize,Math.min(size,size*maxWidth/Math.max(width,1)));text(page,raw,x,top,actual,color,font,maxWidth);};
     const rect=(page,x,top,w,h,fill,stroke=fill)=>page.drawRectangle({x,y:pdfY(H,top,h),width:w,height:h,color:col(fill),borderColor:col(stroke),borderWidth:1});
     const header=(page,section,num)=>{rect(page,0,0,W,52,navy);text(page,'HORIZON EUROPE IN NEW ZEALAND',40,17,10,white,bold);fitText(page,selectionLabel(state).toUpperCase(),520,17,9,'8AC8F5',bold,400,7);fitText(page,section.title,40,70,28,ink,bold,880,20);text(page,section.type==='summary'?'A filter-aware snapshot of the active portfolio.':section.subtitle,40,112,11,muted,regular,870);text(page,String(num).padStart(2,'0'),903,518,8,muted,bold);};
-    const footer=page=>{text(page,`Last update: ${state.updated||'22 August 2026'}`,40,518,8,muted);fitText(page,selectionLabel(state),470,518,8,muted,regular,410,6.5);};
+    const footer=page=>{text(page,`Last update: ${state.updated||dataUpdated()}`,40,518,8,muted);fitText(page,selectionLabel(state),470,518,8,muted,regular,410,6.5);};
     const panel=(page,x,top,w,h,title,subtitle)=>{rect(page,x,top,w,h,white,line);text(page,title,x+18,top+17,15,ink,bold);fitText(page,subtitle,x+18,top+45,9.5,muted,regular,w-36,7);};
     const bars=(page,rows,x,top,w,h,label,color,maxRows=10)=>{const shown=rows.slice(0,maxRows),gap=6,rowH=(h-gap*Math.max(shown.length-1,0))/Math.max(shown.length,1);if(!shown.length){text(page,'No data in the current selection.',x,top+h/2,11,muted);return;}const max=Math.max(...shown.map(row=>row.value),1);shown.forEach((row,index)=>{const yy=top+index*(rowH+gap),labelW=w*.4,barX=x+labelW,barW=w-labelW-28;fitText(page,label(row),x,yy+rowH*.14,9.5,ink,regular,labelW-8,6.8);rect(page,barX,yy+rowH*.2,Math.max(4,barW*row.value/max),rowH*.6,hex(color(row,index)));text(page,number(row.value),x+w-22,yy+rowH*.13,9.5,ink,bold,22);});};
     const columns=(page,rows,x,top,w,h,label,color,maxRows=8)=>{const shown=rows.slice(0,maxRows);if(!shown.length){text(page,'No data in the current selection.',x,top+h/2,11,muted);return;}const max=Math.max(...shown.map(row=>row.value),1),plotTop=top+10,plotH=h-50,slot=w/shown.length,columnW=Math.min(72,slot*.58);shown.forEach((row,index)=>{const columnH=Math.max(4,plotH*row.value/max),columnX=x+index*slot+(slot-columnW)/2,columnTop=plotTop+plotH-columnH;rect(page,columnX,columnTop,columnW,columnH,hex(color(row,index)));fitText(page,number(row.value),columnX-10,Math.max(top,columnTop-15),10,ink,bold,columnW+20,8);fitText(page,label(row),x+index*slot,plotTop+plotH+12,10,ink,regular,slot,8);});};

@@ -17,3 +17,13 @@ Project, organisation, country, funding, signature and start-date records are
 derived from the European Commission's CORDIS project records. Measurement
 rules and source notes are available on the website's **About the data** page.
 
+## Updating from CORDIS XML
+
+The repository includes a local updater that rebuilds the website database from
+one complete ZIP of CORDIS XML records. On macOS, double-click
+`update-site.command`, drag the ZIP into the Terminal window and confirm the
+publication date. Review the local site before committing the generated changes
+with GitHub Desktop.
+
+Detailed instructions and safety checks are documented in
+`XML-UPDATE-README.md`.
