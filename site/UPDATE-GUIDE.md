@@ -12,30 +12,17 @@
 
 ## Project data
 
-Project pages are generated from a complete ZIP of CORDIS XML records. The updater rebuilds the project database from the archive rather than appending records to the previous version. This means that projects added to the ZIP appear on the site and projects removed from the ZIP disappear at the next update.
-
-On macOS:
-
-1. Double-click `update-site.command` in the repository folder.
-2. Drag the complete current XML ZIP into the Terminal window and press Return.
-3. Confirm the publication date.
-4. Review the totals and the list of project IDs added or removed.
-5. Open `site/index.html` and check the refreshed site locally.
-6. Publish only after the local review is satisfactory.
+Project pages are generated from the CORDIS project export. When new projects are available, provide the updated CORDIS export together with the maintenance workbook.
 
 The refresh process will:
 
-- validate every XML record before changing the site;
 - deduplicate every Project–Country pair;
 - preserve the six cluster colours;
 - rebuild all filters and project totals;
-- preserve verified organisation coordinates and use CORDIS coordinates for new organisations;
+- regenerate organisation coordinates for any newly reported head-office cities;
 - rebuild the organisation network map and its project connections;
-- refresh the data-file version markers so browsers do not retain the previous portfolio;
 - update the site-wide project-data date;
 - preserve the National Contact Points maintained in the workbook.
-
-A successful update creates an ignored local backup in `.update-backups`. If validation fails, the website files are not changed. Full instructions are available in `XML-UPDATE-README.md` at repository level.
 
 ## Organisation network map
 
