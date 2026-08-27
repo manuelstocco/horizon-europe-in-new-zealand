@@ -57,6 +57,11 @@
     countryLayer.addEventListener('click',event=>{const node=event.target.closest('[data-country]');if(!node)return;state.locked=state.locked===node.dataset.country?'':node.dataset.country;state.hover='';refreshFocus();updateReadout();draw()});
   }
 
+  stage.addEventListener('click',event=>{
+    if(event.target.closest('[data-country]')||!state.locked)return;
+    state.locked='';state.hover='';refreshFocus();updateReadout();draw();
+  });
+
   function computeLayout(size){
     const centre={x:size/2,y:size/2},radius=size*.39,positions=new Map();
     EU27.forEach((code,index)=>{const angle=-Math.PI/2+index*Math.PI*2/EU27.length,cos=Math.cos(angle),sin=Math.sin(angle);let labelClass;if(cos>.42)labelClass='label-right';else if(cos<-.42)labelClass='label-left';else if(sin<0)labelClass='label-top';else labelClass='label-bottom';positions.set(code,{x:centre.x+cos*radius,y:centre.y+sin*radius,angle,labelClass})});return{centre,radius,positions};

@@ -75,11 +75,11 @@
     rows.forEach(row=>{
       const name=D.projects.find(project=>project.schemeCode===row.key)?.scheme||row.key;
       const item=document.createElement('div');item.className='cluster-mix-row scheme-mix-row';
-      const track=document.createElement('div');track.className='cluster-mix-track';
-      const fill=document.createElement('span');fill.className='cluster-mix-fill';fill.style.width=`${Math.max(3,row.value/max*100)}%`;fill.style.background=schemeColor(row.key);
-      const label=document.createElement('span');label.className='cluster-mix-name';label.textContent=name;label.title=name;
-      const value=document.createElement('strong');value.className='cluster-mix-value';value.textContent=fmtNumber(row.value);
-      track.append(fill,label);item.append(track,value);element.appendChild(item);
+      const track=document.createElement('div');track.className='cluster-mix-track scheme-mix-track';
+      const fill=document.createElement('span');fill.className='cluster-mix-fill scheme-mix-fill';fill.style.width=`${Math.max(3,row.value/max*100)}%`;fill.style.background=schemeColor(row.key);
+      const label=document.createElement('span');label.className='cluster-mix-name scheme-mix-name';label.textContent=name;label.title=name;
+      const value=document.createElement('strong');value.className='scheme-mix-value';value.textContent=fmtNumber(row.value);
+      track.append(fill,label,value);item.append(track);element.appendChild(item);
     });
   }
 

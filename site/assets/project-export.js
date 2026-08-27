@@ -3,6 +3,7 @@
   if(!D||!HE)return;
   const navy='16395F',ink='123357',muted='68798D',white='FFFFFF',canvas='F5F8FC',line='D8E4EF',pale='EAF2F9',aqua='8AC8F5';
   const projectExplorerFallback='https://manuelstocco.github.io/horizon-europe-in-new-zealand/projects.html';
+  const exportFont='Inter';
   const metricColours=['397FD8','22A99A','8D67CE','77A84B'];
   const yearColours=['397FD8','22A99A','E5A63B','EC6C5F','8D67CE','77A84B'];
   const hex=value=>String(value||'').replace('#','').toUpperCase();
@@ -123,7 +124,7 @@
   }
 
   function pptText(slide,value,x,y,w,h,options={}){
-    slide.addText(String(value??''),{x,y,w,h,fontFace:'Aptos',fontSize:options.fontSize||16,color:options.color||ink,bold:!!options.bold,margin:0,fit:'shrink',valign:options.valign||'mid',align:options.align||'left',breakLine:false,...options});
+    slide.addText(String(value??''),{x,y,w,h,fontFace:exportFont,fontSize:options.fontSize||16,color:options.color||ink,bold:!!options.bold,margin:0,fit:'shrink',valign:options.valign||'mid',align:options.align||'left',breakLine:false,...options});
   }
   function pptAccentLine(pptx,slide,accent){
     const colours=(Array.isArray(accent)?accent:[accent]).filter(Boolean);
@@ -141,7 +142,7 @@
     if(subtitle){const safeSubtitle=truncate(subtitle,118),subtitleSize=safeSubtitle.length>94?11.5:safeSubtitle.length>72?12.5:14;pptText(slide,safeSubtitle,.55,1.38,12.15,.25,{fontSize:subtitleSize,color:muted,fit:'shrink'});}
   }
   function pptButton(pptx,slide,label,url,x,y,w){
-    slide.addText(label,{x,y,w,h:.29,fontFace:'Aptos',fontSize:8.5,bold:true,color:ink,align:'center',valign:'mid',margin:0,fill:{color:pale},line:{color:'BBD2E5',width:.8},rectRadius:.04,hyperlink:{url},fit:'shrink'});
+    slide.addText(label,{x,y,w,h:.29,fontFace:exportFont,fontSize:8.5,bold:true,color:ink,align:'center',valign:'mid',margin:0,fill:{color:pale},line:{color:'BBD2E5',width:.8},rectRadius:.04,hyperlink:{url},fit:'shrink'});
   }
   function pptFooter(pptx,slide,plan,project,{site=false,cordis=false}={}){
     pptText(slide,`Source: CORDIS project records · Last update: ${plan.updated}`,.55,7.12,5.95,.18,{fontSize:9.2,color:muted});
@@ -171,7 +172,7 @@
     if(!rows.length)return;
     slide.addChart(pptx.ChartType.bar,[{name:chart.title,labels:rows.map(chart.label),values:rows.map(row=>Number(row.value||0))}],{
       x,y,w,h,objectName:`Editable chart - ${chart.title}`,altText:`${chart.title}. Values can be edited with PowerPoint's Edit Data command.`,
-      barDir:column?'col':'bar',barGrouping:'clustered',barGapWidthPct:column?55:64,chartColors:rows.map(chart.color),showLegend:false,showTitle:false,showValue:true,showLabel:false,dataLabelPosition:'outEnd',dataLabelColor:ink,dataLabelFontFace:'Aptos',dataLabelFontSize:12,dataLabelFontBold:true,dataLabelFormatCode:'0',catAxisOrientation:column?'minMax':'maxMin',catAxisLabelColor:ink,catAxisLabelFontFace:'Aptos',catAxisLabelFontSize:column?12:11,catAxisLineShow:false,catAxisMajorTickMark:'none',catAxisMinorTickMark:'none',catGridLine:{style:'none'},valAxisHidden:true,valAxisLabelPos:'none',valAxisLineShow:false,valAxisMajorTickMark:'none',valAxisMinorTickMark:'none',valAxisMinVal:0,valGridLine:{style:'none'},chartArea:{fill:{color:white,transparency:100}},plotArea:{fill:{color:white,transparency:100}},layout:column?{x:.08,y:.04,w:.87,h:.84}:{x:.31,y:.03,w:.64,h:.91},lang:'en-NZ'
+      barDir:column?'col':'bar',barGrouping:'clustered',barGapWidthPct:column?55:64,chartColors:rows.map(chart.color),showLegend:false,showTitle:false,showValue:true,showLabel:false,dataLabelPosition:'outEnd',dataLabelColor:ink,dataLabelFontFace:exportFont,dataLabelFontSize:12,dataLabelFontBold:true,dataLabelFormatCode:'0',catAxisOrientation:column?'minMax':'maxMin',catAxisLabelColor:ink,catAxisLabelFontFace:exportFont,catAxisLabelFontSize:column?12:11,catAxisLineShow:false,catAxisMajorTickMark:'none',catAxisMinorTickMark:'none',catGridLine:{style:'none'},valAxisHidden:true,valAxisLabelPos:'none',valAxisLineShow:false,valAxisMajorTickMark:'none',valAxisMinorTickMark:'none',valAxisMinVal:0,valGridLine:{style:'none'},chartArea:{fill:{color:white,transparency:100}},plotArea:{fill:{color:white,transparency:100}},layout:column?{x:.08,y:.04,w:.87,h:.84}:{x:.31,y:.03,w:.64,h:.91},lang:'en-NZ'
     });
   }
   function pptSummary(pptx,slide,item,plan,page){
@@ -239,7 +240,7 @@
   }
   function createPptx(plan){
     const Pptx=window.PptxGenJS;if(!Pptx)throw new Error('PowerPoint generator is unavailable.');
-    const pptx=new Pptx();pptx.layout='LAYOUT_WIDE';pptx.author='Horizon Europe in New Zealand';pptx.company='Horizon Europe in New Zealand';pptx.subject=plan.label;pptx.title=plan.projects.length===1?`${plan.projects[0].acronym} project focus`:'Horizon Europe in New Zealand project selection';pptx.lang='en-NZ';pptx.theme={headFontFace:'Aptos Display',bodyFontFace:'Aptos',lang:'en-NZ'};
+    const pptx=new Pptx();pptx.layout='LAYOUT_WIDE';pptx.author='Horizon Europe in New Zealand';pptx.company='Horizon Europe in New Zealand';pptx.subject=plan.label;pptx.title=plan.projects.length===1?`${plan.projects[0].acronym} project focus`:'Horizon Europe in New Zealand project selection';pptx.lang='en-NZ';pptx.theme={headFontFace:exportFont,bodyFontFace:exportFont,lang:'en-NZ'};
     plan.slides.forEach((item,index)=>{const slide=pptx.addSlide();if(item.type==='summary')pptSummary(pptx,slide,item,plan,index+1);else if(item.type==='project')pptProject(pptx,slide,item,plan,index+1);else pptOrganisations(pptx,slide,item,plan,index+1);});
     return pptx;
   }
@@ -247,9 +248,16 @@
   async function exportPptx(scope='filtered',state=currentState(),fileName){const plan=buildPlan(scope,state),pptx=createPptx(plan);await pptx.writeFile({fileName:fileName||`${fileBase(plan)}.pptx`});return plan;}
 
   function pdfTop(H,top,height=0){return H-top-height;}
+  function decodedFont(value){
+    const binary=atob(value),bytes=new Uint8Array(binary.length);for(let index=0;index<binary.length;index+=1)bytes[index]=binary.charCodeAt(index);return bytes;
+  }
   async function createPdfBytes(plan){
     const lib=window.PDFLib;if(!lib)throw new Error('PDF generator is unavailable.');
-    const {PDFDocument,StandardFonts,rgb,PDFName,PDFString}=lib,doc=await PDFDocument.create(),regular=await doc.embedFont(StandardFonts.Helvetica),bold=await doc.embedFont(StandardFonts.HelveticaBold),W=960,H=540;
+    const {PDFDocument,StandardFonts,rgb,PDFName,PDFString}=lib,doc=await PDFDocument.create();
+    let regular,bold;
+    if(window.fontkit&&window.HE_FONT_DATA?.interRegular&&window.HE_FONT_DATA?.interBold){doc.registerFontkit(window.fontkit);regular=await doc.embedFont(decodedFont(window.HE_FONT_DATA.interRegular),{subset:true});bold=await doc.embedFont(decodedFont(window.HE_FONT_DATA.interBold),{subset:true});}
+    else{regular=await doc.embedFont(StandardFonts.Helvetica);bold=await doc.embedFont(StandardFonts.HelveticaBold);}
+    const W=960,H=540;
     doc.setTitle(plan.projects.length===1?`${plan.projects[0].acronym} project focus`:'Horizon Europe in New Zealand project selection');doc.setAuthor('Horizon Europe in New Zealand');doc.setSubject(plan.label);
     const colour=value=>{const raw=hex(value);return rgb(parseInt(raw.slice(0,2),16)/255,parseInt(raw.slice(2,4),16)/255,parseInt(raw.slice(4,6),16)/255);};
     const rect=(page,x,top,w,h,fill,stroke=fill)=>page.drawRectangle({x,y:pdfTop(H,top,h),width:w,height:h,color:colour(fill),borderColor:colour(stroke),borderWidth:1});
