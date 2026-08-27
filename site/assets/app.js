@@ -344,6 +344,7 @@
     };
     modeControl.addEventListener('click',event=>{const button=event.target.closest('[data-flow-mode]');if(button)setMode(button.dataset.flowMode);});
     window.addEventListener('hashchange',()=>setMode(location.hash==='#cluster-country'?'simple':'detailed',{updateUrl:false}));
+    window.addEventListener('he:currency-change',render);
     setMode(mode,{updateUrl:false});
     commonFilters({countries:true,clusters:true,schemes:true,eu27OnlyCountries:true,onUpdate:state=>{currentState=state;render();}});
   }
@@ -359,6 +360,19 @@
     const roleName=role=>({coordinator:'Coordinator',participant:'Participant',thirdParty:'Third party'}[role]||String(role||'Participant').replace(/([A-Z])/g,' $1').replace(/^./,char=>char.toUpperCase()));
     const put=(selector,value)=>{const element=document.querySelector(selector);if(element)element.textContent=value??'';};
     const money=value=>Number(value)>0?fmtExactMoney(value):'Not reported';
+    const publishExportState=()=>{
+      const selectedProject=D.projects.find(project=>project.id===state.selectedId)||null;
+      window.HE_PROJECT_EXPORT_STATE={
+        projects:[...state.filtered],
+        selectedProject,
+        filters:{countries:[...state.countries],clusters:[...state.clusters],schemes:[...state.schemes]},
+        search:state.search,
+        updated:formatDate(D.metadata.projectDataUpdated)
+      };
+      const count=document.querySelector('[data-export-project-count]');
+      if(count)count.textContent=`${fmtNumber(state.filtered.length)} ${state.filtered.length===1?'project':'projects'}`;
+      window.dispatchEvent(new CustomEvent('he:project-export-ready'));
+    };
 
     let controlsReady=false;
     const applyFilters=()=>{
@@ -373,6 +387,7 @@
       if(state.filtered.length) renderProject(D.projects.find(project=>project.id===state.selectedId));
       slide.hidden=!state.filtered.length;
       updatePosition();
+      publishExportState();
     };
 
     const clusterControl=mountMultiSelect(document.querySelector('[data-filter="clusters"]'),{options:uniqueOptions('clusters'),placeholder:'All clusters',onChange:values=>{state.clusters=values;applyFilters();}});
@@ -461,6 +476,7 @@
       const project=D.projects.find(item=>item.id===id);if(!project)return;state.selectedId=project.id;renderProject(project);renderList();updatePosition();
       if(updateHash&&location.hash.slice(1)!==project.id)history.replaceState(null,'',`#${project.id}`);
       list.querySelector('.focus-project-item.active')?.scrollIntoView({block:'nearest'});
+      publishExportState();
     }
     function updatePosition(){const index=state.filtered.findIndex(project=>project.id===state.selectedId);put('[data-position]',index>=0?`${index+1} of ${state.filtered.length}`:'—');previous.disabled=index<=0;next.disabled=index<0||index>=state.filtered.length-1;}
     function move(direction){const index=state.filtered.findIndex(project=>project.id===state.selectedId);const target=state.filtered[index+direction];if(target)selectProject(target.id,true);}
@@ -469,7 +485,7 @@
 
     document.querySelector('[data-filter="search"]').addEventListener('input',event=>{state.search=event.target.value;applyFilters();});
     document.querySelector('[data-clear-filters]').addEventListener('click',()=>{document.querySelector('[data-filter="search"]').value='';state.search='';clusterControl.clear();schemeControl.clear();countryControl.clear();applyFilters();document.querySelector('[data-filter="search"]').focus();});
-    previous.addEventListener('click',()=>move(-1));next.addEventListener('click',()=>move(1));document.querySelector('[data-copy-link]').addEventListener('click',copyLink);document.querySelector('[data-print]').addEventListener('click',()=>window.print());
+    previous.addEventListener('click',()=>move(-1));next.addEventListener('click',()=>move(1));document.querySelector('[data-copy-link]').addEventListener('click',copyLink);
     window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id)selectProject(id,false);});
     document.addEventListener('keydown',event=>{if(event.target.matches('input,button'))return;if(event.key==='ArrowLeft')move(-1);if(event.key==='ArrowRight')move(1);});
     window.addEventListener('he:currency-change',()=>{const project=D.projects.find(item=>item.id===state.selectedId);if(project)renderProject(project);});

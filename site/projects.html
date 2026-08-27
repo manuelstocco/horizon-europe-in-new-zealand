@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Select a New Zealand-linked Horizon Europe project and generate a presentation-ready project focus page.">
   <title>Project Explorer · Horizon Europe in New Zealand</title>
-  <link rel="stylesheet" href="assets/styles.css?v=20260827-currency1">
+  <link rel="stylesheet" href="assets/styles.css?v=20260827-projectexport1">
 </head>
 <body class="page-shell focus-explorer" data-page="projects">
   <header class="site-header">
@@ -37,7 +37,22 @@
       <section class="focus-content" aria-label="Selected project focus">
         <div class="focus-toolbar">
           <div class="focus-toolbar-group"><button class="focus-tool-button" data-previous type="button">← Previous</button><span class="focus-position" data-position></span><button class="focus-tool-button" data-next type="button">Next →</button></div>
-          <div class="focus-toolbar-group"><button class="focus-tool-button" data-copy-link type="button">Copy project link</button><button class="focus-tool-button" data-print type="button">Print / save PDF</button></div>
+          <div class="focus-toolbar-group">
+            <button class="focus-tool-button" data-copy-link type="button">Copy project link</button>
+            <details class="focus-export" data-project-download>
+              <summary class="focus-tool-button"><span class="download-arrow" aria-hidden="true">↓</span>Download</summary>
+              <div class="focus-export-menu">
+                <div class="download-group-label">Current project</div>
+                <button data-project-export-scope="current" data-project-export-format="pptx" type="button"><span class="download-type-icon ppt">P</span><span><strong>PowerPoint</strong><small>Project focus with selected-country detail · .pptx</small></span></button>
+                <button data-project-export-scope="current" data-project-export-format="pdf" type="button"><span class="download-type-icon pdf">PDF</span><span><strong>PDF</strong><small>Project focus with selected-country detail · .pdf</small></span></button>
+                <div class="download-separator"></div>
+                <div class="download-group-label">Filtered selection · <span data-export-project-count>38 projects</span></div>
+                <button data-project-export-scope="filtered" data-project-export-format="pptx" type="button"><span class="download-type-icon ppt">P</span><span><strong>PowerPoint</strong><small>Adaptive summary and project-focus slides · .pptx</small></span></button>
+                <button data-project-export-scope="filtered" data-project-export-format="pdf" type="button"><span class="download-type-icon pdf">PDF</span><span><strong>PDF</strong><small>Adaptive summary and project-focus pages · .pdf</small></span></button>
+                <span class="download-status" data-project-export-status aria-live="polite"></span>
+              </div>
+            </details>
+          </div>
         </div>
 
         <article class="focus-slide" data-focus-slide>
@@ -90,6 +105,6 @@
 
   <div class="focus-toast" data-toast role="status" aria-live="polite"></div>
   <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
-  <script src="assets/data.js"></script><script src="assets/common.js?v=20260827-currency1"></script><script src="assets/app.js?v=20260827-currency1"></script>
+  <script src="assets/data.js"></script><script src="assets/common.js?v=20260827-currency1"></script><script src="assets/app.js?v=20260827-projectexport1"></script><script src="assets/vendor/pptxgen.bundle.js"></script><script src="assets/vendor/pdf-lib.min.js"></script><script src="assets/project-export.js?v=20260827-projectexport3"></script>
 </body>
 </html>

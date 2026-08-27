@@ -7,6 +7,7 @@
   const countryExportPalette=['397FD8','EC6C5F','22A99A','E5A63B','8D67CE','77A84B','C0649C','4E9BB8','C07A4E','D62F6A','2E5AAC','E07B39','008C76','B88A00','6F4FB3','4E8A3A','A83E78','24758F','9A5435','D8433E'];
   const yearPalette=['397FD8','22A99A','E5A63B','EC6C5F'];
   const metricPalette=['397FD8','22A99A','8D67CE','77A84B','E5A63B','EC6C5F'];
+  const partnershipOverviewFallback='https://manuelstocco.github.io/horizon-europe-in-new-zealand/overview.html';
   const hex=value=>String(value||'').replace('#','').toUpperCase();
   const money=value=>HE.fmtMoney(value);
   const number=value=>new Intl.NumberFormat('en-NZ',{maximumFractionDigits:0}).format(Number(value||0));
@@ -15,6 +16,7 @@
   const schemeName=code=>D.projects.find(project=>project.schemeCode===code)?.scheme||code;
   const clusterColor=code=>hex(HE.clusterColor(code));
   const schemeColor=code=>hex(HE.schemeColor(code));
+  const partnershipOverviewUrl=()=>typeof location!=='undefined'&&/^https?:$/.test(location.protocol)?location.href.split(/[?#]/)[0]:partnershipOverviewFallback;
   const group=(projects,values)=>{
     const counts=new Map();
     projects.forEach(project=>[...new Set(values(project).filter(Boolean))].forEach(value=>counts.set(value,(counts.get(value)||0)+1)));
@@ -131,9 +133,13 @@
     if(subtitle)pptText(slide,subtitle,.55,1.51,12.1,.3,{fontSize:12.5,color:muted});
     pptText(slide,String(page).padStart(2,'0'),12.2,7.09,.55,.2,{fontSize:9,bold:true,color:muted,align:'right'});
   }
-  function pptFooter(slide,state){
+  function pptButton(slide,label,url,x,y,w){
+    slide.addText(label,{x,y,w,h:.29,fontFace:'Aptos',fontSize:8.5,bold:true,color:ink,align:'center',valign:'mid',margin:0,fill:{color:pale},line:{color:'BBD2E5',width:.8},rectRadius:.04,hyperlink:{url},fit:'shrink'});
+  }
+  function pptFooter(slide,state,{site=false}={}){
     pptText(slide,`Last update: ${state.updated||'22 August 2026'}`,.55,7.09,4,.2,{fontSize:9,color:muted});
-    pptText(slide,selectionLabel(state),4.1,7.06,7.95,.26,{fontSize:9,color:muted,align:'right'});
+    pptText(slide,selectionLabel(state),4.1,7.06,site?5.15:7.95,.26,{fontSize:9,color:muted,align:'right'});
+    if(site)pptButton(slide,'OPEN PARTNERSHIP OVERVIEW',partnershipOverviewUrl(),9.48,7.01,2.48);
   }
   function pptPanel(pptx,slide,x,y,w,h,title,subtitle){
     slide.addShape(pptx.ShapeType.roundRect,{x,y,w,h,rectRadius:.08,fill:{color:white},line:{color:line,width:1}});
@@ -219,7 +225,7 @@
       pptText(slide,metric[1],x+.28,y+.48,cardW-.5,.55,{fontSize:27,bold:true,color:ink});
       pptText(slide,metric[2],x+.28,y+1.11,cardW-.5,.29,{fontSize:10.5,color:muted});
     });
-    pptFooter(slide,state);
+    pptFooter(slide,state,{site:page===1});
   }
   function pptCharts(pptx,slide,section,state,page){
     pptHeader(pptx,slide,section.title,section.subtitle,page,selectionLabel(state));
@@ -244,7 +250,7 @@
   function pdfY(pageHeight,top,height=0){return pageHeight-top-height;}
   async function exportPdf(state){
     const lib=window.PDFLib;if(!lib)throw new Error('PDF generator is unavailable.');
-    const {PDFDocument,StandardFonts,rgb}=lib,data=exportData(state),sections=buildSections(data,state),doc=await PDFDocument.create();
+    const {PDFDocument,StandardFonts,rgb,PDFName,PDFString}=lib,data=exportData(state),sections=buildSections(data,state),doc=await PDFDocument.create();
     doc.setTitle('Horizon Europe in New Zealand - Partnership Overview');doc.setAuthor('Horizon Europe in New Zealand');doc.setSubject(selectionLabel(state));
     const regular=await doc.embedFont(StandardFonts.Helvetica),bold=await doc.embedFont(StandardFonts.HelveticaBold),W=960,H=540;
     const col=value=>{const raw=hex(value);return rgb(parseInt(raw.slice(0,2),16)/255,parseInt(raw.slice(2,4),16)/255,parseInt(raw.slice(4,6),16)/255);};
@@ -252,7 +258,17 @@
     const fitText=(page,value,x,top,size,color,font,maxWidth,minSize=6.5)=>{const raw=String(value),width=font.widthOfTextAtSize(raw,size),actual=Math.max(minSize,Math.min(size,size*maxWidth/Math.max(width,1)));text(page,raw,x,top,actual,color,font,maxWidth);};
     const rect=(page,x,top,w,h,fill,stroke=fill)=>page.drawRectangle({x,y:pdfY(H,top,h),width:w,height:h,color:col(fill),borderColor:col(stroke),borderWidth:1});
     const header=(page,section,num)=>{rect(page,0,0,W,52,navy);text(page,'HORIZON EUROPE IN NEW ZEALAND',40,17,10,white,bold);fitText(page,selectionLabel(state).toUpperCase(),520,17,9,'8AC8F5',bold,400,7);fitText(page,section.title,40,70,28,ink,bold,880,20);if(section.subtitle)text(page,section.subtitle,40,112,11,muted,regular,870);text(page,String(num).padStart(2,'0'),903,518,8,muted,bold);};
-    const footer=page=>{text(page,`Last update: ${state.updated||'22 August 2026'}`,40,518,8,muted);fitText(page,selectionLabel(state),470,518,8,muted,regular,410,6.5);};
+    const addLink=(page,url,x,top,w,h)=>{
+      const annotation=doc.context.register(doc.context.obj({Type:'Annot',Subtype:'Link',Rect:[x,pdfY(H,top,h),x+w,pdfY(H,top,h)+h],Border:[0,0,0],A:{Type:'Action',S:'URI',URI:PDFString.of(url)}}));
+      if(typeof page.node.addAnnot==='function')page.node.addAnnot(annotation);
+      else page.node.set(PDFName.of('Annots'),doc.context.obj([annotation]));
+    };
+    const pdfButton=(page,label,url,x,top,w)=>{rect(page,x,top,w,20,pale,'BBD2E5');fitText(page,label,x+7,top+6,7.5,ink,bold,w-14,6.5);addLink(page,url,x,top,w,20);};
+    const footer=(page,{site=false}={})=>{
+      text(page,`Last update: ${state.updated||'22 August 2026'}`,40,518,8,muted);
+      fitText(page,selectionLabel(state),350,518,8,muted,regular,site?300:530,6.5);
+      if(site)pdfButton(page,'OPEN PARTNERSHIP OVERVIEW',partnershipOverviewUrl(),690,507,200);
+    };
     const panel=(page,x,top,w,h,title,subtitle)=>{rect(page,x,top,w,h,white,line);text(page,title,x+18,top+17,15,ink,bold);if(subtitle)fitText(page,subtitle,x+18,top+45,9.5,muted,regular,w-36,7);};
     const bars=(page,chart,x,top,w,h)=>{const shown=chart.rows.slice(0,chart.maxRows||10),gap=6,rowH=(h-gap*Math.max(shown.length-1,0))/Math.max(shown.length,1);if(!shown.length){text(page,'No data in the current selection.',x,top+h/2,11,muted);return;}const max=Math.max(...shown.map(row=>row.value),1),labelRatio=chart.id==='schemes'?.29:chart.id==='organisations'?.36:.31;shown.forEach((row,index)=>{const yy=top+index*(rowH+gap),labelW=w*labelRatio,barX=x+labelW,barW=w-labelW-28;fitText(page,pptChartLabel(chart,row),x,yy+rowH*.14,9.5,ink,regular,labelW-8,6.8);rect(page,barX,yy+rowH*.2,Math.max(4,barW*row.value/max),rowH*.6,hex(chart.color(row,index)));text(page,number(row.value),x+w-22,yy+rowH*.13,9.5,ink,bold,22);});};
     const columns=(page,rows,x,top,w,h,label,color,maxRows=8)=>{const shown=rows.slice(0,maxRows);if(!shown.length){text(page,'No data in the current selection.',x,top+h/2,11,muted);return;}const max=Math.max(...shown.map(row=>row.value),1),plotTop=top+10,plotH=h-50,slot=w/shown.length,columnW=Math.min(72,slot*.58);shown.forEach((row,index)=>{const columnH=Math.max(4,plotH*row.value/max),columnX=x+index*slot+(slot-columnW)/2,columnTop=plotTop+plotH-columnH;rect(page,columnX,columnTop,columnW,columnH,hex(color(row,index)));fitText(page,number(row.value),columnX-10,Math.max(top,columnTop-15),10,ink,bold,columnW+20,8);fitText(page,label(row),x+index*slot,plotTop+plotH+12,10,ink,regular,slot,8);});};
@@ -268,7 +284,7 @@
       }else{
         const widths=[430,430],xs=[40,490];section.charts.slice(0,2).forEach((chart,chartIndex)=>{panel(page,xs[chartIndex],140,widths[chartIndex],340,chart.title,chart.subtitle);pdfChart(page,chart,xs[chartIndex]+20,202,widths[chartIndex]-40,240);});
       }
-      footer(page);
+      footer(page,{site:index===0});
     });
     const bytes=await doc.save(),blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob),link=document.createElement('a');
     link.href=url;link.download='horizon-europe-new-zealand-filtered-partnership-overview.pdf';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
