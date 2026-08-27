@@ -306,11 +306,24 @@
   window.HE_PROJECT_EXPORT_API={buildPlan,createPptx,createPdfBytes,exportPptx,exportPdf};
   if(typeof document==='undefined')return;
   const menu=document.querySelector('[data-project-download]'),status=document.querySelector('[data-project-export-status]');if(!menu)return;
+  const scopeButtons=[...menu.querySelectorAll('[data-project-export-scope-choice]')];
+  let activeScope='current';
+  const setScope=scope=>{
+    activeScope=scope;
+    scopeButtons.forEach(button=>{const active=button.dataset.projectExportScopeChoice===scope;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+    status.textContent='';
+  };
   const close=()=>menu.removeAttribute('open');
   document.addEventListener('click',event=>{if(menu.open&&!menu.contains(event.target))close();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.open){close();menu.querySelector('summary')?.focus();}});
+  scopeButtons.forEach(button=>button.addEventListener('click',()=>setScope(button.dataset.projectExportScopeChoice)));
+  window.addEventListener('he:project-export-ready',()=>{
+    const state=currentState(),filteredButton=scopeButtons.find(button=>button.dataset.projectExportScopeChoice==='filtered');
+    if(filteredButton)filteredButton.disabled=!state.projects.length;
+    if(activeScope==='filtered'&&!state.projects.length)setScope('current');
+  });
   menu.querySelectorAll('[data-project-export-format]').forEach(button=>button.addEventListener('click',async()=>{
-    const format=button.dataset.projectExportFormat,scope=button.dataset.projectExportScope,buttons=[...menu.querySelectorAll('[data-project-export-format]')],state=currentState(),count=scope==='current'?1:state.projects.length;
+    const format=button.dataset.projectExportFormat,scope=activeScope,buttons=[...menu.querySelectorAll('[data-project-export-format]')],state=currentState(),count=scope==='current'?Number(Boolean(state.selectedProject)):state.projects.length;
     if(!count){status.textContent='No projects are available in the current selection.';return;}
     buttons.forEach(item=>item.disabled=true);status.textContent=`Preparing ${format==='pptx'?'PowerPoint':'PDF'}…`;
     try{if(format==='pptx')await exportPptx(scope,state);else await exportPdf(scope,state);status.textContent='Download ready.';setTimeout(close,450);}

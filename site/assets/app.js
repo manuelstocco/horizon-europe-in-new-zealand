@@ -371,6 +371,9 @@
       };
       const count=document.querySelector('[data-export-project-count]');
       if(count)count.textContent=`${fmtNumber(state.filtered.length)} ${state.filtered.length===1?'project':'projects'}`;
+      const hasPortfolioFilters=Boolean(state.search.trim()||state.countries.length||state.clusters.length||state.schemes.length);
+      put('[data-export-portfolio-label]',hasPortfolioFilters?'Filtered portfolio':'Full portfolio');
+      put('[data-export-current-project]',selectedProject?`${selectedProject.acronym} · 1 project`:'No project selected');
       window.dispatchEvent(new CustomEvent('he:project-export-ready'));
     };
 
