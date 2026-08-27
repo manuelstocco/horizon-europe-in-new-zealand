@@ -443,6 +443,10 @@ body[data-page="overview"] .page-download-menu{z-index:61}
 
 /* Navigation drawer prototype */
 .site-header{min-height:72px;padding-top:0;padding-bottom:0}
+.site-header-actions{display:flex;align-items:center;gap:15px;margin-left:auto}
+.currency-switch{display:inline-flex;align-items:center;padding:3px;border:1px solid rgba(139,192,239,.38);background:rgba(255,255,255,.035)}
+.currency-switch button{min-width:43px;height:28px;padding:0 9px;border:0;background:transparent;color:#aebed0;font-size:10px;font-weight:850;letter-spacing:.08em;cursor:pointer;transition:background .18s,color .18s}
+.currency-switch button:hover{color:#fff}.currency-switch button.active{background:var(--aqua);color:#102b4c}.currency-switch button:focus-visible{outline:2px solid #fff;outline-offset:2px}.currency-switch button:disabled{cursor:not-allowed;opacity:.38}
 .site-menu-button{display:inline-flex;align-items:center;gap:12px;min-height:36px;padding:0 2px 0 15px;border:0;border-left:1px solid rgba(139,192,239,.48);border-radius:0;background:transparent;color:#fff;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:color .2s,border-color .2s}
 .site-menu-button:hover{border-color:var(--aqua);color:var(--aqua)}
 .site-menu-button:focus-visible,.site-nav-close:focus-visible,.site-nav-drawer .primary-nav a:focus-visible{outline:3px solid rgba(139,192,239,.48);outline-offset:3px}
@@ -459,5 +463,5 @@ body[data-page="overview"] .page-download-menu{z-index:61}
 .site-nav-drawer .primary-nav a{display:flex;align-items:center;justify-content:space-between;min-height:43px;padding:8px 3px;border-bottom:1px solid rgba(255,255,255,.075);color:#d3deea;font-size:15px;font-weight:650;white-space:normal;transition:color .18s,padding-left .18s}
 .site-nav-drawer .primary-nav a:after{content:'';position:static;height:auto;background:none}
 .site-nav-drawer .primary-nav a:hover{padding-left:8px;color:#fff}.site-nav-drawer .primary-nav a.active{color:var(--aqua)}.site-nav-drawer .primary-nav a.active:after{content:'Current';color:var(--aqua);font-size:9px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
-@media(max-width:760px){.site-header{align-items:center;flex-direction:row;gap:16px;padding:0 18px}.brand{min-width:0}.brand>span:last-child{overflow:hidden;text-overflow:ellipsis}.site-menu-button{flex:none;padding:0 2px 0 13px}.site-nav-drawer{padding:24px 22px}.site-nav-drawer .primary-nav a{font-size:15px}}
+@media(max-width:760px){.site-header{align-items:center;flex-direction:row;gap:12px;padding:0 18px}.brand{min-width:0}.brand>span:last-child{overflow:hidden;text-overflow:ellipsis}.site-header-actions{gap:8px}.currency-switch button{min-width:38px;padding:0 6px}.site-menu-button{flex:none;padding:0 2px 0 10px}.site-menu-button>span:last-child{display:none}.site-nav-drawer{padding:24px 22px}.site-nav-drawer .primary-nav a{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.site-nav-overlay,.site-nav-drawer{transition:none}}

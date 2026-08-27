@@ -8,7 +8,7 @@ The XML updater rebuilds the project database from one complete ZIP archive. It 
 2. Double-click `update-site.command`.
 3. Drag the ZIP into the Terminal window and press Return.
 4. Confirm the publication date, or press Return to use today's date.
-5. Read the summary showing project, organisation and country totals, plus the IDs of projects added or removed.
+5. Read the summary showing project, organisation and country totals, the InforEuro EUR–NZD rate, and the IDs of projects added or removed.
 6. Open `site/index.html` and review the website locally.
 7. If the result is correct, commit and push the changes using GitHub Desktop.
 
@@ -18,7 +18,9 @@ The updater changes only the generated data and the page references that prevent
 - `site/assets/organisation-locations.js`
 - the version marker on those files in the website's HTML pages
 
-It preserves the site's design, colour palettes, repository files and all other pages. PowerPoint and PDF exports remain generated from the active website data, so they automatically reflect the refreshed portfolio.
+The project update also retrieves the latest monthly EUR–NZD accounting rate available from the European Commission's InforEuro service. The verified rate and its reference month are stored in `site/assets/data.js`; visitors do not make live exchange-rate requests. If InforEuro is temporarily unavailable, the updater preserves the last verified official rate and displays a warning in its summary.
+
+It preserves the site's design, colour palettes, repository files and all other pages. PowerPoint and PDF exports remain generated from the active website data, selected filters and selected currency, so they automatically reflect the refreshed portfolio.
 
 ## Safety checks
 

@@ -45,7 +45,10 @@
     nav.removeAttribute('aria-label');
     drawer.appendChild(nav);
     document.body.append(overlay, drawer);
-    header.appendChild(menuButton);
+    const headerActions = document.createElement('div');
+    headerActions.className = 'site-header-actions';
+    headerActions.appendChild(menuButton);
+    header.appendChild(headerActions);
 
     let previousFocus = null;
     let closeTimer = null;
@@ -74,16 +77,25 @@
     });
   }
 
-  mountNavigationDrawer();
-
   const D = window.HE_DATA;
   const EU27 = new Set(['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','EL','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE']);
-  const money = new Intl.NumberFormat('en-NZ', { style:'currency', currency:'EUR', notation:'compact', maximumFractionDigits:1 });
   const number = new Intl.NumberFormat('en-NZ', { maximumFractionDigits:0 });
   const dateLong = new Intl.DateTimeFormat('en-NZ', { day:'numeric', month:'long', year:'numeric' });
   const safeDate = value => value ? new Date(`${value}T00:00:00`) : null;
   const formatDate = value => safeDate(value) ? dateLong.format(safeDate(value)) : '—';
-  const fmtMoney = value => money.format(Number(value || 0));
+  const exchangeRate = D.metadata?.exchangeRate || {};
+  const nzdRate = Number(exchangeRate.value || 0);
+  let activeCurrency = 'EUR';
+  try {
+    const saved = localStorage.getItem('he-display-currency');
+    if (saved === 'NZD' && nzdRate > 0) activeCurrency = 'NZD';
+  } catch (error) {
+    // Local files may restrict storage; the switch still works for the current page.
+  }
+  const convertedMoney = value => Number(value || 0) * (activeCurrency === 'NZD' ? nzdRate : 1);
+  const currencyPrefix = () => activeCurrency === 'NZD' ? 'NZ$' : '€';
+  const fmtMoney = value => `${currencyPrefix()}${new Intl.NumberFormat('en-NZ',{notation:'compact',maximumFractionDigits:1}).format(convertedMoney(value))}`;
+  const fmtExactMoney = value => `${currencyPrefix()}${new Intl.NumberFormat('en-NZ',{maximumFractionDigits:0}).format(convertedMoney(value))}`;
   const fmtNumber = value => number.format(Number(value || 0));
   const clusterMap = new Map(D.clusters.map(c => [c.code, c]));
   const countryMap = new Map(D.countries.map(c => [c.code, c.name]));
@@ -114,6 +126,63 @@
   function schemeColor(code) { return schemePalette.get(code) || hashColor(`scheme-${code}`); }
   function projectPartnerCodes(project) { return project.countryCodes.filter(code => code !== 'NZ'); }
   function projectPartnerNames(project) { return project.countries.filter(name => name !== 'New Zealand'); }
+
+  function updateStaticCurrencyValues() {
+    document.querySelectorAll('[data-eur-amount]').forEach(element => {
+      const value = Number(element.dataset.eurAmount || 0);
+      if (element.dataset.moneyDisplay === 'billions') {
+        const converted = convertedMoney(value) / 1e9;
+        element.textContent = `${currencyPrefix()}${converted.toFixed(1)}bn`;
+      } else {
+        element.textContent = fmtMoney(value);
+      }
+    });
+    const periodElement = document.querySelector('[data-exchange-period]');
+    if (periodElement && exchangeRate.period) {
+      const [year,month] = exchangeRate.period.split('-').map(Number);
+      periodElement.textContent = new Intl.DateTimeFormat('en-NZ',{month:'long',year:'numeric'}).format(new Date(year,month-1,1));
+    }
+    const rateElement = document.querySelector('[data-exchange-rate]');
+    if (rateElement && nzdRate > 0) rateElement.textContent = `EUR 1 = NZD ${nzdRate.toFixed(4)}`;
+  }
+
+  function mountCurrencySwitch() {
+    const actions = document.querySelector('.site-header-actions');
+    if (!actions || document.querySelector('.currency-switch')) return;
+    const control = document.createElement('div');
+    control.className = 'currency-switch';
+    control.setAttribute('role','group');
+    control.setAttribute('aria-label','Display currency');
+    control.innerHTML = '<button type="button" data-currency="EUR">EUR</button><button type="button" data-currency="NZD">NZD</button>';
+    const buttons = [...control.querySelectorAll('button')];
+    const sync = () => buttons.forEach(button => {
+      const selected = button.dataset.currency === activeCurrency;
+      button.classList.toggle('active',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    if (!(nzdRate > 0)) {
+      const nzd = control.querySelector('[data-currency="NZD"]');
+      nzd.disabled = true;
+      nzd.title = 'NZD conversion is unavailable until an official exchange rate is stored.';
+    }
+    control.addEventListener('click',event => {
+      const button = event.target.closest('[data-currency]');
+      if (!button || button.disabled || button.dataset.currency === activeCurrency) return;
+      activeCurrency = button.dataset.currency;
+      try { localStorage.setItem('he-display-currency',activeCurrency); } catch (error) {}
+      document.documentElement.dataset.currency = activeCurrency.toLowerCase();
+      sync();
+      updateStaticCurrencyValues();
+      window.dispatchEvent(new CustomEvent('he:currency-change',{detail:{currency:activeCurrency,rate:nzdRate}}));
+    });
+    actions.prepend(control);
+    document.documentElement.dataset.currency = activeCurrency.toLowerCase();
+    sync();
+    updateStaticCurrencyValues();
+  }
+
+  mountNavigationDrawer();
+  mountCurrencySwitch();
 
   function filterProjects({ countries=[], clusters=[], schemes=[], search='' } = {}) {
     const countrySet = new Set(countries);
@@ -432,5 +501,5 @@
     if (!nav.querySelector('a[href="repository.html"]')) projectsLink.insertAdjacentHTML('afterend','<a href="repository.html">Repository</a>');
   });
 
-  window.HE = { D, EU27, clusterMap, countryMap, uniqueOptions, filterProjects, metrics, projectPartnerCodes, projectPartnerNames, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, formatDate, fmtMoney, fmtNumber, updateFooters };
+  window.HE = { D, EU27, clusterMap, countryMap, uniqueOptions, filterProjects, metrics, projectPartnerCodes, projectPartnerNames, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, formatDate, fmtMoney, fmtExactMoney, fmtNumber, currentCurrency:()=>activeCurrency, exchangeRate, updateFooters };
 })();

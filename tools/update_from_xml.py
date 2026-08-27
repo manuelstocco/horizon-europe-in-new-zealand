@@ -7,8 +7,12 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 import zipfile
 from collections import Counter
 from datetime import date, datetime
@@ -19,6 +23,8 @@ from xml.etree import ElementTree as ET
 NS = {"c": "http://cordis.europa.eu"}
 DATA_PREFIX = "window.HE_DATA = "
 GEO_PREFIX = "window.HE_GEO_DATA="
+INFOEURO_API = "https://ec.europa.eu/budg/inforeuro/api/public/monthly-rates"
+INFOEURO_SOURCE = "https://commission.europa.eu/funding-and-tenders/procedures-guidelines-tenders/information-contractors-and-beneficiaries/exchange-rate-inforeuro_en"
 
 SCHEME_NAMES = {
     "HORIZON-RIA": "Research and Innovation Actions",
@@ -88,6 +94,66 @@ def load_assignment(path: Path, prefix: str) -> dict:
     if payload.endswith(";"):
         payload = payload[:-1]
     return json.loads(payload)
+
+
+def infoeuro_months(published_date: str, limit: int = 6) -> list[tuple[int, int]]:
+    parsed = date.fromisoformat(published_date)
+    months = []
+    year, month = parsed.year, parsed.month
+    for _ in range(limit):
+        months.append((year, month))
+        month -= 1
+        if month == 0:
+            year -= 1
+            month = 12
+    return months
+
+
+def download_json(endpoint: str) -> object:
+    request = urllib.request.Request(endpoint, headers={"User-Agent": "Horizon-Europe-NZ-site-updater/1.0"})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (OSError, json.JSONDecodeError, urllib.error.URLError) as urllib_error:
+        curl = shutil.which("curl")
+        if not curl:
+            raise urllib_error
+        result = subprocess.run(
+            [curl, "-fsSL", "--max-time", "20", endpoint],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return json.loads(result.stdout)
+
+
+def fetch_infoeuro_nzd(published_date: str, existing: dict | None = None) -> tuple[dict, bool, list[str]]:
+    """Return the latest official NZD rate available at the portfolio update."""
+    errors = []
+    for year, month in infoeuro_months(published_date):
+        query = urllib.parse.urlencode({"year": year, "month": month, "lang": "en"})
+        endpoint = f"{INFOEURO_API}?{query}"
+        try:
+            rates = download_json(endpoint)
+            row = next((item for item in rates if item.get("isoA3Code") == "NZD"), None)
+            value = number(row.get("value") if row else None)
+            if value <= 0:
+                raise ValueError("NZD rate is missing")
+            return {
+                "base": "EUR",
+                "quote": "NZD",
+                "value": value,
+                "period": f"{year:04d}-{month:02d}",
+                "retrieved": date.today().isoformat(),
+                "source": "European Commission InforEuro",
+                "sourceUrl": INFOEURO_SOURCE,
+            }, True, errors
+        except (OSError, ValueError, json.JSONDecodeError, urllib.error.URLError, subprocess.SubprocessError) as exc:
+            errors.append(f"{year:04d}-{month:02d}: {exc}")
+
+    if existing and existing.get("base") == "EUR" and existing.get("quote") == "NZD" and number(existing.get("value")) > 0:
+        return dict(existing), False, errors
+    raise RuntimeError("InforEuro did not return an NZD rate and no previously verified rate is available")
 
 
 def node_text(node: ET.Element, path: str, default: str = "") -> str:
@@ -393,6 +459,21 @@ def main() -> int:
 
     current_data = load_assignment(data_path, DATA_PREFIX)
     current_geo = load_assignment(geo_path, GEO_PREFIX)
+    try:
+        exchange_rate, rate_refreshed, rate_errors = fetch_infoeuro_nzd(
+            published_date,
+            current_data.get("metadata", {}).get("exchangeRate"),
+        )
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}.", file=sys.stderr)
+        return 1
+    if not rate_refreshed:
+        print(
+            "WARNING: InforEuro could not be reached; the last verified official rate was preserved.",
+            file=sys.stderr,
+        )
+        if rate_errors:
+            print(f"  Latest attempt: {rate_errors[0]}", file=sys.stderr)
     existing_names = {row["code"]: row["name"] for row in current_data.get("countries", [])}
     existing_names.update(COUNTRY_NAMES)
     old_ids = {project["id"] for project in current_data.get("projects", [])}
@@ -435,6 +516,7 @@ def main() -> int:
         "projectDataUpdated": published_date,
         "generated": published_date,
         "projectSource": "CORDIS — European Commission",
+        "exchangeRate": exchange_rate,
     })
     rebuilt_data = {
         "metadata": metadata,
@@ -457,6 +539,7 @@ def main() -> int:
     print(f"Removed projects: {', '.join(removed) if removed else 'none'}")
     print(f"Locations using country fallback: {rebuilt_geo['metadata']['countryPrecision']}")
     print(f"Locations missing coordinates: {len(missing_geo)}")
+    print(f"InforEuro rate: EUR 1 = NZD {exchange_rate['value']:.4f} ({exchange_rate['period']})")
     print(f"Pages receiving fresh data cache markers: {len(page_updates)}")
 
     if args.dry_run:

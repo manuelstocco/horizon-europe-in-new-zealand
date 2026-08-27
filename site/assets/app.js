@@ -1,5 +1,5 @@
 (() => {
-  const { D, uniqueOptions, filterProjects, metrics, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, projectPartnerCodes, projectPartnerNames, formatDate, fmtMoney, fmtNumber } = window.HE;
+  const { D, uniqueOptions, filterProjects, metrics, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, projectPartnerCodes, projectPartnerNames, formatDate, fmtMoney, fmtExactMoney, fmtNumber } = window.HE;
   const page = document.body.dataset.page;
 
   function commonFilters({ countries=true, clusters=false, schemes=false, search=false, eu27OnlyCountries=false, onUpdate }) {
@@ -10,6 +10,7 @@
     if(clusters) state.clusterControl=mountMultiSelect(document.querySelector('[data-filter="clusters"]'),{options:uniqueOptions('clusters'),placeholder:'All clusters',clearAction:true,onChange:v=>{state.clusters=v;update();}});
     if(schemes) mountMultiSelect(document.querySelector('[data-filter="schemes"]'),{options:uniqueOptions('schemes'),placeholder:'All funding schemes',clearAction:true,onChange:v=>{state.schemes=v;update();}});
     if(search) document.querySelector('[data-filter="search"]').addEventListener('input',event=>{state.search=event.target.value;update();});
+    state.refresh=update;
     update();
     return state;
   }
@@ -87,7 +88,6 @@
     element.replaceChildren();
     element.className='organisation-table-wrap';
     if(!rows.length){element.innerHTML='<div class="chart-empty">No funded New Zealand organisations match the selection.</div>';return;}
-    const exactMoney=new Intl.NumberFormat('en-NZ',{style:'currency',currency:'EUR',maximumFractionDigits:0});
     const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
     const table=document.createElement('table');table.className='organisation-table';
     const thead=document.createElement('thead');thead.innerHTML='<tr><th>Organisation</th><th>Head office city</th><th>Role</th><th>Projects</th><th>Total EU contribution</th></tr>';
@@ -98,7 +98,7 @@
       const city=document.createElement('td');city.textContent=row.city||'Not reported';
       const role=document.createElement('td');role.className='organisation-role';role.textContent=row.roles.map(value=>roleNames[value]||value).join(', ');
       const projectsCell=document.createElement('td');projectsCell.textContent=fmtNumber(row.projectCount);
-      const funding=document.createElement('td');funding.className='organisation-funding';funding.textContent=row.funding>0?exactMoney.format(row.funding):'Not reported';
+      const funding=document.createElement('td');funding.className='organisation-funding';funding.textContent=row.funding>0?fmtExactMoney(row.funding):'Not reported';
       tr.append(name,city,role,projectsCell,funding);tbody.appendChild(tr);
     });
     table.append(thead,tbody);element.appendChild(table);
@@ -110,7 +110,6 @@
     element.replaceChildren();
     element.className='organisation-table-wrap';
     if(!rows.length){element.innerHTML='<div class="chart-empty">No funded EU27 organisations match the selection.</div>';return;}
-    const exactMoney=new Intl.NumberFormat('en-NZ',{style:'currency',currency:'EUR',maximumFractionDigits:0});
     const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
     const table=document.createElement('table');table.className='organisation-table eu27-organisation-table';
     const thead=document.createElement('thead');thead.innerHTML='<tr><th>Organisation</th><th>Country</th><th>Head office city</th><th>Role</th><th>Projects</th><th>Total EU contribution</th></tr>';
@@ -122,7 +121,7 @@
       const city=document.createElement('td');city.textContent=row.city||'Not reported';
       const role=document.createElement('td');role.className='organisation-role';role.textContent=row.roles.map(value=>roleNames[value]||value).join(', ');
       const projectsCell=document.createElement('td');projectsCell.textContent=fmtNumber(row.projectCount);
-      const funding=document.createElement('td');funding.className='organisation-funding';funding.textContent=exactMoney.format(row.funding);
+      const funding=document.createElement('td');funding.className='organisation-funding';funding.textContent=fmtExactMoney(row.funding);
       tr.append(name,country,city,role,projectsCell,funding);tbody.appendChild(tr);
     });
     table.append(thead,tbody);element.appendChild(table);
@@ -140,7 +139,6 @@
     element.className='organisation-table-wrap';
     const scopeName=scope==='nz'?'New Zealand':scope==='eu'?'EU27':'non-EU';
     if(!rows.length){element.innerHTML=`<div class="chart-empty">No funded ${scopeName} organisations match the selection.</div>`;return;}
-    const exactMoney=new Intl.NumberFormat('en-NZ',{style:'currency',currency:'EUR',maximumFractionDigits:0});
     const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
     const table=document.createElement('table');table.className='organisation-table eu27-organisation-table';
     const thead=document.createElement('thead');thead.innerHTML='<tr><th>Organisation</th><th>Country</th><th>Head office city</th><th>Role</th><th>Projects</th><th>Total EU contribution</th></tr>';
@@ -152,7 +150,7 @@
       const city=document.createElement('td');city.textContent=row.city||'Not reported';
       const role=document.createElement('td');role.className='organisation-role';role.textContent=row.roles.map(value=>roleNames[value]||value).join(', ');
       const projectsCell=document.createElement('td');projectsCell.textContent=fmtNumber(row.projectCount);
-      const funding=document.createElement('td');funding.className='organisation-funding';funding.textContent=exactMoney.format(row.funding);
+      const funding=document.createElement('td');funding.className='organisation-funding';funding.textContent=fmtExactMoney(row.funding);
       tr.append(name,country,city,role,projectsCell,funding);tbody.appendChild(tr);
     });
     table.append(thead,tbody);element.appendChild(table);
@@ -256,9 +254,10 @@
       renderOrganisations();
       renderProjectTable(document.querySelector('[data-project-table]'),projects,projects.length);
 
-      window.HE_PARTNERSHIP_EXPORT_STATE={projects:[...projects],filters:{clusters:[...state.clusters],countries:[...state.countries],schemes:[...state.schemes]},updated:D.updated||'22 August 2026'};
+      window.HE_PARTNERSHIP_EXPORT_STATE={projects:[...projects],filters:{clusters:[...state.clusters],countries:[...state.countries],schemes:[...state.schemes]},updated:formatDate(D.metadata.projectDataUpdated)};
       window.dispatchEvent(new CustomEvent('he:partnership-export-ready'));
     }});
+    window.addEventListener('he:currency-change',()=>stateRef.refresh());
   }
 
   function initClusterOverview(){
@@ -355,12 +354,11 @@
     const slide=document.querySelector('[data-focus-slide]');
     const previous=document.querySelector('[data-previous]');
     const next=document.querySelector('[data-next]');
-    const fullMoney=new Intl.NumberFormat('en-NZ',{style:'currency',currency:'EUR',maximumFractionDigits:0});
     const countryName=code=>D.countries.find(country=>country.code===code)?.name||({EL:'Greece',UK:'United Kingdom'}[code]||code);
     const flag=code=>{const normalised=code==='UK'?'GB':code==='EL'?'GR':code;return /^[A-Z]{2}$/.test(normalised)?String.fromCodePoint(...[...normalised].map(char=>127397+char.charCodeAt(0))):'•';};
     const roleName=role=>({coordinator:'Coordinator',participant:'Participant',thirdParty:'Third party'}[role]||String(role||'Participant').replace(/([A-Z])/g,' $1').replace(/^./,char=>char.toUpperCase()));
     const put=(selector,value)=>{const element=document.querySelector(selector);if(element)element.textContent=value??'';};
-    const money=value=>Number(value)>0?fullMoney.format(value):'Not reported';
+    const money=value=>Number(value)>0?fmtExactMoney(value):'Not reported';
 
     let controlsReady=false;
     const applyFilters=()=>{
@@ -474,6 +472,7 @@
     previous.addEventListener('click',()=>move(-1));next.addEventListener('click',()=>move(1));document.querySelector('[data-copy-link]').addEventListener('click',copyLink);document.querySelector('[data-print]').addEventListener('click',()=>window.print());
     window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id)selectProject(id,false);});
     document.addEventListener('keydown',event=>{if(event.target.matches('input,button'))return;if(event.key==='ArrowLeft')move(-1);if(event.key==='ArrowRight')move(1);});
+    window.addEventListener('he:currency-change',()=>{const project=D.projects.find(item=>item.id===state.selectedId);if(project)renderProject(project);});
     const requested=location.hash.slice(1);state.selectedId=D.projects.some(project=>project.id===requested)?requested:D.projects[0]?.id||'';applyFilters();
   }
 

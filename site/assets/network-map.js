@@ -11,7 +11,7 @@
   const state={clusters:[],projects:[],countries:[]};
   const view={scale:1,tx:0,ty:0};
   const centreLongitude=170;
-  let width=0,height=0,dpr=1,network={projects:[],nodes:[],edges:[],countries:new Set()},hover=null,drag=null,drawQueued=false;
+  let width=0,height=0,dpr=1,network={projects:[],nodes:[],edges:[],countries:new Set()},hover=null,drag=null,drawQueued=false,selectedDetail=null;
   const countryName=new Map(D.countries.map(country=>[country.code,country.name]));
   const clusterName=new Map(D.clusters.map(cluster=>[cluster.code,cluster.short]));
   const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
@@ -119,11 +119,13 @@
   }
 
   function renderDefaultDetail(){
+    selectedDetail=null;
     detail.innerHTML='<p class="map-detail-placeholder">Select a point or connection on the map to inspect the organisations, roles and projects behind it.</p>';
   }
 
   function renderDetail(target){
     if(!target){renderDefaultDetail();return;}
+    selectedDetail=target;
     if(target.kind==='node'){
       const projects=[...target.projects.values()];
       detail.innerHTML=`<div class="map-detail-head"><span class="map-detail-country">${escapeHtml(target.country)}</span><h3>${escapeHtml(target.name)}</h3><p>${escapeHtml(target.city)}${target.precision==='country'?' · approximate country position':''}</p></div><dl class="map-detail-metrics"><div><dt>Projects</dt><dd>${projects.length}</dd></div><div><dt>Role</dt><dd>${escapeHtml([...target.roles].map(role=>roleNames[role]||role).join(', '))}</dd></div><div><dt>EU contribution</dt><dd>${H.fmtMoney(target.funding)}</dd></div></dl><div class="map-detail-projects">${projects.map(project=>`<a href="projects.html#${project.id}"><i style="background:${H.clusterColor(project.clusterCode)}"></i><span><strong>${escapeHtml(project.acronym)}</strong><small>${escapeHtml(clusterName.get(project.clusterCode)||project.cluster)}</small></span></a>`).join('')}</div>`;
@@ -301,6 +303,7 @@
   document.querySelector('[data-map-zoom-out]').addEventListener('click',()=>zoomAt(.8));
   document.querySelector('[data-map-reset-view]').addEventListener('click',()=>{view.scale=1;view.tx=0;view.ty=0;requestDraw();});
   document.querySelector('[data-map-clear]').addEventListener('click',()=>{clusterControl.clear();projectControl.clear();countryControl.clear();});
+  window.addEventListener('he:currency-change',()=>{if(selectedDetail)renderDetail(selectedDetail);});
 
   function resize(){
     const rect=canvas.getBoundingClientRect();width=Math.max(320,Math.round(rect.width));height=Math.max(420,Math.round(rect.height));dpr=Math.min(2,window.devicePixelRatio||1);

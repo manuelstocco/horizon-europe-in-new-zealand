@@ -12,7 +12,9 @@
     clusterLayer.innerHTML = '<p class="story-cluster-caption">Signed projects involving New Zealand</p><div data-story-cluster-pack></div>';
     stage.append(clusterLayer);
     const activeClusterCodes=[...new Set(D.projects.map(project=>project.clusterCode))];
-    H.renderClusterBubbles(clusterLayer.querySelector('[data-story-cluster-pack]'), D.projects, ()=>{}, activeClusterCodes, {maxSize:285,emptySize:72,packAspect:1,fit:true});
+    const renderStoryClusters=()=>H.renderClusterBubbles(clusterLayer.querySelector('[data-story-cluster-pack]'), D.projects, ()=>{}, activeClusterCodes, {maxSize:285,emptySize:72,packAspect:1,fit:true});
+    renderStoryClusters();
+    window.addEventListener('he:currency-change',renderStoryClusters);
   }
 
   let activeBubbleIndex=-1,bubbleFrame=0;

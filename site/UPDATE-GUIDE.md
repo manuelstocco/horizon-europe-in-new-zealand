@@ -22,6 +22,7 @@ The refresh process will:
 - regenerate organisation coordinates for any newly reported head-office cities;
 - rebuild the organisation network map and its project connections;
 - update the site-wide project-data date;
+- retrieve and store the latest available official monthly EUR–NZD rate from European Commission InforEuro;
 - preserve the National Contact Points maintained in the workbook.
 
 ## Organisation network map
@@ -48,6 +49,6 @@ Two dates are intentionally kept separate:
 
 The public site uses one consistent footer label: **Last update**. Set it to the date of the latest published site refresh; the two source dates remain available in the maintenance data for audit purposes.
 
-## Planned enhancement
+## Currency display
 
-Add a site-wide EUR / NZD switch. The selected currency should persist across pages, while the EUR–NZD rate, its source and its reference date should be captured during each data refresh rather than requested live by visitors.
+The EUR / NZD selector is available throughout the site and the visitor's choice persists across pages. The underlying CORDIS funding values remain stored in euro. Each XML refresh captures the latest available monthly InforEuro EUR–NZD rate, its reference month and its source in the generated site data. Visitors never request a live exchange rate while browsing.
