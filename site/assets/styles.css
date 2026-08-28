@@ -459,6 +459,10 @@ body[data-page="overview"] .overview-page-hero{position:relative;z-index:40;over
 body[data-page="overview"] .page-content{position:relative;z-index:1}
 body[data-page="overview"] .page-download{z-index:60}
 body[data-page="overview"] .page-download-menu{z-index:61}
+body[data-page="overview"] .scheme-mix-name{font-size:10px}
+body[data-page="overview"] .cluster-organisations-panel .organisation-table-wrap{overflow-x:auto;scroll-padding-right:24px;-webkit-overflow-scrolling:touch}
+body[data-page="overview"] .eu27-organisation-table{min-width:1100px;table-layout:fixed}
+body[data-page="overview"] .eu27-organisation-table th:last-child,body[data-page="overview"] .eu27-organisation-table td:last-child{width:200px;min-width:200px;padding-right:24px;white-space:nowrap}
 .organisations-heading-row{align-items:center;margin-bottom:14px}
 .organisations-heading-row .panel-subtitle{margin-bottom:0}
 .organisation-scope-control{flex:none}
