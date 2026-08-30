@@ -24,7 +24,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="assets/styles.css?v=20260828-comments1to5">
+  <link rel="stylesheet" href="assets/styles.css?v=20260830-story-export2">
 </head>
 <body data-page="story">
   <header class="site-header">
@@ -56,6 +56,15 @@
         <div class="hero-city-tooltip" data-hero-city-tooltip aria-hidden="true"></div>
         <div class="hero-nz-label"><span>Aotearoa</span><strong>New Zealand</strong><small>Pillar II associate country</small></div>
       </div>
+      <details class="page-download story-page-download" data-story-download>
+        <summary><span class="download-arrow" aria-hidden="true">↓</span>Download</summary>
+        <div class="page-download-menu story-download-menu" aria-label="Download the Story">
+          <p class="download-group-label">Six-slide story</p>
+          <button type="button" data-story-export="pptx"><span class="download-type-icon ppt">P</span><span><strong>PowerPoint</strong><small>Editable presentation · .pptx</small></span></button>
+          <button type="button" data-story-export="pdf"><span class="download-type-icon pdf">PDF</span><span><strong>PDF</strong><small>Presentation-ready document · .pdf</small></span></button>
+          <p class="download-status" data-story-export-status aria-live="polite"></p>
+        </div>
+      </details>
     </section>
 
     <section id="programme" class="programme-section section-dark">
@@ -167,5 +176,10 @@
   <script src="assets/organisation-locations.js"></script>
   <script src="assets/story.js?v=20260827-currency1"></script>
   <script src="assets/network-map.js?v=20260827-currency1"></script>
+  <script src="assets/vendor/pptxgen.bundle.js"></script>
+  <script src="assets/vendor/pdf-lib.min.js"></script>
+  <script src="assets/vendor/fontkit.umd.min.js"></script>
+  <script src="assets/font-data.js"></script>
+  <script src="assets/story-export.js?v=20260831-story-export3"></script>
 </body>
 </html>
