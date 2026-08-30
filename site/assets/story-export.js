@@ -2,6 +2,7 @@
   const D = window.HE_DATA;
   const HE = window.HE;
   const WORLD = window.HE_WORLD;
+  const COUNTRY_STATUS = window.HE_COUNTRY_STATUS;
   if (!D || !HE) return;
 
   const C = {
@@ -14,10 +15,10 @@
   const storyUrl = () => typeof location !== 'undefined' && /^https?:$/.test(location.protocol)
     ? location.href.split(/[?#]/)[0] : fallbackUrl;
   const clusterByCode = new Map(D.clusters.map(cluster => [cluster.code, cluster]));
-  const EU27_CODES = new Set([...HE.EU27].map(code => code === 'EL' ? 'GR' : code));
-  const ASSOCIATED_CODES = new Set(['AL','AM','BA','CA','EG','FO','GE','IS','IL','KR','XK','MD','ME','NZ','MK','NO','RS','CH','TR','TN','UA','GB']);
-  const ASSOCIATION_CHECKED = '31 August 2026';
-  const associationSourceUrl = 'https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe_en';
+  const EU27_CODES = new Set(COUNTRY_STATUS?.eu27 || [...HE.EU27].map(code => code === 'EL' ? 'GR' : code));
+  const ASSOCIATED_CODES = new Set(COUNTRY_STATUS?.associated || []);
+  const ASSOCIATION_CHECKED = COUNTRY_STATUS?.metadata?.checked || '31 August 2026';
+  const associationSourceUrl = COUNTRY_STATUS?.metadata?.source?.association || 'https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe_en';
   const countryName = code => D.countries.find(country => country.code === code)?.name || code;
   const projectOrgKey = org => `${org.countryCode}|${org.id || org.name}`;
 
@@ -234,7 +235,7 @@
     pptText(slide,'Twenty-two non-EU countries are associated to Horizon Europe. New Zealand is highlighted separately because its association covers Pillar II.',.55,1.35,12,.36,{fontSize:13,color:C.muted});
     slide.addShape(pptx.ShapeType.roundRect,{x:.55,y:1.88,w:9.0,h:4.9,rectRadius:.08,fill:{color:C.white},line:{color:C.line,width:1}});
     const map=renderAssociationMapPng();if(map)slide.addImage({data:map,x:.72,y:2.05,w:8.66,h:4.08});
-    const legend=[['EU27',C.blue],['Other associated countries',C.teal],['New Zealand','E5A63B']];
+    const legend=[['EU27',C.blue],['Associated countries',C.teal],['New Zealand','E5A63B']];
     legend.forEach((item,index)=>{slide.addShape(pptx.ShapeType.rect,{x:.92+index*2.68,y:6.28,w:.18,h:.18,fill:{color:item[1]},line:{color:item[1]}});pptText(slide,item[0],1.18+index*2.68,6.23,2.35,.28,{fontSize:9.2,bold:true,color:C.ink});});
     pptMetric(pptx,slide,'EU MEMBER STATES',number(EU27_CODES.size),9.82,1.88,2.96,C.blue);
     pptMetric(pptx,slide,'NON-EU ASSOCIATED COUNTRIES',number(ASSOCIATED_CODES.size),9.82,2.86,2.96,C.teal);
@@ -294,7 +295,7 @@
       const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Association becomes a growing portfolio.',5);const metrics=[['SIGNED PROJECTS',data.projects,C.blue],['NZ ORGANISATIONS',data.nzOrganisations,C.teal],['ORGANISATIONS',data.organisations,'8D67CE'],['PARTNER COUNTRIES',data.partnerCountries,'77A84B']];metrics.forEach((item,index)=>metric(page,item[0],number(item[1]),38+index*222,104,207,item[2]));rect(page,38,174,438,314,C.white,C.line);text(page,'Portfolio by cluster',56,190,14,C.ink,bold,400,1);packCircles(data.clusters,{x:1.0,y:3.05,w:5.1,h:3.2}).forEach(item=>{const scale=72,cx=38+(item.cx-.55)*scale,top=174+(item.cy-2.48)*scale,r=item.r*scale*.83,cluster=clusterByCode.get(item.row.key);circle(page,cx,top,r,hex(cluster?.color||C.blue),C.white);text(page,cluster?.short||item.row.key,cx-r*.78,top-r*.27,Math.max(5.8,7.8*item.r),C.white,bold,r*1.56,3,'center');text(page,number(item.row.value),cx-r*.45,top+r*.2,Math.max(7,11*item.r),C.white,bold,r*.9,1,'center');});rect(page,490,174,432,314,C.white,C.line);text(page,'Projects by starting year',508,190,14,C.ink,bold,390,1);if(data.years.length){const max=Math.max(...data.years.map(row=>row.value),1),plot={x:530,top:235,w:350,h:190},slot=plot.w/data.years.length;data.years.forEach((row,index)=>{const h=plot.h*row.value/max,w=Math.min(48,slot*.58),x=plot.x+index*slot+(slot-w)/2,top=plot.top+plot.h-h;rect(page,x,top,w,h,[C.blue,C.teal,'E5A63B','EC6C5F'][index%4]);text(page,number(row.value),x-8,Math.max(216,top-14),8,C.ink,bold,w+16,1,'center');text(page,row.key,plot.x+index*slot,plot.top+plot.h+14,8,C.ink,regular,slot,1,'center');});}footer(page);
     }
     {
-      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Horizon Europe connects Europe with partners worldwide.',6);text(page,'Twenty-two non-EU countries are associated to Horizon Europe. New Zealand is highlighted separately because its association covers Pillar II.',38,104,10.5,C.muted,regular,880,2);rect(page,38,139,650,349,C.white,C.line);const image=renderAssociationMapPng();if(image){const png=await doc.embedPng(pngBytes(image));page.drawImage(png,{x:50,y:y(151,282),width:626,height:282});}const legend=[['EU27',C.blue],['Other associated countries',C.teal],['New Zealand','E5A63B']];legend.forEach((item,index)=>{rect(page,58+index*176,446,11,11,item[1]);text(page,item[0],75+index*176,446,7.5,C.ink,bold,150,1);});metric(page,'EU MEMBER STATES',number(EU27_CODES.size),705,139,217,C.blue);metric(page,'NON-EU ASSOCIATED COUNTRIES',number(ASSOCIATED_CODES.size),705,207,217,C.teal);metric(page,'EU + ASSOCIATED COUNTRIES',number(EU27_CODES.size+ASSOCIATED_CODES.size),705,275,217,C.navy);text(page,'Association status',707,358,10,C.ink,bold,200,1);text(page,`The European Commission currently lists ${ASSOCIATED_CODES.size} associated non-EU countries, including New Zealand.`,707,382,8.2,C.muted,regular,200,4);button(page,'OFFICIAL COUNTRY LIST',associationSourceUrl,707,449,165);footer(page,{association:true});
+      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Horizon Europe connects Europe with partners worldwide.',6);text(page,'Twenty-two non-EU countries are associated to Horizon Europe. New Zealand is highlighted separately because its association covers Pillar II.',38,104,10.5,C.muted,regular,880,2);rect(page,38,139,650,349,C.white,C.line);const image=renderAssociationMapPng();if(image){const png=await doc.embedPng(pngBytes(image));page.drawImage(png,{x:50,y:y(151,282),width:626,height:282});}const legend=[['EU27',C.blue],['Associated countries',C.teal],['New Zealand','E5A63B']];legend.forEach((item,index)=>{rect(page,58+index*176,446,11,11,item[1]);text(page,item[0],75+index*176,446,7.5,C.ink,bold,150,1);});metric(page,'EU MEMBER STATES',number(EU27_CODES.size),705,139,217,C.blue);metric(page,'NON-EU ASSOCIATED COUNTRIES',number(ASSOCIATED_CODES.size),705,207,217,C.teal);metric(page,'EU + ASSOCIATED COUNTRIES',number(EU27_CODES.size+ASSOCIATED_CODES.size),705,275,217,C.navy);text(page,'Association status',707,358,10,C.ink,bold,200,1);text(page,`The European Commission currently lists ${ASSOCIATED_CODES.size} associated non-EU countries, including New Zealand.`,707,382,8.2,C.muted,regular,200,4);button(page,'OFFICIAL COUNTRY LIST',associationSourceUrl,707,449,165);footer(page,{association:true});
     }
     const bytes=await doc.save(),blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='horizon-europe-in-new-zealand-story.pdf';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
