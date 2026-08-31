@@ -5,6 +5,23 @@
   },
   "items": [
     {
+      "id": "portfolio-update-2026-08-31",
+      "type": "site-update",
+      "status": "published",
+      "title": "Portfolio updated to 38 signed projects",
+      "summary": "The CORDIS portfolio was refreshed: 1 project removed.",
+      "published": "2026-08-31",
+      "start": "",
+      "end": "",
+      "timezone": "Pacific/Auckland",
+      "location": "",
+      "url": "overview.html",
+      "source": "CORDIS project records",
+      "clusters": [],
+      "countries": [],
+      "featured": true
+    },
+    {
       "id": "portfolio-update-2026-08-22",
       "type": "site-update",
       "status": "published",
@@ -19,7 +36,7 @@
       "source": "CORDIS project records",
       "clusters": [],
       "countries": [],
-      "featured": true
+      "featured": false
     }
   ]
 }
