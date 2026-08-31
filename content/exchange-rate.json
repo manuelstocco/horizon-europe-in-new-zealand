@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "updated": "2026-08-27",
+    "updated": "2026-08-31",
     "schemaVersion": 1
   },
   "current": {
@@ -8,7 +8,7 @@
     "quote": "NZD",
     "value": 1.9646,
     "period": "2026-08",
-    "retrieved": "2026-08-27",
+    "retrieved": "2026-08-31",
     "source": "European Commission InforEuro",
     "sourceUrl": "https://commission.europa.eu/funding-and-tenders/procedures-guidelines-tenders/information-contractors-and-beneficiaries/exchange-rate-inforeuro_en"
   },
@@ -18,7 +18,7 @@
       "quote": "NZD",
       "value": 1.9646,
       "period": "2026-08",
-      "retrieved": "2026-08-27",
+      "retrieved": "2026-08-31",
       "source": "European Commission InforEuro",
       "sourceUrl": "https://commission.europa.eu/funding-and-tenders/procedures-guidelines-tenders/information-contractors-and-beneficiaries/exchange-rate-inforeuro_en"
     }
