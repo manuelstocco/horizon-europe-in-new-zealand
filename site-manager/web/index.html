@@ -29,7 +29,7 @@
 
     <main class="manager-main">
       <section class="manager-view active" data-view="dashboard">
-        <div class="view-heading"><div><p class="eyebrow">Control centre</p><h1>Keep the website current.</h1><p>Manage the portfolio, editorial updates and programme-country status from one local workspace.</p></div><button class="primary-action" type="button" data-go="content">Add an update</button></div>
+        <div class="view-heading"><div><p class="eyebrow">Control centre</p><h1>Keep the website current.</h1><p>Manage the portfolio, editorial updates and programme-country status from one local workspace.</p></div><button class="primary-action" type="button" data-new-item>Add an update</button></div>
         <div class="manager-metrics" data-dashboard-metrics></div>
         <div class="dashboard-grid">
           <article class="manager-card manager-card-accent"><span class="card-kicker">Next action</span><h2 data-next-action-title>Review the current content</h2><p data-next-action-copy>Check upcoming events and the date of the country-status reference.</p><button class="text-action" type="button" data-go="publish">Run the readiness check →</button></article>
@@ -122,9 +122,9 @@
       </section>
 
       <section class="manager-view" data-view="publish">
-        <div class="view-heading compact"><div><p class="eyebrow">Local handoff</p><h1>Prepare the website update</h1><p>Check that the generated files are complete before opening GitHub Desktop.</p></div></div>
+        <div class="view-heading compact"><div><p class="eyebrow">Local handoff</p><h1>Prepare the website update</h1><p>Regenerate the public files, verify that the portfolio is aligned and give every changed data file a fresh web address before opening GitHub Desktop.</p></div></div>
         <div class="prepare-layout">
-          <article class="manager-card readiness-card"><div class="readiness-icon" data-readiness-icon>✓</div><h2 data-readiness-title>Ready to check</h2><p data-readiness-copy>Run the final local check after saving your content and country-status changes.</p><button class="primary-action" type="button" data-prepare>Check website files</button></article>
+          <article class="manager-card readiness-card"><div class="readiness-icon" data-readiness-icon>✓</div><h2 data-readiness-title>Ready to prepare</h2><p data-readiness-copy>Run this final step after saving events, country status or portfolio changes.</p><button class="primary-action" type="button" data-prepare>Regenerate &amp; check files</button></article>
           <article class="manager-card"><span class="card-kicker">Public preview</span><h2>Review before publishing</h2><div class="preview-links"><a href="/site/updates.html" target="_blank"><b>Updates &amp; Events</b><span>Check cards, filters and calendar ↗</span></a><a href="/site/feed.xml" target="_blank"><b>RSS feed</b><span>Check the generated subscription feed ↗</span></a><a href="/site/index.html" target="_blank"><b>The Story</b><span>Check country status and the portfolio ↗</span></a><a href="/site/overview.html" target="_blank"><b>Partnership Overview</b><span>Check portfolio figures ↗</span></a></div></article>
         </div>
         <article class="manager-card changed-files-card" data-prepare-result hidden><span class="card-kicker">Files prepared</span><h2>Review these changes in GitHub Desktop</h2><ul data-prepared-files></ul></article>

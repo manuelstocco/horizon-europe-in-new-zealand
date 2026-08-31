@@ -19,7 +19,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="assets/styles.css?v=20260831-updates1">
+  <link rel="stylesheet" href="assets/styles.css?v=7cf690472826">
+  <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
 </head>
 <body class="page-shell" data-page="updates">
   <header class="site-header">
@@ -45,7 +46,7 @@
       </div>
       <label class="updates-search"><span class="sr-only">Search updates and events</span><input type="search" placeholder="Search updates and events…" data-updates-search></label>
       <label class="updates-type-filter"><span class="sr-only">Filter by content type</span><select data-updates-type><option value="all">All content types</option><option value="event">Events</option><option value="deadline">Deadlines</option><option value="news">News</option><option value="site-update">Site updates</option></select></label>
-      <a class="updates-rss-link" href="feed.xml" target="_blank" rel="alternate" type="application/rss+xml"><span aria-hidden="true">◔</span> RSS feed</a>
+      <button class="updates-rss-link" type="button" data-rss-open><span aria-hidden="true">RSS</span> Subscribe</button>
     </section>
 
     <section class="updates-view active" data-updates-panel="latest">
@@ -70,10 +71,22 @@
     </section>
   </main>
 
-  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="feed.xml" type="application/rss+xml">RSS feed</a><a href="methodology.html">About the data</a></footer>
-  <script src="assets/data.js?v=20260831"></script>
-  <script src="assets/common.js?v=20260831-updates1"></script>
-  <script src="assets/updates-events-data.js?v=20260831-updates1"></script>
-  <script src="assets/updates.js?v=20260831-updates1"></script>
+  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><button class="footer-rss-button" type="button" data-rss-open>Subscribe to updates</button><a href="methodology.html">About the data</a></footer>
+
+  <div class="rss-dialog" data-rss-dialog hidden>
+    <button class="rss-dialog-backdrop" type="button" data-rss-close aria-label="Close subscription options"></button>
+    <section class="rss-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="rss-dialog-title">
+      <div class="rss-dialog-head"><div><p class="eyebrow">Stay informed</p><h2 id="rss-dialog-title">Subscribe to updates</h2></div><button class="rss-dialog-close" type="button" data-rss-close aria-label="Close">×</button></div>
+      <p>Receive new events, deadlines, portfolio changes and website updates in the RSS reader of your choice.</p>
+      <div class="rss-address"><label for="rss-address">RSS address</label><div><input id="rss-address" type="text" readonly data-rss-address><button type="button" data-rss-copy>Copy address</button></div><span data-rss-copy-status aria-live="polite"></span></div>
+      <div class="rss-reader-actions"><a data-rss-feedly target="_blank" rel="noopener"><b>Feedly</b><span>Open and follow the feed ↗</span></a><a data-rss-inoreader target="_blank" rel="noopener"><b>Inoreader</b><span>Open and follow the feed ↗</span></a></div>
+      <p class="rss-dialog-note">Already use another reader? Copy the address above and paste it into its “Add feed” or “New subscription” field.</p>
+      <a class="rss-technical-link" href="feed.xml" target="_blank" rel="alternate" type="application/rss+xml">View the raw RSS file</a>
+    </section>
+  </div>
+  <script src="assets/data.js?v=2a7164321211"></script>
+  <script src="assets/common.js?v=31e1991a6d72"></script>
+  <script src="assets/updates-events-data.js?v=5de3dba9545a"></script>
+  <script src="assets/updates.js?v=57212cbf14dc"></script>
 </body>
 </html>

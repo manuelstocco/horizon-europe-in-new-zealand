@@ -30,5 +30,28 @@
   function icsEscape(value){return String(value||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n')}
   function icsDate(value){return String(value).replace(/[-:]/g,'').replace('T','T')+'00'}
   function downloadIcs(item){const allDay=!item.start.includes('T'),start=allDay?item.start.replace(/-/g,''):icsDate(item.start),endValue=item.end||item.start,end=allDay?endValue.replace(/-/g,''):icsDate(endValue),timezone=item.timezone||'Pacific/Auckland',dateFields=allDay?`DTSTART;VALUE=DATE:${start}\r\nDTEND;VALUE=DATE:${end}`:`DTSTART;TZID=${timezone}:${start}\r\nDTEND;TZID=${timezone}:${end}`;const body=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Horizon Europe in New Zealand//Updates and Events//EN','BEGIN:VEVENT',`UID:${icsEscape(item.id)}@horizon-europe-in-new-zealand`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}`,dateFields,`SUMMARY:${icsEscape(item.title)}`,`DESCRIPTION:${icsEscape(item.summary)}`,`LOCATION:${icsEscape(item.location)}`,item.url?`URL:${item.url}`:'','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');const blob=new Blob([body],{type:'text/calendar;charset=utf-8'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`${item.id}.ics`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)}
-  renderFeatured();renderUpcoming();renderLatest();renderSiteUpdates();
+
+  function setupRssSubscription(){
+    const dialog=$('[data-rss-dialog]');
+    if(!dialog)return;
+    const publicRssUrl='https://manuelstocco.github.io/horizon-europe-in-new-zealand/feed.xml';
+    const isLocal=location.protocol==='file:'||['127.0.0.1','localhost'].includes(location.hostname);
+    const rssUrl=isLocal?publicRssUrl:new URL('feed.xml',location.href).href;
+    const address=$('[data-rss-address]',dialog),copyButton=$('[data-rss-copy]',dialog),copyStatus=$('[data-rss-copy-status]',dialog);
+    const feedly=$('[data-rss-feedly]',dialog),inoreader=$('[data-rss-inoreader]',dialog);
+    let returnFocus=null,previousOverflow='';
+    address.value=rssUrl;
+    feedly.href=`https://feedly.com/i/subscription/feed/${encodeURIComponent(rssUrl)}`;
+    inoreader.href=`https://www.inoreader.com/feed/${encodeURIComponent(rssUrl)}`;
+    function openDialog(event){returnFocus=event.currentTarget;previousOverflow=document.body.style.overflow;dialog.hidden=false;document.body.style.overflow='hidden';copyStatus.textContent='';requestAnimationFrame(()=>$('.rss-dialog-close',dialog).focus())}
+    function closeDialog(){if(dialog.hidden)return;dialog.hidden=true;document.body.style.overflow=previousOverflow;copyStatus.textContent='';if(returnFocus)returnFocus.focus()}
+    $$('[data-rss-open]').forEach(button=>button.addEventListener('click',openDialog));
+    $$('[data-rss-close]',dialog).forEach(button=>button.addEventListener('click',closeDialog));
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!dialog.hidden)closeDialog()});
+    copyButton.addEventListener('click',async()=>{
+      try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(rssUrl)}else{address.focus();address.select();document.execCommand('copy')}copyStatus.textContent='Address copied.'}
+      catch(error){address.focus();address.select();copyStatus.textContent='Copy the selected address.'}
+    });
+  }
+  setupRssSubscription();renderFeatured();renderUpcoming();renderLatest();renderSiteUpdates();
 })();

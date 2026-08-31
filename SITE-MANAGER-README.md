@@ -20,15 +20,16 @@ The Site Manager is the local control centre for the Horizon Europe in New Zeala
 
 1. Save changes in the Site Manager.
 2. Open the public preview links in **Prepare update**.
-3. Run **Check website files**.
+3. Run **Regenerate & check files**. This rebuilds public event and country data and refreshes the web addresses of changed assets, preventing an older browser copy from masking the update.
 4. Review the changed files with GitHub Desktop.
 5. Commit and push only when the local website is correct.
+6. Wait for the newest GitHub Pages deployment to complete before checking the public site. A newly pushed update supersedes any older deployment still in progress.
 
 The editable source files are stored in `content/`, including `portfolio-projects.json` and `exchange-rate.json`. The Site Manager generates the JavaScript files read by the static website, so these generated files should be committed together with their source files.
 
 ## RSS feed
 
-The public feed is generated as `site/feed.xml`. It contains published items only and uses the same Updates & Events content as the website. Draft and archived items never appear. Browsers and feed readers can discover it automatically from every public page, and visitors can open it from the Updates & Events page.
+The public feed is generated as `site/feed.xml`. It contains published items only and uses the same Updates & Events content as the website. Draft and archived items never appear. Browsers and feed readers can discover it automatically from every public page. Visitors use **Subscribe** on the Updates & Events page to copy the address or open it in a compatible reader; the raw XML remains available as a technical option.
 
 ## Portfolio workflow
 

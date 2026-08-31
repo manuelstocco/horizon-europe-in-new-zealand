@@ -31,6 +31,7 @@ from content_manager import (  # noqa: E402
     default_event_store,
     ensure_content,
     read_json,
+    refresh_asset_references,
     validate_country_overrides,
     validate_event_store,
     write_country_outputs,
@@ -227,18 +228,34 @@ class Handler(BaseHTTPRequestHandler):
             if route == "/api/prepare":
                 events = read_json(ROOT / "content" / "updates-events.json", default_event_store())
                 countries = read_json(ROOT / "content" / "country-status-overrides.json", default_country_overrides(ROOT))
-                _, event_errors = validate_event_store(events)
-                _, country_errors = validate_country_overrides(countries)
+                cleaned_events, event_errors = validate_event_store(events)
+                cleaned_countries, country_errors = validate_country_overrides(countries)
                 errors = event_errors + country_errors
+                project_store = ensure_project_store(ROOT)
+                portfolio = portfolio_summary()
+                enabled_projects = sum(row.get("enabled", True) for row in project_store.get("projects", []))
+                if enabled_projects != portfolio["projects"]:
+                    errors.append(
+                        f"The project register contains {enabled_projects} included projects, but the public website contains "
+                        f"{portfolio['projects']}. Run ‘Update website’ in Portfolio XML before publishing."
+                    )
+                if not errors:
+                    write_event_outputs(ROOT, cleaned_events)
+                    write_country_outputs(ROOT, cleaned_countries)
+                    refresh_asset_references(ROOT)
                 required = [SITE / "updates.html", SITE / "feed.xml", SITE / "assets" / "updates-events-data.js", SITE / "assets" / "country-status-overrides.js", ROOT / "content" / "portfolio-projects.json", ROOT / "content" / "exchange-rate.json"]
                 missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
                 if errors or missing:
                     self._error("The publication package is not ready.", details=errors + [f"Missing: {name}" for name in missing])
                     return
-                self._json({
-                    "ok": True,
-                    "message": "The website files are ready for review in GitHub Desktop.",
-                    "files": [
+                status = subprocess.run(
+                    ["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True, timeout=20
+                )
+                changed_files = []
+                if status.returncode == 0:
+                    changed_files = sorted({line[3:].strip() for line in status.stdout.splitlines() if len(line) > 3})
+                if not changed_files:
+                    changed_files = [
                         "content/updates-events.json",
                         "content/country-status-overrides.json",
                         "content/portfolio-projects.json",
@@ -247,7 +264,11 @@ class Handler(BaseHTTPRequestHandler):
                         "site/assets/country-status-overrides.js",
                         "site/feed.xml",
                         "site/updates.html",
-                    ],
+                    ]
+                self._json({
+                    "ok": True,
+                    "message": f"The public files were regenerated and {len(changed_files)} changed file{'s are' if len(changed_files) != 1 else ' is'} ready for GitHub Desktop.",
+                    "files": changed_files,
                 })
                 return
             if route == "/api/xml-update":

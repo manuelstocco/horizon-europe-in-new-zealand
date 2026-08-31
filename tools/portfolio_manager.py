@@ -17,7 +17,7 @@ from datetime import date, datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from content_manager import atomic_write, read_json
+from content_manager import atomic_write, read_json, refresh_asset_references
 
 
 DATA_PREFIX = "window.HE_DATA = "
@@ -227,12 +227,7 @@ def apply_exchange_rate(root: Path, rate: dict) -> dict:
     shutil.copy2(data_path, backup_dir / "data.js")
     atomic_write(data_path, f"{DATA_PREFIX}{json.dumps(data, ensure_ascii=False, separators=(',', ':'))};\n")
 
-    token = f"{date.today().strftime('%Y%m%d')}-rate"
-    for page in (root / "site").glob("*.html"):
-        original = page.read_text(encoding="utf-8")
-        updated = re.sub(r"assets/data\.js(?:\?v=[^\"']+)?", f"assets/data.js?v={token}", original)
-        if updated != original:
-            atomic_write(page, updated)
+    refresh_asset_references(root, {"assets/data.js"})
 
     store = current_exchange_store(root)
     history = [row for row in store.get("history", []) if row.get("period") != rate["period"]]

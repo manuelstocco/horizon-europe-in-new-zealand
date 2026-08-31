@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -424,11 +425,12 @@ def atomic_write(path: Path, content: str) -> None:
     temp_path.replace(path)
 
 
-def cache_busted_pages(site_dir: Path, published_date: str) -> dict[Path, str]:
-    token = published_date.replace("-", "")
+def cache_busted_pages(site_dir: Path, data_output: str, geo_output: str) -> dict[Path, str]:
+    data_token = hashlib.sha256(data_output.encode("utf-8")).hexdigest()[:12]
+    geo_token = hashlib.sha256(geo_output.encode("utf-8")).hexdigest()[:12]
     replacements = {
-        r"assets/data\.js(?:\?v=[^\"']+)?": f"assets/data.js?v={token}",
-        r"assets/organisation-locations\.js(?:\?v=[^\"']+)?": f"assets/organisation-locations.js?v={token}",
+        r"assets/data\.js(?:\?v=[^\"']+)?": f"assets/data.js?v={data_token}",
+        r"assets/organisation-locations\.js(?:\?v=[^\"']+)?": f"assets/organisation-locations.js?v={geo_token}",
     }
     changed = {}
     for path in site_dir.glob("*.html"):
@@ -536,7 +538,9 @@ def main() -> int:
         "ncps": current_data.get("ncps", []),
     }
     rebuilt_geo, missing_geo = rebuild_geo(projects, xml_coordinates, current_geo, published_date)
-    page_updates = cache_busted_pages(site_dir, published_date)
+    data_output = f"{DATA_PREFIX}{json.dumps(rebuilt_data, ensure_ascii=False, separators=(',', ':'))};\n"
+    geo_output = f"{GEO_PREFIX}{json.dumps(rebuilt_geo, ensure_ascii=False, separators=(',', ':'))};\n"
+    page_updates = cache_busted_pages(site_dir, data_output, geo_output)
 
     new_ids = {project["id"] for project in projects}
     added = sorted(new_ids - old_ids)
@@ -566,8 +570,8 @@ def main() -> int:
             shutil.copy2(page_path, backup_dir / page_path.name)
         print(f"Backup created: {backup_dir}")
 
-    atomic_write(data_path, f"{DATA_PREFIX}{json.dumps(rebuilt_data, ensure_ascii=False, separators=(',', ':'))};\n")
-    atomic_write(geo_path, f"{GEO_PREFIX}{json.dumps(rebuilt_geo, ensure_ascii=False, separators=(',', ':'))};\n")
+    atomic_write(data_path, data_output)
+    atomic_write(geo_path, geo_output)
     for page_path, content in page_updates.items():
         atomic_write(page_path, content)
     try:

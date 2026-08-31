@@ -90,20 +90,24 @@
     const stamp=Date.now().toString().slice(-6);
     return {id:`new-item-${stamp}`,type:'event',status:'draft',title:'',summary:'',published:state.today,start:'',end:'',timezone:'Pacific/Auckland',location:'',url:'',source:'',clusters:[],countries:[],featured:false};
   }
-  function addItem() {const item=blankItem();state.events.items.unshift(item);editItem(item.id);$('[name="title"]',contentForm).focus();}
-  $('[data-new-item]').addEventListener('click',addItem);
+  function addItem() {switchView('content');const item=blankItem();state.events.items.unshift(item);editItem(item.id);hideErrors('[data-form-errors]');$('[name="title"]',contentForm).focus();}
+  $$('[data-new-item]').forEach(button=>button.addEventListener('click',addItem));
   function readEditor() {
     const data=new FormData(contentForm),current=state.events.items.find(item=>item.id===state.activeItemId)||blankItem();
     const title=String(data.get('title')||'').trim();
     let id=String(data.get('id')||'').trim();
-    if(!id||id.startsWith('new-item-'))id=`${slugify(title)}-${String(data.get('published')||state.today)}`;
+    if(!id||id.startsWith('new-item-')){
+      const base=`${slugify(title)}-${String(data.get('published')||state.today)}`;
+      const used=new Set(state.events.items.filter(row=>row.id!==state.activeItemId).map(row=>row.id));
+      id=base;let suffix=2;while(used.has(id)){id=`${base}-${suffix++}`}
+    }
     return {...current,id,type:data.get('type'),status:data.get('status'),title,summary:String(data.get('summary')||'').trim(),published:data.get('published'),start:data.get('start'),end:data.get('end'),timezone:String(data.get('timezone')||'Pacific/Auckland').trim(),location:String(data.get('location')||'').trim(),url:String(data.get('url')||'').trim(),source:String(data.get('source')||'').trim(),clusters:splitCodes(data.get('clusters')),countries:splitCodes(data.get('countries')).map(code=>code.toUpperCase()),featured:Boolean(data.get('featured'))};
   }
   async function saveEditor(event) {
     event.preventDefault();const item=readEditor(),index=state.events.items.findIndex(row=>row.id===state.activeItemId);if(index<0)return;
-    const previousId=state.activeItemId;state.events.items[index]=item;state.activeItemId=item.id;
-    try{const payload=await api('/api/events',{method:'POST',body:JSON.stringify(state.events)});state.events=payload.events;hideErrors('[data-form-errors]');renderContentList();renderDashboard();editItem(item.id);notify(payload.message);}
-    catch(error){state.activeItemId=previousId;showErrors('[data-form-errors]',error);notify(error.message,true)}
+    const nextStore={...state.events,items:state.events.items.map((row,rowIndex)=>rowIndex===index?item:row)};
+    try{const payload=await api('/api/events',{method:'POST',body:JSON.stringify(nextStore)});state.events=payload.events;state.activeItemId=item.id;hideErrors('[data-form-errors]');renderContentList();renderDashboard();editItem(item.id);notify(payload.message);}
+    catch(error){showErrors('[data-form-errors]',error);notify(error.message,true)}
   }
   contentForm.addEventListener('submit',saveEditor);
   contentForm.addEventListener('input',()=>setEditorState('Unsaved changes'));

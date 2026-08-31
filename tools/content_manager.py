@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import re
 import tempfile
@@ -35,6 +36,40 @@ def read_json(path: Path, default: dict) -> dict:
     if not path.is_file():
         return json.loads(json.dumps(default))
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def refresh_asset_references(root: Path, assets: set[str] | None = None) -> list[Path]:
+    """Give local JS/CSS references a content-derived version marker.
+
+    GitHub Pages and browsers may retain an asset when its URL does not change.
+    A hash of the file content makes every real update immediately addressable,
+    while leaving references unchanged when the file itself is unchanged.
+    """
+    site = root / "site"
+    pattern = re.compile(
+        r'(?P<prefix>(?:src|href)=["\'])(?P<asset>assets/[A-Za-z0-9_./-]+\.(?:js|css))'
+        r'(?:\?v=[^"\']+)?(?P<suffix>["\'])'
+    )
+    changed: list[Path] = []
+    tokens: dict[str, str] = {}
+
+    def replace(match: re.Match[str]) -> str:
+        asset = match.group("asset")
+        if assets is not None and asset not in assets:
+            return match.group(0)
+        asset_path = site / asset
+        if not asset_path.is_file():
+            return match.group(0)
+        token = tokens.setdefault(asset, hashlib.sha256(asset_path.read_bytes()).hexdigest()[:12])
+        return f'{match.group("prefix")}{asset}?v={token}{match.group("suffix")}'
+
+    for page in site.glob("*.html"):
+        original = page.read_text(encoding="utf-8")
+        updated = pattern.sub(replace, original)
+        if updated != original:
+            atomic_write(page, updated)
+            changed.append(page)
+    return changed
 
 
 def valid_url(value: str, allow_relative: bool = True) -> bool:
@@ -146,6 +181,7 @@ def write_event_outputs(root: Path, store: dict) -> dict:
     atomic_write(data_path, f"window.HE_UPDATES_EVENTS={payload};\n")
     write_rss_feed(root, cleaned)
     ensure_rss_discovery(root)
+    refresh_asset_references(root, {"assets/updates-events-data.js"})
     return cleaned
 
 
@@ -195,7 +231,8 @@ def ensure_rss_discovery(root: Path) -> None:
     tag = '  <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">\n'
     for path in (root / "site").glob("*.html"):
         original = path.read_text(encoding="utf-8")
-        if 'type="application/rss+xml"' in original:
+        head = original.partition("</head>")[0]
+        if '<link rel="alternate" type="application/rss+xml"' in head:
             continue
         updated = original.replace("</head>", f"{tag}</head>", 1)
         if updated != original:
@@ -269,6 +306,7 @@ def write_country_outputs(root: Path, store: dict) -> dict:
         "document.readyState==='loading'?document.addEventListener('DOMContentLoaded',sync):sync();})();\n"
     )
     atomic_write(data_path, script)
+    refresh_asset_references(root, {"assets/country-status-overrides.js"})
     return cleaned
 
 
