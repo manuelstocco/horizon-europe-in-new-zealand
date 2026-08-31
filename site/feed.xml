@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Horizon Europe in New Zealand — Updates &amp; Events</title>
+    <link>https://manuelstocco.github.io/horizon-europe-in-new-zealand/updates.html</link>
+    <description>News, events, deadlines and portfolio updates for Horizon Europe cooperation with New Zealand.</description>
+    <language>en-NZ</language>
+    <lastBuildDate>Mon, 31 Aug 2026 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://manuelstocco.github.io/horizon-europe-in-new-zealand/feed.xml" rel="self" type="application/rss+xml" />
+    <generator>Horizon Europe in New Zealand Site Manager</generator>
+    <ttl>1440</ttl>
+    <item>
+      <title>Portfolio updated to 38 signed projects</title>
+      <link>https://manuelstocco.github.io/horizon-europe-in-new-zealand/overview.html</link>
+      <guid isPermaLink="false">horizon-europe-nz:portfolio-update-2026-08-22</guid>
+      <pubDate>Sat, 22 Aug 2026 00:00:00 +0000</pubDate>
+      <description>The current CORDIS dataset records 38 signed Horizon Europe projects involving New Zealand organisations.</description>
+      <category>site-update</category>
+    </item>
+  </channel>
+</rss>

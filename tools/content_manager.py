@@ -7,15 +7,20 @@ import ast
 import json
 import re
 import tempfile
-from datetime import date
+from datetime import date, datetime, timezone
+from email.utils import format_datetime
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
+from xml.sax.saxutils import escape
 
 
 EVENT_TYPES = {"event", "deadline", "news", "site-update"}
 CONTENT_STATUSES = {"draft", "published", "archived"}
 DEFAULT_ASSOCIATION_SOURCE = "https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe_en"
 DEFAULT_ELIGIBILITY_SOURCE = "https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2026-2027/wp-15-general-annexes_horizon-2026-2027_en.pdf"
+PUBLIC_SITE_URL = "https://manuelstocco.github.io/horizon-europe-in-new-zealand/"
+RSS_TITLE = "Horizon Europe in New Zealand — Updates & Events"
+RSS_DESCRIPTION = "News, events, deadlines and portfolio updates for Horizon Europe cooperation with New Zealand."
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -139,7 +144,62 @@ def write_event_outputs(root: Path, store: dict) -> dict:
     atomic_write(content_path, json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n")
     payload = json.dumps(cleaned, ensure_ascii=False, separators=(",", ":"))
     atomic_write(data_path, f"window.HE_UPDATES_EVENTS={payload};\n")
+    write_rss_feed(root, cleaned)
+    ensure_rss_discovery(root)
     return cleaned
+
+
+def _rss_date(value: str) -> str:
+    parsed = datetime.fromisoformat((value or date.today().isoformat())[:10]).replace(tzinfo=timezone.utc)
+    return format_datetime(parsed)
+
+
+def _rss_link(value: str) -> str:
+    return urljoin(PUBLIC_SITE_URL, value or "updates.html")
+
+
+def write_rss_feed(root: Path, store: dict) -> None:
+    published = [item for item in store.get("items", []) if item.get("status") == "published"]
+    published.sort(key=lambda item: (item.get("published", ""), item.get("start", ""), item.get("title", "")), reverse=True)
+    updated = store.get("metadata", {}).get("updated") or date.today().isoformat()
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+        "  <channel>",
+        f"    <title>{escape(RSS_TITLE)}</title>",
+        f"    <link>{escape(_rss_link('updates.html'))}</link>",
+        f"    <description>{escape(RSS_DESCRIPTION)}</description>",
+        "    <language>en-NZ</language>",
+        f"    <lastBuildDate>{_rss_date(updated)}</lastBuildDate>",
+        f'    <atom:link href="{escape(_rss_link("feed.xml"))}" rel="self" type="application/rss+xml" />',
+        "    <generator>Horizon Europe in New Zealand Site Manager</generator>",
+        "    <ttl>1440</ttl>",
+    ]
+    for item in published:
+        link = _rss_link(item.get("url", ""))
+        lines.extend([
+            "    <item>",
+            f"      <title>{escape(item.get('title', ''))}</title>",
+            f"      <link>{escape(link)}</link>",
+            f'      <guid isPermaLink="false">horizon-europe-nz:{escape(item.get("id", "item"))}</guid>',
+            f"      <pubDate>{_rss_date(item.get('published', ''))}</pubDate>",
+            f"      <description>{escape(item.get('summary', ''))}</description>",
+            f"      <category>{escape(item.get('type', 'update'))}</category>",
+        ])
+        lines.append("    </item>")
+    lines.extend(["  </channel>", "</rss>", ""])
+    atomic_write(root / "site" / "feed.xml", "\n".join(lines))
+
+
+def ensure_rss_discovery(root: Path) -> None:
+    tag = '  <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">\n'
+    for path in (root / "site").glob("*.html"):
+        original = path.read_text(encoding="utf-8")
+        if 'type="application/rss+xml"' in original:
+            continue
+        updated = original.replace("</head>", f"{tag}</head>", 1)
+        if updated != original:
+            atomic_write(path, updated)
 
 
 def _array_from_country_script(script: str, variable: str) -> list[str]:

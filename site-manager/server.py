@@ -230,7 +230,7 @@ class Handler(BaseHTTPRequestHandler):
                 _, event_errors = validate_event_store(events)
                 _, country_errors = validate_country_overrides(countries)
                 errors = event_errors + country_errors
-                required = [SITE / "updates.html", SITE / "assets" / "updates-events-data.js", SITE / "assets" / "country-status-overrides.js", ROOT / "content" / "portfolio-projects.json", ROOT / "content" / "exchange-rate.json"]
+                required = [SITE / "updates.html", SITE / "feed.xml", SITE / "assets" / "updates-events-data.js", SITE / "assets" / "country-status-overrides.js", ROOT / "content" / "portfolio-projects.json", ROOT / "content" / "exchange-rate.json"]
                 missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
                 if errors or missing:
                     self._error("The publication package is not ready.", details=errors + [f"Missing: {name}" for name in missing])
@@ -245,6 +245,7 @@ class Handler(BaseHTTPRequestHandler):
                         "content/exchange-rate.json",
                         "site/assets/updates-events-data.js",
                         "site/assets/country-status-overrides.js",
+                        "site/feed.xml",
                         "site/updates.html",
                     ],
                 })

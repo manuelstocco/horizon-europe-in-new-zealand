@@ -10,7 +10,7 @@ The Site Manager is the local control centre for the Horizon Europe in New Zeala
 
 ## What it manages
 
-- **Updates & events** — create, edit, feature, publish or archive public content.
+- **Updates & events** — create, edit, feature, publish or archive public content. Every save also refreshes the public RSS feed.
 - **Country status** — maintain associated countries, low- and middle-income eligibility, source links and the date on which the reference was checked.
 - **Portfolio XML** — maintain the project register, download fresh XML records directly from the official CORDIS links, validate the complete portfolio and update the website. A complete ZIP remains available as a fallback.
 - **Exchange rate** — check an official monthly EUR–NZD InforEuro rate and apply it only after manual approval.
@@ -25,6 +25,10 @@ The Site Manager is the local control centre for the Horizon Europe in New Zeala
 5. Commit and push only when the local website is correct.
 
 The editable source files are stored in `content/`, including `portfolio-projects.json` and `exchange-rate.json`. The Site Manager generates the JavaScript files read by the static website, so these generated files should be committed together with their source files.
+
+## RSS feed
+
+The public feed is generated as `site/feed.xml`. It contains published items only and uses the same Updates & Events content as the website. Draft and archived items never appear. Browsers and feed readers can discover it automatically from every public page, and visitors can open it from the Updates & Events page.
 
 ## Portfolio workflow
 
