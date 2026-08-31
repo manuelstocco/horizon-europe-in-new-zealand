@@ -27,6 +27,15 @@ The Site Manager is the local control centre for the Horizon Europe in New Zeala
 
 The editable source files are stored in `content/`, including `portfolio-projects.json` and `exchange-rate.json`. The Site Manager generates the JavaScript files read by the static website, so these generated files should be committed together with their source files.
 
+## Updates and events workflow
+
+1. Create an item and choose its status. **Draft** is saved locally but not shown publicly; **Published** is included in Updates & Events and the RSS feed; **Archived** is hidden publicly but remains recoverable.
+2. Events and deadlines need a start date to appear in the public calendar.
+3. Use **Remove from public calendar** to change a published event to Archived, then save. Use **Restore as draft** to bring an archived item back for editing.
+4. Use **Delete permanently** only when the item should also disappear from the local manager. A confirmation is always required.
+
+After every successful save, the editor shows the save time and the item’s publication state. Changes become visible on the online website only after the normal GitHub publication workflow.
+
 ## RSS feed
 
 The public feed is generated as `site/feed.xml`. It contains published items only and uses the same Updates & Events content as the website. Draft and archived items never appear. Browsers and feed readers can discover it automatically from every public page. Visitors use **Subscribe** on the Updates & Events page to copy the address or open it in a compatible reader; the raw XML remains available as a technical option.
@@ -37,6 +46,8 @@ The public feed is generated as `site/feed.xml`. It contains published items onl
 2. Save the list. Projects can be temporarily excluded with their checkbox or removed from the register.
 3. Run **Download & validate**. The manager downloads one fresh XML record for every included project and checks the full portfolio without changing the website.
 4. If the report is correct, run **Update website**.
+
+During either operation, the progress panel shows the number of CORDIS records processed, the current phase and the elapsed time. The final website-building phase can continue briefly after every project has been downloaded.
 
 The project update preserves the currently approved exchange rate. Currency changes are handled separately in **Exchange rate**.
 

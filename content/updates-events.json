@@ -1,9 +1,53 @@
 {
   "metadata": {
-    "updated": "2026-08-31",
+    "updated": "2026-09-01",
     "schemaVersion": 1
   },
   "items": [
+    {
+      "id": "horizon-europe-session-at-aerospace-summit-2026-09-01",
+      "type": "event",
+      "status": "published",
+      "title": "Horizon Europe Session at Aerospace Summit",
+      "summary": "Horizon Europe Session at Aerospace Summit with Diane Lacoste, Nishant Shandilya, Jannik Haas, Naomi Land",
+      "published": "2026-09-01",
+      "start": "2026-10-01T09:00",
+      "end": "2026-10-01T10:30",
+      "timezone": "Pacific/Auckland",
+      "location": "Christchurch",
+      "url": "https://www.aerospace.org.nz/summit",
+      "source": "Delegation of the European Union to New Zealand",
+      "clusters": [
+        "-",
+        "C4",
+        "Space"
+      ],
+      "countries": [
+        "NZ"
+      ],
+      "featured": true
+    },
+    {
+      "id": "prova-2026-08-31",
+      "type": "event",
+      "status": "archived",
+      "title": "Prova",
+      "summary": "Prova Prova",
+      "published": "2026-08-31",
+      "start": "2026-09-01T23:35",
+      "end": "2026-09-02T23:35",
+      "timezone": "Pacific/Auckland",
+      "location": "Wellington",
+      "url": "",
+      "source": "",
+      "clusters": [
+        "c4"
+      ],
+      "countries": [
+        "NZ"
+      ],
+      "featured": true
+    },
     {
       "id": "portfolio-update-2026-08-31",
       "type": "site-update",

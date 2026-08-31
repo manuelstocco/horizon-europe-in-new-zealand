@@ -44,11 +44,14 @@
             <div class="list-toolbar"><label><span class="sr-only">Search updates and events</span><input type="search" placeholder="Search content…" data-content-search></label><select data-content-filter aria-label="Filter by publication status"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select></div>
             <div class="content-list" data-content-list></div>
           </section>
-          <form class="editor-panel" data-content-form>
+          <form class="editor-panel" data-content-form novalidate>
             <div class="editor-empty" data-editor-empty><span>+</span><h2>Select an item</h2><p>Choose an existing item or create a new one.</p></div>
             <div class="editor-fields" data-editor-fields hidden>
-              <div class="editor-head"><div><span class="card-kicker">Content editor</span><h2 data-editor-title>New item</h2></div><div class="editor-head-actions"><button type="button" class="quiet-action" data-duplicate-item>Duplicate</button><button type="button" class="quiet-action danger" data-archive-item>Archive</button></div></div>
+              <div class="editor-head"><div><span class="card-kicker">Content editor</span><h2 data-editor-title>New item</h2></div><div class="editor-head-actions"><button type="button" class="quiet-action" data-duplicate-item>Duplicate</button><button type="button" class="quiet-action" data-archive-item>Remove from public page</button><button type="button" class="quiet-action danger" data-delete-item>Delete permanently</button></div></div>
               <div class="field-grid two"><label>Type<select name="type"><option value="event">Event</option><option value="deadline">Deadline</option><option value="news">News</option><option value="site-update">Site update</option></select></label><label>Status<select name="status"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label></div>
+              <div class="publication-state" data-publication-state aria-live="polite"><span data-publication-icon>○</span><div><strong data-publication-title>Draft — not visible online</strong><small data-publication-copy>Saved locally until you choose Published.</small></div></div>
+              <div class="save-feedback" data-save-feedback aria-live="assertive"><span>●</span><div><strong>Ready to save</strong><small>Changes are stored only when “Save changes” confirms completion.</small></div></div>
+              <div class="form-errors" data-form-errors hidden role="alert"></div>
               <label>Title<input name="title" maxlength="160" required></label>
               <label>Summary<textarea name="summary" rows="4" maxlength="620" required></textarea><small><span data-summary-count>0</span>/620 characters</small></label>
               <div class="field-grid two"><label>Publication date<input name="published" type="date" required></label><label>Time zone<input name="timezone" value="Pacific/Auckland"></label></div>
@@ -58,8 +61,7 @@
               <div class="field-grid two"><label>Clusters<input name="clusters" placeholder="C1, C5"></label><label>Country codes<input name="countries" placeholder="NZ, BE, IT"></label></div>
               <label class="check-field"><input name="featured" type="checkbox"><span><b>Featured item</b><small>Show this item prominently on the public page.</small></span></label>
               <input name="id" type="hidden">
-              <div class="form-errors" data-form-errors hidden></div>
-              <div class="editor-footer"><span data-editor-state>No unsaved changes</span><button class="primary-action" type="submit">Save changes</button></div>
+              <div class="editor-footer"><span data-editor-state>No unsaved changes</span><button class="primary-action" type="button" data-editor-save>Save changes</button></div>
             </div>
           </form>
         </div>
@@ -109,7 +111,15 @@
             </details>
           </aside>
         </div>
-        <article class="manager-card xml-report-card portfolio-report"><div class="report-head"><div><span class="card-kicker">Validation report</span><h2>Portfolio update results</h2></div><span class="report-status" data-xml-status>Waiting</span></div><pre data-xml-output>Save the project list, then use “Download &amp; validate” before updating the website.</pre></article>
+        <article class="manager-card xml-report-card portfolio-report">
+          <div class="report-head"><div><span class="card-kicker">Validation report</span><h2>Portfolio update results</h2></div><span class="report-status" data-xml-status>Waiting</span></div>
+          <div class="processing-progress" data-processing-progress hidden aria-live="polite">
+            <div class="processing-summary"><div><strong data-processing-title>Processing projects</strong><span data-processing-detail>Preparing the update…</span></div><strong data-processing-count>0 / 0</strong></div>
+            <div class="processing-track"><span data-processing-bar></span></div>
+            <div class="processing-meta"><span data-processing-stage>Starting</span><time data-processing-elapsed>00:00</time></div>
+          </div>
+          <pre data-xml-output>Save the project list, then use “Download &amp; validate” before updating the website.</pre>
+        </article>
       </section>
 
       <section class="manager-view" data-view="exchange">

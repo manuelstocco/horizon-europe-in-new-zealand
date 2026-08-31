@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import webbrowser
 from datetime import date
 from http import HTTPStatus
@@ -100,6 +101,19 @@ class ManagerServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.progress_lock = threading.Lock()
+        self.progress = {
+            "active": False,
+            "operation": "",
+            "stage": "idle",
+            "current": 0,
+            "total": 0,
+            "message": "Waiting",
+            "started": 0,
+        }
+
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "HorizonSiteManager/1.0"
@@ -125,6 +139,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def _error(self, message: str, status: int = 400, details: list[str] | None = None) -> None:
         self._json({"ok": False, "message": message, "details": details or []}, status)
+
+    def _set_progress(self, **updates) -> None:
+        with self.server.progress_lock:
+            self.server.progress = {**self.server.progress, **updates}
+
+    def _progress_snapshot(self) -> dict:
+        with self.server.progress_lock:
+            return dict(self.server.progress)
 
     def _read_json(self) -> dict:
         size = int(self.headers.get("Content-Length", "0"))
@@ -177,6 +199,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if route == "/api/health":
             self._json({"ok": True})
+            return
+        if route == "/api/progress":
+            self._json({"ok": True, "progress": self._progress_snapshot()})
             return
         if route.startswith("/site/"):
             relative = route[len("/site/"):] or "index.html"
@@ -306,11 +331,30 @@ class Handler(BaseHTTPRequestHandler):
         command.append("--keep-exchange-rate")
         if dry_run:
             command.append("--dry-run")
+        self._set_progress(
+            active=True,
+            operation="xml-update",
+            stage="processing",
+            current=0,
+            total=0,
+            message="Reading and validating the XML projects…",
+            started=time.time(),
+        )
         try:
             result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=300)
+        except Exception as exc:
+            self._set_progress(active=False, stage="error", message=f"XML processing stopped: {exc}")
+            raise
         finally:
             archive_path.unlink(missing_ok=True)
         output = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part.strip())
+        self._set_progress(
+            active=False,
+            stage="completed" if result.returncode == 0 else "error",
+            current=1 if result.returncode == 0 else 0,
+            total=1,
+            message="XML processing completed." if result.returncode == 0 else "XML processing stopped before completion.",
+        )
         self._json({
             "ok": result.returncode == 0,
             "message": "XML validation completed." if dry_run and result.returncode == 0 else "Portfolio update completed." if result.returncode == 0 else "The XML update stopped before completion.",
@@ -328,16 +372,52 @@ class Handler(BaseHTTPRequestHandler):
             self._error("The publication date must use YYYY-MM-DD.")
             return
         archive_path = None
+        project_store = ensure_project_store(ROOT)
+        total = sum(row.get("enabled", True) for row in project_store.get("projects", []))
+        self._set_progress(
+            active=True,
+            operation="portfolio-sync",
+            stage="downloading",
+            current=0,
+            total=total,
+            message="Connecting to CORDIS…",
+            started=time.time(),
+        )
+
+        def report_download(current: int, download_total: int, message: str) -> None:
+            self._set_progress(
+                active=True,
+                stage="downloading",
+                current=current,
+                total=download_total,
+                message=message,
+            )
+
         try:
-            archive_path, project_store, download_errors = download_portfolio(ROOT)
+            archive_path, project_store, download_errors = download_portfolio(ROOT, progress=report_download)
             if download_errors or archive_path is None:
+                self._set_progress(active=False, stage="error", message="Some CORDIS records could not be downloaded.")
                 self._json({"ok": False, "message": "Some CORDIS records could not be downloaded.", "details": download_errors, "projectStore": project_store}, 400)
                 return
+            self._set_progress(
+                active=True,
+                stage="building",
+                current=total,
+                total=total,
+                message="Building and validating the website data…",
+            )
             command = [sys.executable, str(TOOLS / "update_from_xml.py"), str(archive_path), "--site-dir", str(SITE), "--date", published, "--keep-exchange-rate"]
             if dry_run:
                 command.append("--dry-run")
             result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, timeout=420)
             output = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part.strip())
+            self._set_progress(
+                active=False,
+                stage="completed" if result.returncode == 0 else "error",
+                current=total,
+                total=total,
+                message="Website data is ready." if result.returncode == 0 else "Website data processing stopped before completion.",
+            )
             self._json({
                 "ok": result.returncode == 0,
                 "message": "CORDIS list validated." if dry_run and result.returncode == 0 else "Portfolio updated from the CORDIS list." if result.returncode == 0 else "The portfolio update stopped before completion.",
@@ -346,6 +426,7 @@ class Handler(BaseHTTPRequestHandler):
                 "projectStore": ensure_project_store(ROOT),
             }, 200 if result.returncode == 0 else 400)
         except Exception as exc:
+            self._set_progress(active=False, stage="error", message=f"Processing stopped: {exc}")
             self._error(f"The CORDIS list could not be processed: {exc}", 500)
         finally:
             if archive_path:

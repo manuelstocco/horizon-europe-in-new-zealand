@@ -74,7 +74,7 @@
       row.append(mark,copy,status);row.addEventListener('click',()=>editItem(item.id));list.append(row);
     });
   }
-  function editItem(id) {
+  function editItem(id, options={}) {
     const item=state.events.items.find(row=>row.id===id);if(!item)return;
     state.activeItemId=id;$('[data-editor-empty]').hidden=true;$('[data-editor-fields]').hidden=false;
     $('[data-editor-title]').textContent=item.title||'New item';
@@ -84,13 +84,13 @@
       else if(Array.isArray(value))field.value=value.join(', ');
       else field.value=value??'';
     });
-    updateEventDateVisibility();updateSummaryCount();setEditorState('No unsaved changes');renderContentList();
+    updateEventDateVisibility();updateSummaryCount();renderPublicationState();if(!options.preserveState)setEditorState('No unsaved changes');renderContentList();
   }
   function blankItem() {
     const stamp=Date.now().toString().slice(-6);
     return {id:`new-item-${stamp}`,type:'event',status:'draft',title:'',summary:'',published:state.today,start:'',end:'',timezone:'Pacific/Auckland',location:'',url:'',source:'',clusters:[],countries:[],featured:false};
   }
-  function addItem() {switchView('content');const item=blankItem();state.events.items.unshift(item);editItem(item.id);hideErrors('[data-form-errors]');$('[name="title"]',contentForm).focus();}
+  function addItem() {switchView('content');const item=blankItem();state.events.items.unshift(item);editItem(item.id);hideErrors('[data-form-errors]');setEditorState('New draft · not saved yet','warning');$('[name="title"]',contentForm).focus();}
   $$('[data-new-item]').forEach(button=>button.addEventListener('click',addItem));
   function readEditor() {
     const data=new FormData(contentForm),current=state.events.items.find(item=>item.id===state.activeItemId)||blankItem();
@@ -104,20 +104,68 @@
     return {...current,id,type:data.get('type'),status:data.get('status'),title,summary:String(data.get('summary')||'').trim(),published:data.get('published'),start:data.get('start'),end:data.get('end'),timezone:String(data.get('timezone')||'Pacific/Auckland').trim(),location:String(data.get('location')||'').trim(),url:String(data.get('url')||'').trim(),source:String(data.get('source')||'').trim(),clusters:splitCodes(data.get('clusters')),countries:splitCodes(data.get('countries')).map(code=>code.toUpperCase()),featured:Boolean(data.get('featured'))};
   }
   async function saveEditor(event) {
-    event.preventDefault();const item=readEditor(),index=state.events.items.findIndex(row=>row.id===state.activeItemId);if(index<0)return;
+    event.preventDefault();hideErrors('[data-form-errors]');setEditorState('Checking the required fields…','busy');
+    const validation=validateEditor();
+    if(validation.errors.length){
+      const error=new Error('The event has not been saved yet. Complete the highlighted fields.');error.details=validation.errors;
+      setEditorState(`Not saved · ${validation.errors.length} field${validation.errors.length===1?' needs':'s need'} attention`,'warning');showErrors('[data-form-errors]',error);notify(error.message,true);
+      validation.first?.focus({preventScroll:true});validation.first?.scrollIntoView({behavior:'smooth',block:'center'});return;
+    }
+    const item=readEditor(),index=state.events.items.findIndex(row=>row.id===state.activeItemId);if(index<0){setEditorState('Not saved · select or create an item first','warning');return}
     const nextStore={...state.events,items:state.events.items.map((row,rowIndex)=>rowIndex===index?item:row)};
-    try{const payload=await api('/api/events',{method:'POST',body:JSON.stringify(nextStore)});state.events=payload.events;state.activeItemId=item.id;hideErrors('[data-form-errors]');renderContentList();renderDashboard();editItem(item.id);notify(payload.message);}
-    catch(error){showErrors('[data-form-errors]',error);notify(error.message,true)}
+    const saveButton=$('[data-editor-save]');saveButton.disabled=true;saveButton.textContent='Saving…';setEditorState('Saving locally…','busy');
+    try{const payload=await api('/api/events',{method:'POST',body:JSON.stringify(nextStore)});state.events=payload.events;state.activeItemId=item.id;hideErrors('[data-form-errors]');renderContentList();renderDashboard();editItem(item.id,{preserveState:true});const time=new Intl.DateTimeFormat('en-NZ',{hour:'2-digit',minute:'2-digit'}).format(new Date());setEditorState(`Saved at ${time} · ${item.status==='published'?'visible online after publishing to GitHub':item.status}`,'saved');notify(item.status==='published'?'Saved. This item is included in the public Updates page and feed.':payload.message);}
+    catch(error){setEditorState('Not saved · check the message below','warning');showErrors('[data-form-errors]',error);notify(error.message,true)}
+    finally{saveButton.disabled=false;saveButton.textContent='Save changes'}
   }
   contentForm.addEventListener('submit',saveEditor);
-  contentForm.addEventListener('input',()=>setEditorState('Unsaved changes'));
-  contentForm.elements.namedItem('type').addEventListener('change',updateEventDateVisibility);
+  $('[data-editor-save]').addEventListener('click',saveEditor);
+  contentForm.addEventListener('input',event=>{event.target.classList?.remove('invalid-field');event.target.removeAttribute?.('aria-invalid');setEditorState('Unsaved changes · press Save changes to keep them','warning')});
+  contentForm.elements.namedItem('type').addEventListener('change',()=>{updateEventDateVisibility();renderPublicationState()});
+  contentForm.elements.namedItem('status').addEventListener('change',renderPublicationState);
+  contentForm.elements.namedItem('start').addEventListener('change',renderPublicationState);
   contentForm.elements.namedItem('summary').addEventListener('input',updateSummaryCount);
-  function setEditorState(message){$('[data-editor-state]').textContent=message}
+  function validateEditor(){
+    $$('input,select,textarea',contentForm).forEach(field=>{field.classList.remove('invalid-field');field.removeAttribute('aria-invalid')});
+    const errors=[],required=[['title','Enter a title.'],['summary','Enter a short summary.'],['published','Choose the publication date.']];
+    if(['event','deadline'].includes(contentForm.elements.namedItem('type').value))required.push(['start','Choose when the event or deadline starts.']);
+    let first=null;required.forEach(([name,message])=>{const field=contentForm.elements.namedItem(name);if(String(field?.value||'').trim())return;errors.push(message);field?.classList.add('invalid-field');field?.setAttribute('aria-invalid','true');first=first||field});
+    return {errors,first};
+  }
+  function setEditorState(message,tone=''){
+    const element=$('[data-editor-state]');element.textContent=message;element.className=tone;
+    const feedback=$('[data-save-feedback]');if(!feedback)return;feedback.className=`save-feedback ${tone}`;
+    const title=$('strong',feedback),copy=$('small',feedback),icon=$('span',feedback);
+    if(tone==='saved'){icon.textContent='✓';title.textContent='Save completed';copy.textContent=message}
+    else if(tone==='warning'){icon.textContent='!';title.textContent='Not saved yet';copy.textContent=message}
+    else if(tone==='busy'){icon.textContent='…';title.textContent='Saving in progress';copy.textContent=message}
+    else{icon.textContent='●';title.textContent='Saved local version';copy.textContent=message}
+  }
   function updateSummaryCount(){$('[data-summary-count]').textContent=contentForm.elements.namedItem('summary').value.length}
   function updateEventDateVisibility(){const visible=['event','deadline'].includes(contentForm.elements.namedItem('type').value);$('.event-date-fields').hidden=!visible}
+  function renderPublicationState(){
+    const type=contentForm.elements.namedItem('type').value,status=contentForm.elements.namedItem('status').value,start=contentForm.elements.namedItem('start').value;
+    const box=$('[data-publication-state]'),title=$('[data-publication-title]'),copy=$('[data-publication-copy]'),icon=$('[data-publication-icon]'),archive=$('[data-archive-item]');
+    box.className=`publication-state ${status}`;
+    if(status==='published'){
+      icon.textContent='✓';title.textContent='Published — included in the public website';
+      copy.textContent=['event','deadline'].includes(type)?`Visible in Updates & Events${start?` and in the calendar on ${formatDate(start)}`:'; add a start date to place it in the calendar'}.`:'Visible in Updates & Events and in the RSS feed.';
+      archive.textContent=['event','deadline'].includes(type)?'Remove from public calendar':'Remove from public page';
+    }else if(status==='archived'){
+      icon.textContent='↶';title.textContent='Archived — not visible online';copy.textContent='Kept locally and recoverable. Restore it as a draft to edit and republish it.';archive.textContent='Restore as draft';
+    }else{
+      icon.textContent='○';title.textContent='Draft — not visible online';copy.textContent='Saved locally until you choose Published and prepare the GitHub update.';archive.textContent='Archive draft';
+    }
+  }
   $('[data-duplicate-item]').addEventListener('click',()=>{const item=readEditor(),copy={...item,id:`${item.id}-copy`,title:`${item.title} — copy`,status:'draft',featured:false};state.events.items.unshift(copy);editItem(copy.id);setEditorState('Save this duplicate to keep it')});
-  $('[data-archive-item]').addEventListener('click',()=>{contentForm.elements.namedItem('status').value='archived';setEditorState('Unsaved changes');notify('The item will be archived when you save it.')});
+  $('[data-archive-item]').addEventListener('click',()=>{const status=contentForm.elements.namedItem('status');status.value=status.value==='archived'?'draft':'archived';renderPublicationState();setEditorState('Unsaved status change','warning');notify(status.value==='archived'?'Save to remove this item from the public page and calendar.':'Restored as a draft. Save to keep this change.')});
+  $('[data-delete-item]').addEventListener('click',async()=>{
+    const current=state.events.items.find(item=>item.id===state.activeItemId);if(!current)return;
+    if(!window.confirm(`Delete “${current.title||'this item'}” permanently?\n\nIt will be removed from the local manager, public page, calendar and RSS feed. This cannot be undone.`))return;
+    const nextStore={...state.events,items:state.events.items.filter(item=>item.id!==current.id)};
+    try{const payload=await api('/api/events',{method:'POST',body:JSON.stringify(nextStore)});state.events=payload.events;state.activeItemId=null;$('[data-editor-fields]').hidden=true;$('[data-editor-empty]').hidden=false;renderContentList();renderDashboard();notify('Item deleted permanently.');}
+    catch(error){showErrors('[data-form-errors]',error);notify(error.message,true)}
+  });
   $('[data-content-search]').addEventListener('input',renderContentList);$('[data-content-filter]').addEventListener('change',renderContentList);
   function showErrors(selector,error){const box=$(selector);box.hidden=false;box.textContent=[error.message,...(error.details||[])].join('\n')}
   function hideErrors(selector){const box=$(selector);box.hidden=true;box.textContent=''}
@@ -168,7 +216,30 @@
   async function saveProjectList(silent=false){try{const payload=await api('/api/portfolio-list',{method:'POST',body:JSON.stringify(state.projectStore)});state.projectStore=payload.projectStore;$('[data-project-list-state]').textContent='Saved locally';renderProjectList();if(!silent)notify(payload.message);return true}catch(error){notify(error.message,true);return false}}
   $('[data-project-list-save]').addEventListener('click',()=>saveProjectList(false));
   $$('[data-sync-run]').forEach(button=>button.addEventListener('click',()=>runPortfolioSync(button.dataset.syncRun==='validate')));
-  async function runPortfolioSync(dryRun){if(!await saveProjectList(true))return;const published=$('[data-sync-form] [name="date"]').value||state.today;const status=$('[data-xml-status]'),output=$('[data-xml-output]');status.className='report-status';status.textContent=dryRun?'Downloading':'Updating';output.textContent=`Downloading ${state.projectStore.projects.filter(row=>row.enabled!==false).length} current XML records from CORDIS…`;$$('[data-sync-run],[data-xml-run]').forEach(button=>button.disabled=true);try{const payload=await api(`/api/portfolio-sync?date=${encodeURIComponent(published)}&dryRun=${dryRun}`,{method:'POST',body:JSON.stringify({})});status.classList.add('success');status.textContent=dryRun?'Valid':'Updated';output.textContent=payload.output||payload.message;state.portfolio=payload.portfolio||state.portfolio;state.projectStore=payload.projectStore||state.projectStore;renderProjectList();renderDashboard();notify(payload.message)}catch(error){status.classList.add('error');status.textContent='Stopped';output.textContent=error.payload?.output||[error.message,...(error.details||[])].join('\n');if(error.payload?.projectStore)state.projectStore=error.payload.projectStore;renderProjectList();notify(error.message,true)}finally{$$('[data-sync-run],[data-xml-run]').forEach(button=>button.disabled=false)}}
+  let progressPollTimer=0,progressElapsedTimer=0,progressStarted=0,processingActive=false,progressOperation='portfolio-sync';
+  function formatElapsed(milliseconds){const seconds=Math.max(0,Math.floor(milliseconds/1000));return `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`}
+  function renderProcessing(progress){
+    const panel=$('[data-processing-progress]');panel.hidden=false;panel.classList.toggle('error',progress.stage==='error');panel.classList.toggle('complete',progress.stage==='completed');
+    const total=Number(progress.total||0),current=Number(progress.current||0),determinate=total>0;
+    $('[data-processing-title]').textContent=progress.operation==='xml-update'?'Processing XML archive':'Processing portfolio projects';
+    $('[data-processing-detail]').textContent=progress.message||'Working…';
+    $('[data-processing-count]').textContent=determinate?`${Math.min(current,total)} / ${total}`:'Working';
+    $('[data-processing-stage]').textContent=({downloading:'Downloading from CORDIS',building:'Building website data',processing:'Reading XML projects',completed:'Completed',error:'Stopped'})[progress.stage]||'Starting';
+    const bar=$('[data-processing-bar]');bar.classList.toggle('indeterminate',!determinate&&progress.active);bar.style.width=determinate?`${Math.max(2,Math.min(100,(current/total)*100))}%`:(progress.stage==='completed'?'100%':'32%');
+  }
+  async function pollProcessing(){try{const payload=await api('/api/progress');renderProcessing(payload.progress)}catch(_error){/* Keep the visible local timer running if one poll is missed. */}}
+  function beginProcessing(operation,total,message){
+    processingActive=true;progressOperation=operation;progressStarted=Date.now();clearInterval(progressPollTimer);clearInterval(progressElapsedTimer);
+    renderProcessing({active:true,operation,stage:operation==='xml-update'?'processing':'downloading',current:0,total,message});
+    $('[data-processing-elapsed]').textContent='00:00';progressPollTimer=setInterval(pollProcessing,550);progressElapsedTimer=setInterval(()=>{$('[data-processing-elapsed]').textContent=formatElapsed(Date.now()-progressStarted)},1000);
+  }
+  async function finishProcessing(success,message){
+    await pollProcessing();processingActive=false;clearInterval(progressPollTimer);clearInterval(progressElapsedTimer);
+    const currentText=$('[data-processing-count]').textContent,total=Number(currentText.split('/')[1]||0);renderProcessing({active:false,operation:progressOperation,stage:success?'completed':'error',current:success&&total?total:0,total,message});
+    $('[data-processing-elapsed]').textContent=formatElapsed(Date.now()-progressStarted);
+  }
+  window.addEventListener('beforeunload',event=>{if(!processingActive)return;event.preventDefault();event.returnValue=''});
+  async function runPortfolioSync(dryRun){if(!await saveProjectList(true))return;const published=$('[data-sync-form] [name="date"]').value||state.today,total=state.projectStore.projects.filter(row=>row.enabled!==false).length;const status=$('[data-xml-status]'),output=$('[data-xml-output]');status.className='report-status';status.textContent=dryRun?'Downloading':'Updating';output.textContent=`Downloading ${total} current XML records from CORDIS…`;beginProcessing('portfolio-sync',total,'Connecting to CORDIS…');$$('[data-sync-run],[data-xml-run]').forEach(button=>button.disabled=true);try{const payload=await api(`/api/portfolio-sync?date=${encodeURIComponent(published)}&dryRun=${dryRun}`,{method:'POST',body:JSON.stringify({})});status.classList.add('success');status.textContent=dryRun?'Valid':'Updated';output.textContent=payload.output||payload.message;state.portfolio=payload.portfolio||state.portfolio;state.projectStore=payload.projectStore||state.projectStore;renderProjectList();renderDashboard();await finishProcessing(true,payload.message);notify(payload.message)}catch(error){status.classList.add('error');status.textContent='Stopped';output.textContent=error.payload?.output||[error.message,...(error.details||[])].join('\n');if(error.payload?.projectStore)state.projectStore=error.payload.projectStore;renderProjectList();await finishProcessing(false,error.message);notify(error.message,true)}finally{$$('[data-sync-run],[data-xml-run]').forEach(button=>button.disabled=false)}}
 
   function renderExchange(){const current=state.exchangeStore.current||state.portfolio.exchangeRate||{};$('[data-current-rate]').textContent=current.value?`NZ$${Number(current.value).toFixed(4)}`:'NZ$—';$('[data-current-rate-period]').textContent=current.period||'—';$('[data-current-rate-retrieved]').textContent=formatDate(current.retrieved);const history=$('[data-rate-history]');history.replaceChildren();(state.exchangeStore.history||[]).forEach((row,index)=>{const item=document.createElement('div');item.className='rate-history-row';const period=document.createElement('strong');period.textContent=row.period||'—';const rate=document.createElement('span');rate.textContent=`€1 = NZ$${Number(row.value||0).toFixed(4)}${index===0?' · Current':''}`;const retrieved=document.createElement('small');retrieved.textContent=`Retrieved ${formatDate(row.retrieved)}`;item.append(period,rate,retrieved);history.append(item)});if(!history.children.length){const empty=document.createElement('p');empty.textContent='No approved-rate history is available yet.';history.append(empty)}}
   $('[data-rate-form]').addEventListener('submit',async event=>{event.preventDefault();hideErrors('[data-rate-errors]');const period=event.currentTarget.elements.namedItem('period').value;const button=$('[data-rate-check]');button.disabled=true;button.textContent='Checking InforEuro…';try{const payload=await api(`/api/exchange-rate/check?period=${encodeURIComponent(period)}`);state.exchangeCandidate=payload.rate;$('[data-candidate-rate]').textContent=`NZ$${Number(payload.rate.value).toFixed(4)}`;$('[data-candidate-period]').textContent=payload.rate.period;$('[data-rate-candidate]').hidden=false;notify(payload.message)}catch(error){showErrors('[data-rate-errors]',error);$('[data-rate-candidate]').hidden=true;state.exchangeCandidate=null;notify(error.message,true)}finally{button.disabled=false;button.textContent='Check official rate'}});
@@ -177,7 +248,7 @@
   const xmlFile=$('[data-xml-file]');
   xmlFile.addEventListener('change',()=>{$('[data-xml-file-name]').textContent=xmlFile.files[0]?.name||'Choose the complete XML archive'});
   $$('[data-xml-run]').forEach(button=>button.addEventListener('click',()=>runXml(button.dataset.xmlRun==='validate')));
-  async function runXml(dryRun){const file=xmlFile.files[0];if(!file){notify('Choose the complete XML ZIP first.',true);return}const published=$('[data-xml-form] [name="date"]').value||state.today;const status=$('[data-xml-status]'),output=$('[data-xml-output]');status.className='report-status';status.textContent=dryRun?'Validating':'Updating';output.textContent='Processing the XML archive…';$$('[data-xml-run]').forEach(button=>button.disabled=true);try{const payload=await api(`/api/xml-update?date=${encodeURIComponent(published)}&dryRun=${dryRun}`,{method:'POST',body:file});status.classList.add('success');status.textContent=dryRun?'Valid':'Updated';output.textContent=payload.output||payload.message;state.portfolio=payload.portfolio||state.portfolio;renderDashboard();notify(payload.message)}catch(error){status.classList.add('error');status.textContent='Stopped';output.textContent=error.payload?.output||[error.message,...(error.details||[])].join('\n');notify(error.message,true)}finally{$$('[data-xml-run]').forEach(button=>button.disabled=false)}}
+  async function runXml(dryRun){const file=xmlFile.files[0];if(!file){notify('Choose the complete XML ZIP first.',true);return}const published=$('[data-xml-form] [name="date"]').value||state.today;const status=$('[data-xml-status]'),output=$('[data-xml-output]');status.className='report-status';status.textContent=dryRun?'Validating':'Updating';output.textContent='Processing the XML archive…';beginProcessing('xml-update',0,'Uploading and reading the XML archive…');$$('[data-xml-run]').forEach(button=>button.disabled=true);try{const payload=await api(`/api/xml-update?date=${encodeURIComponent(published)}&dryRun=${dryRun}`,{method:'POST',body:file});status.classList.add('success');status.textContent=dryRun?'Valid':'Updated';output.textContent=payload.output||payload.message;state.portfolio=payload.portfolio||state.portfolio;renderDashboard();await finishProcessing(true,payload.message);notify(payload.message)}catch(error){status.classList.add('error');status.textContent='Stopped';output.textContent=error.payload?.output||[error.message,...(error.details||[])].join('\n');await finishProcessing(false,error.message);notify(error.message,true)}finally{$$('[data-xml-run]').forEach(button=>button.disabled=false)}}
 
   $('[data-prepare]').addEventListener('click',async()=>{const card=$('.readiness-card');try{const payload=await api('/api/prepare',{method:'POST',body:JSON.stringify({})});card.classList.remove('error');$('[data-readiness-icon]').textContent='✓';$('[data-readiness-title]').textContent='Website files are ready';$('[data-readiness-copy]').textContent=payload.message;const result=$('[data-prepare-result]');result.hidden=false;const list=$('[data-prepared-files]');list.replaceChildren(...payload.files.map(file=>{const item=document.createElement('li');item.textContent=file;return item}));notify(payload.message)}catch(error){card.classList.add('error');$('[data-readiness-icon]').textContent='!';$('[data-readiness-title]').textContent='Some items need attention';$('[data-readiness-copy]').textContent=[error.message,...(error.details||[])].join(' ');notify(error.message,true)}});
 

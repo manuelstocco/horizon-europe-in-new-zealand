@@ -15,6 +15,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from pathlib import Path
+from typing import Callable
 from xml.etree import ElementTree as ET
 
 from content_manager import atomic_write, read_json, refresh_asset_references
@@ -151,11 +152,27 @@ def _download_record(row: dict) -> tuple[str, bytes, str, str]:
     return project_id, content, acronym, title
 
 
-def download_portfolio(root: Path) -> tuple[Path | None, dict, list[str]]:
+def download_portfolio(
+    root: Path,
+    progress: Callable[[int, int, str], None] | None = None,
+) -> tuple[Path | None, dict, list[str]]:
     store = ensure_project_store(root)
     active = [row for row in store["projects"] if row.get("enabled", True)]
     if not active:
         return None, store, ["The project list contains no included projects."]
+    total = len(active)
+    completed = 0
+
+    def report(message: str) -> None:
+        if not progress:
+            return
+        try:
+            progress(completed, total, message)
+        except Exception:
+            # A presentation-layer progress update must never stop a download.
+            pass
+
+    report("Connecting to CORDIS…")
     fetched: dict[str, tuple[bytes, str, str]] = {}
     errors: list[str] = []
     today = date.today().isoformat()
@@ -170,6 +187,10 @@ def download_portfolio(root: Path) -> tuple[Path | None, dict, list[str]]:
             except Exception as exc:
                 row.update({"lastFetched": today, "lastStatus": "Error"})
                 errors.append(f"{row['id']} {row.get('acronym') or ''}: {exc}".strip())
+            finally:
+                completed += 1
+                label = row.get("acronym") or row["id"]
+                report(f"Processed {label}")
     write_project_store(root, store)
     if errors:
         return None, store, errors
