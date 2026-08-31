@@ -27,3 +27,11 @@ with GitHub Desktop.
 
 Detailed instructions and safety checks are documented in
 `XML-UPDATE-README.md`.
+
+## Local Site Manager
+
+Double-click `site-manager.command` to manage public updates and events,
+programme-country status, the CORDIS project register, direct XML downloads,
+the manually approved InforEuro rate and the files prepared for GitHub Desktop.
+The manager runs only on the local Mac and never publishes changes
+automatically. See `SITE-MANAGER-README.md` for the short workflow.

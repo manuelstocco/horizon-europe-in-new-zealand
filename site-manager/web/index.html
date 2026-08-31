@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Site Manager · Horizon Europe in New Zealand</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/site/assets/favicon-32.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="manager-header">
+    <a class="manager-brand" href="#dashboard" data-go="dashboard"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a>
+    <div class="manager-header-meta"><span class="local-badge">Local only</span><a href="/site/index.html" target="_blank">Preview website ↗</a></div>
+  </header>
+
+  <div class="manager-layout">
+    <aside class="manager-sidebar" aria-label="Site Manager sections">
+      <p class="sidebar-label">Site Manager</p>
+      <nav>
+        <button class="active" type="button" data-view-button="dashboard"><span>01</span>Overview</button>
+        <button type="button" data-view-button="content"><span>02</span>Updates &amp; events</button>
+        <button type="button" data-view-button="countries"><span>03</span>Country status</button>
+        <button type="button" data-view-button="portfolio"><span>04</span>Portfolio XML</button>
+        <button type="button" data-view-button="exchange"><span>05</span>Exchange rate</button>
+        <button type="button" data-view-button="publish"><span>06</span>Prepare update</button>
+      </nav>
+      <div class="sidebar-note"><strong>No automatic publishing</strong><p>Changes remain on this Mac until you publish them with GitHub Desktop.</p></div>
+    </aside>
+
+    <main class="manager-main">
+      <section class="manager-view active" data-view="dashboard">
+        <div class="view-heading"><div><p class="eyebrow">Control centre</p><h1>Keep the website current.</h1><p>Manage the portfolio, editorial updates and programme-country status from one local workspace.</p></div><button class="primary-action" type="button" data-go="content">Add an update</button></div>
+        <div class="manager-metrics" data-dashboard-metrics></div>
+        <div class="dashboard-grid">
+          <article class="manager-card manager-card-accent"><span class="card-kicker">Next action</span><h2 data-next-action-title>Review the current content</h2><p data-next-action-copy>Check upcoming events and the date of the country-status reference.</p><button class="text-action" type="button" data-go="publish">Run the readiness check →</button></article>
+          <article class="manager-card"><span class="card-kicker">Workflow</span><ol class="workflow"><li><b>Update</b><span>Edit events, countries or the XML portfolio.</span></li><li><b>Preview</b><span>Review the public pages locally.</span></li><li><b>Publish</b><span>Commit the prepared files with GitHub Desktop.</span></li></ol></article>
+        </div>
+      </section>
+
+      <section class="manager-view" data-view="content">
+        <div class="view-heading compact"><div><p class="eyebrow">Editorial content</p><h1>Updates &amp; events</h1><p>Published items appear on the public Updates &amp; Events page. Drafts remain visible only here.</p></div><button class="primary-action" type="button" data-new-item>New item</button></div>
+        <div class="content-workspace">
+          <section class="content-list-panel">
+            <div class="list-toolbar"><label><span class="sr-only">Search updates and events</span><input type="search" placeholder="Search content…" data-content-search></label><select data-content-filter aria-label="Filter by publication status"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option><option value="archived">Archived</option></select></div>
+            <div class="content-list" data-content-list></div>
+          </section>
+          <form class="editor-panel" data-content-form>
+            <div class="editor-empty" data-editor-empty><span>+</span><h2>Select an item</h2><p>Choose an existing item or create a new one.</p></div>
+            <div class="editor-fields" data-editor-fields hidden>
+              <div class="editor-head"><div><span class="card-kicker">Content editor</span><h2 data-editor-title>New item</h2></div><div class="editor-head-actions"><button type="button" class="quiet-action" data-duplicate-item>Duplicate</button><button type="button" class="quiet-action danger" data-archive-item>Archive</button></div></div>
+              <div class="field-grid two"><label>Type<select name="type"><option value="event">Event</option><option value="deadline">Deadline</option><option value="news">News</option><option value="site-update">Site update</option></select></label><label>Status<select name="status"><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label></div>
+              <label>Title<input name="title" maxlength="160" required></label>
+              <label>Summary<textarea name="summary" rows="4" maxlength="620" required></textarea><small><span data-summary-count>0</span>/620 characters</small></label>
+              <div class="field-grid two"><label>Publication date<input name="published" type="date" required></label><label>Time zone<input name="timezone" value="Pacific/Auckland"></label></div>
+              <div class="field-grid two event-date-fields"><label>Starts<input name="start" type="datetime-local"></label><label>Ends<input name="end" type="datetime-local"></label></div>
+              <div class="field-grid two"><label>Location<input name="location" placeholder="Online, Brussels, Wellington…"></label><label>Official source name<input name="source" placeholder="European Commission"></label></div>
+              <label>Official or internal link<input name="url" placeholder="https://… or overview.html"></label>
+              <div class="field-grid two"><label>Clusters<input name="clusters" placeholder="C1, C5"></label><label>Country codes<input name="countries" placeholder="NZ, BE, IT"></label></div>
+              <label class="check-field"><input name="featured" type="checkbox"><span><b>Featured item</b><small>Show this item prominently on the public page.</small></span></label>
+              <input name="id" type="hidden">
+              <div class="form-errors" data-form-errors hidden></div>
+              <div class="editor-footer"><span data-editor-state>No unsaved changes</span><button class="primary-action" type="submit">Save changes</button></div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="manager-view" data-view="countries">
+        <div class="view-heading compact"><div><p class="eyebrow">Programme reference</p><h1>Country status</h1><p>Association takes precedence over low- and middle-income eligibility. EU27 membership remains a fixed reference.</p></div><a class="secondary-action" href="/site/index.html#programme" target="_blank">Preview Story map ↗</a></div>
+        <form class="country-form" data-country-form>
+          <div class="manager-metrics country-metrics" data-country-metrics></div>
+          <article class="manager-card country-meta-card">
+            <div class="field-grid three"><label>Status checked<input name="checked" type="date" required></label><label>Programme period<input name="programmePeriod"></label><div class="staleness-indicator" data-country-freshness></div></div>
+            <label>Official association source<input name="associationSource" type="url" required></label>
+            <label>Official eligibility source<input name="eligibilitySource" type="url" required></label>
+          </article>
+          <div class="country-groups">
+            <article class="manager-card country-group" data-country-group="associated"><div class="country-group-head"><div><span class="status-dot associated"></span><h2>Associated countries</h2></div><strong data-country-count="associated">0</strong></div><div class="country-add"><select data-country-select="associated" aria-label="Choose a country to add"></select><button type="button" data-country-add="associated">Add</button></div><div class="country-chips" data-country-chips="associated"></div></article>
+            <article class="manager-card country-group" data-country-group="lowMiddleIncome"><div class="country-group-head"><div><span class="status-dot lmic"></span><h2>Low- and middle-income countries</h2></div><strong data-country-count="lowMiddleIncome">0</strong></div><div class="country-add"><select data-country-select="lowMiddleIncome" aria-label="Choose a country to add"></select><button type="button" data-country-add="lowMiddleIncome">Add</button></div><div class="country-chips" data-country-chips="lowMiddleIncome"></div></article>
+          </div>
+          <div class="form-errors" data-country-errors hidden></div>
+          <div class="sticky-save"><span data-country-state>No unsaved changes</span><button class="primary-action" type="submit">Save country status</button></div>
+        </form>
+      </section>
+
+      <section class="manager-view" data-view="portfolio">
+        <div class="view-heading compact"><div><p class="eyebrow">CORDIS data</p><h1>Portfolio XML</h1><p>Maintain one list of CORDIS projects. The Site Manager downloads a fresh XML record for every included project whenever you run an update.</p></div><button class="primary-action" type="button" data-project-add-focus>Add projects</button></div>
+        <div class="portfolio-workspace">
+          <section class="manager-card project-register-card">
+            <div class="register-head"><div><span class="card-kicker">Source register</span><h2><span data-project-count>0</span> projects</h2></div><label class="compact-search"><span class="sr-only">Search the project list</span><input type="search" placeholder="Search acronym, title or ID…" data-project-search></label></div>
+            <form class="project-add-form" data-project-add-form><label>Add project IDs or CORDIS links<textarea rows="3" name="references" placeholder="Paste one or several IDs or links, separated by a new line"></textarea></label><button class="secondary-action" type="submit">Add to list</button></form>
+            <div class="project-register" data-project-list></div>
+            <div class="register-footer"><span data-project-list-state>No unsaved changes</span><button class="primary-action" type="button" data-project-list-save>Save project list</button></div>
+          </section>
+          <aside class="portfolio-side">
+            <form class="manager-card sync-card" data-sync-form>
+              <span class="card-kicker">Automated update</span><h2>Download fresh records</h2><p>Every included CORDIS link is downloaded and checked before the website data changes.</p>
+              <label>Publication date<input type="date" name="date" required></label>
+              <div class="sync-note"><b>The exchange rate stays unchanged.</b><span>Update it separately from the Exchange rate page.</span></div>
+              <div class="xml-actions"><button class="secondary-action" type="button" data-sync-run="validate">Download &amp; validate</button><button class="primary-action" type="button" data-sync-run="update">Update website</button></div>
+            </form>
+            <details class="manager-card legacy-zip">
+              <summary>Use a complete XML ZIP instead</summary>
+              <form class="xml-card" data-xml-form>
+                <label class="file-drop compact"><input type="file" accept=".zip,application/zip" data-xml-file><span class="file-icon">ZIP</span><b data-xml-file-name>Choose the complete XML archive</b><small>Fallback option for an archive prepared outside the Site Manager.</small></label>
+                <label>Publication date<input type="date" name="date" required></label>
+                <div class="xml-actions"><button class="secondary-action" type="button" data-xml-run="validate">Validate ZIP</button><button class="primary-action" type="button" data-xml-run="update">Use ZIP</button></div>
+              </form>
+            </details>
+          </aside>
+        </div>
+        <article class="manager-card xml-report-card portfolio-report"><div class="report-head"><div><span class="card-kicker">Validation report</span><h2>Portfolio update results</h2></div><span class="report-status" data-xml-status>Waiting</span></div><pre data-xml-output>Save the project list, then use “Download &amp; validate” before updating the website.</pre></article>
+      </section>
+
+      <section class="manager-view" data-view="exchange">
+        <div class="view-heading compact"><div><p class="eyebrow">Official conversion</p><h1>Exchange rate</h1><p>Review the European Commission’s monthly InforEuro rate and decide when it should be applied across the website.</p></div><a class="secondary-action" href="https://commission.europa.eu/funding-and-tenders/procedures-guidelines-tenders/information-contractors-and-beneficiaries/exchange-rate-inforeuro_en" target="_blank" rel="noopener">Open InforEuro ↗</a></div>
+        <div class="exchange-layout">
+          <article class="manager-card current-rate-card"><span class="card-kicker">Rate currently used</span><div class="rate-equation"><span>€1</span><i>=</i><strong data-current-rate>NZ$—</strong></div><dl class="rate-meta"><div><dt>Accounting period</dt><dd data-current-rate-period>—</dd></div><div><dt>Retrieved</dt><dd data-current-rate-retrieved>—</dd></div><div><dt>Source</dt><dd>European Commission InforEuro</dd></div></dl></article>
+          <form class="manager-card rate-check-card" data-rate-form><span class="card-kicker">Official check</span><h2>Choose a monthly rate</h2><p>Checking a rate does not change the website. You will be asked to apply it in a separate step.</p><label>InforEuro month<input type="month" name="period" required></label><button class="secondary-action" type="submit" data-rate-check>Check official rate</button><div class="rate-candidate" data-rate-candidate hidden><span>Verified result</span><strong data-candidate-rate>NZ$—</strong><small data-candidate-period>—</small><button class="primary-action" type="button" data-rate-apply>Apply this rate to the website</button></div><div class="form-errors" data-rate-errors hidden></div></form>
+        </div>
+        <article class="manager-card rate-history-card"><div class="report-head"><div><span class="card-kicker">Local record</span><h2>Recent approved rates</h2></div><span class="report-status">Manual approval</span></div><div class="rate-history" data-rate-history></div></article>
+      </section>
+
+      <section class="manager-view" data-view="publish">
+        <div class="view-heading compact"><div><p class="eyebrow">Local handoff</p><h1>Prepare the website update</h1><p>Check that the generated files are complete before opening GitHub Desktop.</p></div></div>
+        <div class="prepare-layout">
+          <article class="manager-card readiness-card"><div class="readiness-icon" data-readiness-icon>✓</div><h2 data-readiness-title>Ready to check</h2><p data-readiness-copy>Run the final local check after saving your content and country-status changes.</p><button class="primary-action" type="button" data-prepare>Check website files</button></article>
+          <article class="manager-card"><span class="card-kicker">Public preview</span><h2>Review before publishing</h2><div class="preview-links"><a href="/site/updates.html" target="_blank"><b>Updates &amp; Events</b><span>Check cards, filters and calendar ↗</span></a><a href="/site/index.html" target="_blank"><b>The Story</b><span>Check country status and the portfolio ↗</span></a><a href="/site/overview.html" target="_blank"><b>Partnership Overview</b><span>Check portfolio figures ↗</span></a></div></article>
+        </div>
+        <article class="manager-card changed-files-card" data-prepare-result hidden><span class="card-kicker">Files prepared</span><h2>Review these changes in GitHub Desktop</h2><ul data-prepared-files></ul></article>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

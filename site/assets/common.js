@@ -19,6 +19,7 @@
         ['projects.html','Project Explorer']
       ]},
       { label:'Resources', pages:[
+        ['updates.html','Updates & Events'],
         ['repository.html','Country Presentations'],
         ['methodology.html','Data & Methodology']
       ]}

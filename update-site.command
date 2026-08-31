@@ -26,7 +26,7 @@ read -r UPDATE_DATE
 UPDATE_DATE="${UPDATE_DATE:-$DEFAULT_DATE}"
 
 echo
-python3 tools/update_from_xml.py "$ZIP_PATH" --site-dir site --date "$UPDATE_DATE"
+python3 tools/update_from_xml.py "$ZIP_PATH" --site-dir site --date "$UPDATE_DATE" --keep-exchange-rate
 STATUS=$?
 
 echo

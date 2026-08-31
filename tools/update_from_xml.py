@@ -19,6 +19,8 @@ from datetime import date, datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from content_manager import record_portfolio_update
+
 
 NS = {"c": "http://cordis.europa.eu"}
 DATA_PREFIX = "window.HE_DATA = "
@@ -83,6 +85,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--date", default=date.today().isoformat(), help="Published data date, YYYY-MM-DD")
     parser.add_argument("--dry-run", action="store_true", help="Validate and report without changing files")
     parser.add_argument("--no-backup", action="store_true", help="Do not create a local ignored backup")
+    parser.add_argument("--keep-exchange-rate", action="store_true", help="Preserve the currently approved EUR/NZD rate")
     return parser.parse_args()
 
 
@@ -459,21 +462,28 @@ def main() -> int:
 
     current_data = load_assignment(data_path, DATA_PREFIX)
     current_geo = load_assignment(geo_path, GEO_PREFIX)
-    try:
-        exchange_rate, rate_refreshed, rate_errors = fetch_infoeuro_nzd(
-            published_date,
-            current_data.get("metadata", {}).get("exchangeRate"),
-        )
-    except RuntimeError as exc:
-        print(f"ERROR: {exc}.", file=sys.stderr)
-        return 1
-    if not rate_refreshed:
-        print(
-            "WARNING: InforEuro could not be reached; the last verified official rate was preserved.",
-            file=sys.stderr,
-        )
-        if rate_errors:
-            print(f"  Latest attempt: {rate_errors[0]}", file=sys.stderr)
+    if args.keep_exchange_rate:
+        exchange_rate = dict(current_data.get("metadata", {}).get("exchangeRate", {}))
+        if number(exchange_rate.get("value")) <= 0:
+            print("ERROR: No approved EUR/NZD rate is available to preserve.", file=sys.stderr)
+            return 1
+        rate_refreshed, rate_errors = False, []
+    else:
+        try:
+            exchange_rate, rate_refreshed, rate_errors = fetch_infoeuro_nzd(
+                published_date,
+                current_data.get("metadata", {}).get("exchangeRate"),
+            )
+        except RuntimeError as exc:
+            print(f"ERROR: {exc}.", file=sys.stderr)
+            return 1
+        if not rate_refreshed:
+            print(
+                "WARNING: InforEuro could not be reached; the last verified official rate was preserved.",
+                file=sys.stderr,
+            )
+            if rate_errors:
+                print(f"  Latest attempt: {rate_errors[0]}", file=sys.stderr)
     existing_names = {row["code"]: row["name"] for row in current_data.get("countries", [])}
     existing_names.update(COUNTRY_NAMES)
     old_ids = {project["id"] for project in current_data.get("projects", [])}
@@ -539,7 +549,8 @@ def main() -> int:
     print(f"Removed projects: {', '.join(removed) if removed else 'none'}")
     print(f"Locations using country fallback: {rebuilt_geo['metadata']['countryPrecision']}")
     print(f"Locations missing coordinates: {len(missing_geo)}")
-    print(f"InforEuro rate: EUR 1 = NZD {exchange_rate['value']:.4f} ({exchange_rate['period']})")
+    rate_action = "preserved" if args.keep_exchange_rate else "checked"
+    print(f"InforEuro rate {rate_action}: EUR 1 = NZD {exchange_rate['value']:.4f} ({exchange_rate['period']})")
     print(f"Pages receiving fresh data cache markers: {len(page_updates)}")
 
     if args.dry_run:
@@ -559,6 +570,11 @@ def main() -> int:
     atomic_write(geo_path, f"{GEO_PREFIX}{json.dumps(rebuilt_geo, ensure_ascii=False, separators=(',', ':'))};\n")
     for page_path, content in page_updates.items():
         atomic_write(page_path, content)
+    try:
+        if record_portfolio_update(site_dir.parent, published_date, len(projects), added, removed):
+            print("Added a public site-update item for the changed portfolio")
+    except Exception as exc:
+        print(f"WARNING: The portfolio was updated, but the public update item could not be created: {exc}", file=sys.stderr)
     print(f"Updated: {data_path}")
     print(f"Updated: {geo_path}")
     if page_updates:

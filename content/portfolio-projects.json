@@ -1,0 +1,388 @@
+{
+  "metadata": {
+    "updated": "2026-08-31",
+    "schemaVersion": 1
+  },
+  "projects": [
+    {
+      "id": "101132352",
+      "acronym": "d@rts",
+      "title": "dialoguing@rts – Advancing Cultural Literacy for Social Inclusion through Dialogical Arts Education",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101132352",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101132352?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101132694",
+      "acronym": "EU-CIEMBLY",
+      "title": "EU-CIEMBLY: Creating an Inclusive European Citizens’ Assembly",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101132694",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101132694?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101136728",
+      "acronym": "VITAL",
+      "title": "VIrtual Twins as tools for personalised clinicAL care",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101136728",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101136728?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101134750",
+      "acronym": "STELLA",
+      "title": "Digital technologies for plant health, early detection, territory surveillance and phytosanitary measures",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101134750",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101134750?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101147385",
+      "acronym": "Minority Report",
+      "title": "MITIGATING ENVIRONMENTAL DISRUPTIVE EVENTS USING PEOPLE-CENTRIC PREDICTIVE DIGITAL TECHNOLOGIES TO IMPROVE DISASTER AND CLIMATE RESILIENCE",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101147385",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101147385?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101145612",
+      "acronym": "PROTID",
+      "title": "Randomised Controlled Trial of Preventive Treatment of Latent Tuberculosis Infection in Patients with Diabetes Mellitus",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101145612",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101145612?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101130741",
+      "acronym": "UPWEARS",
+      "title": "Sustainable solutions for upgraded smart wearables and equipment in sport",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101130741",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101130741?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101156595",
+      "acronym": "ERDERA",
+      "title": "EUROPEAN RARE DISEASES RESEARCH ALLIANCE",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101156595",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101156595?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101177351",
+      "acronym": "INTRACOMP",
+      "title": "INTERCULTURAL AND TRANSCULTURAL COMPETENCE THROUGH COLLABORATIVE CULTURAL EXPRESSION",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101177351",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101177351?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101177310",
+      "acronym": "VALPOP",
+      "title": "Valuing Public Goods in a Populist World: A Comparative Analysis of Network Dynamics and Societal Outcomes",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101177310",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101177310?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101182261",
+      "acronym": "REDESIGN",
+      "title": "tRansformativE fooD valuE Systems reshapInG resilient urban laNdscapes",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101182261",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101182261?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101181413",
+      "acronym": "GuardIAS",
+      "title": "GuardIAS - Guarding European Waters from IAS",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101181413",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101181413?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101180559",
+      "acronym": "OneSTOP",
+      "title": "OneBiosecurity Systems and Technology for People, Places and Pathways",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101180559",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101180559?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101191729",
+      "acronym": "m2M",
+      "title": "A bioprinting platform for the rapid, reliable, controlled and quantifiable patterning of cellular aggregates and microtissues into macroscale regenerative grafts with programmable architectures",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101191729",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101191729?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101192337",
+      "acronym": "HyDRA",
+      "title": "Diagnostic Tools and Risk Protocols To Accelerate Underground Hydrogen Storage",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101192337",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101192337?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101212676",
+      "acronym": "EUFAWREADY",
+      "title": "Enhancing Europe's readiness for managing fall armyworm, an invasive pest threat",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101212676",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101212676?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101214441",
+      "acronym": "RISE-IN",
+      "title": "Resilient Investment for Sustainable Environments",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101214441",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101214441?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101216573",
+      "acronym": "CSR",
+      "title": "ClimateSmartResearch",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101216573",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101216573?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101226682",
+      "acronym": "BE READY NOW",
+      "title": "BE READY NOW - EUROPEAN PARTNERSHIP FOR PANDEMIC PREPAREDNESS",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101226682",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101226682?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101235635",
+      "acronym": "SOLAR-MOVE",
+      "title": "SOLAR Photovoltaic to MOVE for Systems Integration",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101235635",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101235635?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101259512",
+      "acronym": "EP BrainHealth",
+      "title": "EUROPEAN PARTNERSHIP FOR BRAIN HEALTH (EP BRAINHEALTH)",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101259512",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101259512?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101251004",
+      "acronym": "NEREUS",
+      "title": "NEXT-GENERATION SCALABLE AEM ELECTROLYZERS AS SUSTAINABLE HYDROGEN PRODUCTION SYSTEM",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101251004",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101251004?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101288029",
+      "acronym": "CIVIC STAGE",
+      "title": "Citizenship-, Identity-, European Values-, Inclusion-, and Community development through Societal Participatory Theatre Activities in a Global Europe",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101288029",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101288029?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101286168",
+      "acronym": "RELATE4NATURE",
+      "title": "Relational Biodiversity Economics Approach for Assessing, Weaving and Scaling Socio-Economic Models for Biodiversity Restoration, and Community Resilience To Climate Change and Wellbeing",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101286168",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101286168?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101288958",
+      "acronym": "GrassWise",
+      "title": "Grassland Resilience and Adaptation through Sustainability and Science, With Inclusive Stakeholder Engagement",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101288958",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101288958?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101291488",
+      "acronym": "m-CONNECT",
+      "title": "Management of Coastal Networks Nurtured through Ecosystem assessment, Collaboration and Technology",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101291488",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101291488?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101286371",
+      "acronym": "GrassConnect",
+      "title": "Connecting actors to enhance multifunctionality in grass-based livestock sector through ecosystem service monitoring and informed decision-making",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101286371",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101286371?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101291290",
+      "acronym": "OCEOMICS",
+      "title": "OCEAN COMPUTATIONAL EXPLORATION AND ANALYTICS FOR THE NOVEL BIOACTIVE MOLECULES’ DISCOVERY AND THEIR EXPLOITATION IN COSMETICS",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101291290",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101291290?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101292089",
+      "acronym": "CLEAR-WATER",
+      "title": "Harmonising Aquatic Litter Monitoring and Assessment Across EU Waters",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101292089",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101292089?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101286791",
+      "acronym": "DIVERSIFY4Future",
+      "title": "Diversifying aquaculture for the future: inclusion of low-trophic species for sustainable, innovative, healthy and circular food systems",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101286791",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101286791?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101295902",
+      "acronym": "CASI-BIO",
+      "title": "Cascading and Sustainable Innovation for the Bioeconomy",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101295902",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101295902?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101295794",
+      "acronym": "STRONGBIONET",
+      "title": "STRONGBIONET: STRengthening and cOnnectiNG BIOeconomy NETworks to improve resilience, competitiveness and growth",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101295794",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101295794?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101295883",
+      "acronym": "AEAAS",
+      "title": "From EU Soil to Outer Space: Regulation as an enabler for Spaceports",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101295883",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101295883?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101291450",
+      "acronym": "AIMARIA",
+      "title": "Accelerating Innovation in Marine AI-powered Bioprospecting",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101291450",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101291450?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101294308",
+      "acronym": "ROWER",
+      "title": "Restoring Oceans and Waters in European Regions",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101294308",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101294308?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101295248",
+      "acronym": "SYNCHRONY",
+      "title": "Synchronous Southern Ocean Observatory",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101295248",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101295248?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101297191",
+      "acronym": "CoAgent",
+      "title": "Cognitive Computing Continuum for Large-Scale Distributed GenAI Agents",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101297191",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101297191?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    },
+    {
+      "id": "101296208",
+      "acronym": "CLIMACARE",
+      "title": "CLIMACARE: CLIMATE-RESILIENT ADAPTIVE ENVIRONMENTS FOR URBAN HEALTH AND SOCIAL EQUITY",
+      "cordisUrl": "https://cordis.europa.eu/project/id/101296208",
+      "xmlUrl": "https://cordis.europa.eu/project/id/101296208?format=xml",
+      "enabled": true,
+      "lastFetched": "",
+      "lastStatus": "Not checked"
+    }
+  ]
+}
