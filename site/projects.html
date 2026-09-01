@@ -24,7 +24,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="assets/styles.css?v=efb626e9a2f3">
+  <link rel="stylesheet" href="assets/styles.css?v=9f1201fa5c7f">
   <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
 </head>
 <body class="page-shell focus-explorer" data-page="projects">
@@ -82,7 +82,10 @@
         </div>
 
         <article class="focus-slide" data-focus-slide>
-          <div class="focus-accent"></div>
+          <div class="focus-progress-rail" data-project-stage-rail tabindex="0" role="img">
+            <div class="focus-accent" aria-hidden="true"></div>
+            <div class="focus-stage-drop" aria-hidden="true"><span></span><strong data-project-stage-label></strong></div>
+          </div>
           <div class="focus-slide-inner">
             <header class="focus-slide-header">
               <div>
@@ -90,7 +93,7 @@
                 <h2 class="focus-slide-title" data-project-acronym></h2>
                 <p class="focus-slide-subtitle" data-project-title></p>
               </div>
-              <div class="focus-identity"><div class="focus-project-number" data-project-id></div><div class="focus-status"><span class="focus-status-dot"></span><span data-project-status></span></div></div>
+              <div class="focus-identity"><div class="focus-project-number" data-project-id></div><div class="focus-status"><span class="focus-status-dot"></span><span data-project-status></span></div><a class="focus-output-status" data-project-output-status href="results.html" hidden></a></div>
             </header>
 
             <section class="focus-metric-grid" aria-label="Project metrics">
@@ -98,13 +101,6 @@
               <div class="focus-metric"><span>Timeline</span><strong data-project-duration></strong><small data-project-dates></small></div>
               <div class="focus-metric"><span>Consortium</span><strong data-project-organisations></strong><small data-project-countries></small></div>
               <div class="focus-metric"><span>NZ participation</span><strong data-project-nz-funding></strong><small data-project-nz-count></small></div>
-            </section>
-
-            <section class="project-result-strip" data-project-result aria-labelledby="project-result-title">
-              <div class="project-result-heading"><div><span class="focus-label">Implementation</span><h3 id="project-result-title">Project progress and public outputs</h3></div><a href="results.html">Explore all results →</a></div>
-              <ol class="project-stage-track" data-project-stage aria-label="Implementation stage"></ol>
-              <p class="project-result-summary" data-project-result-summary></p>
-              <div class="project-output-list" data-project-outputs></div>
             </section>
 
             <div class="focus-slide-grid">
@@ -138,6 +134,6 @@
 
   <div class="focus-toast" data-toast role="status" aria-live="polite"></div>
   <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
-  <script src="assets/data.js?v=2c04c42a471a"></script><script src="assets/project-results-data.js?v=ffcd586f7a44"></script><script src="assets/common.js?v=05500bfa8bad"></script><script src="assets/app.js?v=ae5d61c02901"></script><script src="assets/vendor/pptxgen.bundle.js?v=4fb9eac5cfef"></script><script src="assets/vendor/pdf-lib.min.js?v=0f9a5cad0794"></script><script src="assets/vendor/fontkit.umd.min.js?v=d8df561b9fba"></script><script src="assets/font-data.js?v=6d6cd22bc83f"></script><script src="assets/project-export.js?v=ff91e99f977c"></script>
+  <script src="assets/data.js?v=2c04c42a471a"></script><script src="assets/project-results-data.js?v=ffcd586f7a44"></script><script src="assets/common.js?v=fd70e7881e05"></script><script src="assets/app.js?v=67ac127283b4"></script><script src="assets/vendor/pptxgen.bundle.js?v=4fb9eac5cfef"></script><script src="assets/vendor/pdf-lib.min.js?v=0f9a5cad0794"></script><script src="assets/vendor/fontkit.umd.min.js?v=d8df561b9fba"></script><script src="assets/font-data.js?v=6d6cd22bc83f"></script><script src="assets/project-export.js?v=ff91e99f977c"></script>
 </body>
 </html>

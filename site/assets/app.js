@@ -376,7 +376,8 @@
       search:params.get('search')||'',filtered:[...D.projects],selectedId:''
     };
     const resultRecords=new Map((window.HE_PROJECT_RESULTS?.projects||[]).map(record=>[String(record.projectId),record]));
-    const resultStages=[['planned','Planned'],['ongoing','Ongoing'],['outputs','Outputs available'],['completed','Completed']];
+    const lifecycleLabels={signed:'Signed',ongoing:'Ongoing',completed:'Completed'};
+    const lifecyclePositions={signed:'12%',ongoing:'50%',completed:'88%'};
     const list=document.querySelector('[data-project-list]');
     const slide=document.querySelector('[data-focus-slide]');
     const previous=document.querySelector('[data-previous]');
@@ -485,7 +486,7 @@
       const nzFunding=nz.reduce((sum,org)=>sum+(org.contribution||0),0);
       const countryRows=project.countryParticipation||[...new Set(project.countryCodes)].map(code=>({code,organisations:project.organisations.filter(org=>org.countryCode===code).length}));
       slide.style.setProperty('--cluster-colour',clusterColor(project.clusterCode));slide.style.setProperty('--scheme-colour',schemeColor(project.schemeCode));
-      put('[data-project-cluster]',cluster?.name||project.cluster);put('[data-project-acronym]',project.acronym);put('[data-project-title]',project.title);put('[data-project-id]',`Grant ${project.id}`);put('[data-project-status]',project.status||'Status not reported');
+      put('[data-project-cluster]',cluster?.name||project.cluster);put('[data-project-acronym]',project.acronym);put('[data-project-title]',project.title);put('[data-project-id]',`Grant ${project.id}`);
       put('[data-project-contribution]',money(project.ecContribution));put('[data-project-cost]',project.totalCost>0?`Total project cost ${money(project.totalCost)}`:'Total project cost not reported');
       put('[data-project-duration]',project.duration?`${fmtNumber(project.duration)} months`:'Not reported');put('[data-project-dates]',`${formatDate(project.start)} – ${formatDate(project.end)}`);
       put('[data-project-organisations]',`${fmtNumber(project.organisationCount||project.organisations.length)} organisations`);put('[data-project-countries]',`${fmtNumber(project.countryCount||countryRows.length)} countries represented`);
@@ -493,15 +494,16 @@
       put('[data-project-focus]',project.focus||project.teaser||'No project objective is available in the source record.');put('[data-project-scheme]',project.scheme||'Not reported');put('[data-project-scheme-code]',project.schemeCode);put('[data-project-call]',project.callCode||'Not reported');put('[data-project-topic]',project.topic||'Not reported');put('[data-project-topic-code]',project.topicCode);
       const manual=resultRecords.get(String(project.id));
       const today=new Date().toISOString().slice(0,10);
-      const inferred=project.end&&project.end<today?'completed':project.start&&project.start>today?'planned':'ongoing';
-      const stage=manual?.stage||inferred;
-      const stageIndex=resultStages.findIndex(([key])=>key===stage);
-      const stageTrack=document.querySelector('[data-project-stage]');stageTrack.replaceChildren();
-      resultStages.forEach(([key,label],index)=>{const item=document.createElement('li');item.className=index<stageIndex?'complete':index===stageIndex?'active':'';item.setAttribute('aria-current',index===stageIndex?'step':'false');item.innerHTML=`<span aria-hidden="true">${index<stageIndex?'✓':index+1}</span><strong>${label}</strong>`;stageTrack.appendChild(item);});
-      const resultSummary=document.querySelector('[data-project-result-summary]');resultSummary.textContent=manual?.summary||`Current stage inferred from the project dates: ${resultStages[stageIndex]?.[1]||'Ongoing'}.`;
-      const outputs=document.querySelector('[data-project-outputs]');outputs.replaceChildren();
-      (manual?.outputs||[]).forEach(output=>{const link=document.createElement('a');link.className='project-output-link';link.href=output.url;link.target='_blank';link.rel='noopener';link.innerHTML=`<span>${String(output.type||'output').replace('-', ' ')}</span><strong>${output.title}</strong><small>${output.published?formatDate(output.published):'Public output'} ↗</small>`;outputs.appendChild(link);});
-      outputs.hidden=!outputs.children.length;
+      const inferred=project.end&&project.end<today?'completed':project.start&&project.start>today?'signed':'ongoing';
+      const stage=manual?.stage==='completed'?'completed':manual?.stage==='planned'?'signed':manual?.stage==='ongoing'||manual?.stage==='outputs'?'ongoing':inferred;
+      const stageLabel=lifecycleLabels[stage]||'Ongoing';
+      slide.dataset.projectStage=stage;slide.style.setProperty('--stage-position',lifecyclePositions[stage]||lifecyclePositions.ongoing);
+      put('[data-project-status]',stageLabel);put('[data-project-stage-label]',stageLabel);
+      const rail=document.querySelector('[data-project-stage-rail]');
+      rail.setAttribute('aria-label',`Project status: ${stageLabel}. Project dates: ${formatDate(project.start)} to ${formatDate(project.end)}.`);
+      const outputCount=manual?.outputs?.length||0,hasOutputs=outputCount>0||manual?.stage==='outputs';
+      const outputStatus=document.querySelector('[data-project-output-status]');
+      outputStatus.hidden=!hasOutputs;outputStatus.textContent=outputCount?`${fmtNumber(outputCount)} public ${outputCount===1?'output':'outputs'}`:'Outputs available';outputStatus.href=`results.html?q=${encodeURIComponent(project.acronym)}`;
       const coordinator=project.coordinator||project.organisations.find(org=>org.coordinator);
       put('[data-coordinator-name]',coordinator?(coordinator.short||coordinator.name):'Not reported');put('[data-coordinator-meta]',coordinator?[countryName(coordinator.countryCode),coordinator.city,coordinator.contribution>0?`${money(coordinator.contribution)} EU contribution`:null].filter(Boolean).join(' · '):'');
 

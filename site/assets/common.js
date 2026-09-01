@@ -381,7 +381,7 @@
     const target = page === 'overview'
       ? document.querySelector('.overview-hero-actions')
       : page === 'funding-flows'
-        ? document.querySelector('.page-hero')
+        ? document.querySelector('.overview-hero-actions')
         : document.querySelector('.filter-panel,.focus-sidebar,.circle-controls');
     if (!target) return;
     const button = document.createElement('button');
@@ -389,7 +389,6 @@
     decorateShareButton(button);
     button.addEventListener('click', () => copyCurrentView(button));
     if (target.classList.contains('overview-hero-actions')) target.appendChild(button);
-    else if (target.classList.contains('page-hero')) { button.classList.add('page-hero-share-view'); target.appendChild(button); }
     else if (target.classList.contains('circle-controls')) { button.classList.add('circle-share-view'); target.insertAdjacentElement('afterend',button); }
     else if (target.classList.contains('focus-sidebar')) (target.querySelector('.focus-results-meta') || target).appendChild(button);
     else target.appendChild(button);
