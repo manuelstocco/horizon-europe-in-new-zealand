@@ -51,3 +51,7 @@ body.circle-study-page{background:#f1f5f9;color:#294b68}
 .circle-search:before{position:absolute;left:13px;top:50%;margin-left:0;transform:translateY(-50%)}.circle-search:after{left:25px;top:27px}.circle-search input{width:100%;min-width:0;padding-left:39px;padding-right:42px}
 .circle-search-results{display:none}.circle-search-results.is-open{display:grid}.circle-search-results[hidden]{display:none!important}
 @media(max-width:1180px){.circle-controls{grid-template-columns:230px minmax(0,1fr) 210px 68px}.cluster-filter{width:230px;min-width:230px;max-width:230px}.cluster-filter .multi-label{max-width:160px}}
+
+/* WCAG AA reading contrast */
+.circle-filter>label,.circle-measure legend,.circle-selection,.circle-nz-label span,.circle-nz-label small,.readout-kicker,.circle-readout>div:first-child>p,.readout-metric span,.readout-cluster,.circle-instruction,.circle-search-result small{color:#52697d}
+.circle-study-page .site-footer,.circle-study-page .site-footer a{color:#52697d}

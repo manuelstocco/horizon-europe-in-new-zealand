@@ -11,6 +11,7 @@ The Site Manager is the local control centre for the Horizon Europe in New Zeala
 ## What it manages
 
 - **Updates & events** — create, edit, feature, publish or archive public content. Every save also refreshes the public RSS feed.
+- **Project results** — assign an implementation stage, add a concise verified summary and link public deliverables, papers, pilots, demonstrators, policy reports or datasets.
 - **Country status** — maintain associated countries, low- and middle-income eligibility, source links and the date on which the reference was checked.
 - **Portfolio XML** — maintain the project register, download fresh XML records directly from the official CORDIS links, validate the complete portfolio and update the website. A complete ZIP remains available as a fallback.
 - **Exchange rate** — check an official monthly EUR–NZD InforEuro rate and apply it only after manual approval.
@@ -39,6 +40,16 @@ After every successful save, the editor shows the save time and the item’s pub
 ## RSS feed
 
 The public feed is generated as `site/feed.xml`. It contains published items only and uses the same Updates & Events content as the website. Draft and archived items never appear. Browsers and feed readers can discover it automatically from every public page. Visitors use **Subscribe** on the Updates & Events page to copy the address or open it in a compatible reader; the raw XML remains available as a technical option.
+
+## Project-results workflow
+
+1. Open **Project results** and choose a project from the list.
+2. Confirm its implementation stage. When no manual record exists, the public tracker infers Planned, Ongoing or Completed from the CORDIS dates.
+3. Add only reader-facing information: a concise implementation summary and verified public outputs with their source links.
+4. Save locally, then check **Project Results** and the project’s own Project Explorer view.
+5. Use the normal **Prepare update** and GitHub Desktop workflow to publish the changes.
+
+Manual result records are stored in `content/project-results.json` and are preserved when the XML portfolio is refreshed.
 
 ## Portfolio workflow
 

@@ -7,7 +7,9 @@
   const shell=canvas.closest('.network-map-shell');
   const tooltip=document.querySelector('[data-map-tooltip]');
   const empty=document.querySelector('[data-map-empty]');
-  const state={clusters:[],projects:[],countries:[]};
+  const params=new URLSearchParams(location.search);
+  const allowedClusters=new Set(D.clusters.map(cluster=>cluster.code)),allowedProjects=new Set(D.projects.map(project=>project.id)),allowedCountries=new Set(D.countries.map(country=>country.code));
+  const state={clusters:(params.get('mapClusters')||'').split(',').filter(value=>allowedClusters.has(value)),projects:(params.get('mapProjects')||'').split(',').filter(value=>allowedProjects.has(value)),countries:(params.get('mapCountries')||'').split(',').filter(value=>allowedCountries.has(value))};
   const view={scale:1,tx:0,ty:0};
   const centreLongitude=15;
   let width=0,height=0,dpr=1,scope=null,hover=null,drag=null,drawQueued=false,drawnAreas=[],drawnMarkers=[];
@@ -104,6 +106,16 @@
     H.renderChips(document.querySelector('[data-map-selection]'),selectionLabels(),'All clusters, projects and partner countries');
     document.querySelector('[data-map-narrative]').innerHTML=scope.projects.length?`<strong>${scope.projects.length} ${scope.projects.length===1?'project connects':'projects connect'} New Zealand with ${partnerCountries.length} partner ${partnerCountries.length===1?'country':'countries'}.</strong> The map keeps programme status visible while highlighting the countries represented across ${scope.organisations.size} organisations.`:'<strong>No projects match the current filters.</strong> Adjust the selection to restore the active portfolio.';
     canvas.setAttribute('aria-label',`World map centred on Europe. ${scope.projects.length} selected projects involve ${partnerCountries.length} partner countries and ${scope.organisations.size} organisations.`);
+    renderAccessibleMapTable();
+  }
+
+  function renderAccessibleMapTable(){
+    const root=document.querySelector('[data-map-accessible-table]');if(!root)return;
+    const countries=new Map();
+    WORLD.features.forEach(feature=>{const code=normaliseCode(feature.properties.code);if(code&&code!=='-99')countries.set(code,{code,name:countryName.get(code)||feature.properties.name});});
+    markerRows().forEach(item=>{const code=normaliseCode(item.code);if(code&&!countries.has(code))countries.set(code,{code,name:item.name||countryName.get(code)||code});});
+    const rows=[...countries.values()].sort((a,b)=>a.name.localeCompare(b.name)).map(country=>{const activity=scope.countries.get(country.code),status=statusStyle[statusFor(country.code)];return `<tr><th scope="row">${escapeHtml(country.name)}</th><td>${escapeHtml(status.label)}</td><td>${activity?activity.projects.size:0}</td><td>${activity?activity.organisations.size:0}</td></tr>`;});
+    root.innerHTML=`<table class="project-table map-accessible-table"><caption class="sr-only">Horizon Europe country status and participation in the selected project scope</caption><thead><tr><th scope="col">Country or territory</th><th scope="col">Horizon Europe status</th><th scope="col">Selected projects</th><th scope="col">Organisations</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
   }
 
   function renderLegend(){
@@ -254,6 +266,7 @@
   document.querySelector('[data-map-zoom-out]').addEventListener('click',()=>zoomAt(.8));
   document.querySelector('[data-map-reset-view]').addEventListener('click',()=>{view.scale=1;view.tx=0;view.ty=0;requestDraw();});
   document.querySelector('[data-map-clear]').addEventListener('click',()=>{clusterControl.clear();projectControl.clear();countryControl.clear();});
+  document.querySelector('[data-map-share]').addEventListener('click',event=>H.copyCurrentView(event.currentTarget,'Map view link copied'));
 
   function resize(){
     const rect=canvas.getBoundingClientRect();width=Math.max(320,Math.round(rect.width));height=Math.max(420,Math.round(rect.height));dpr=Math.min(2,window.devicePixelRatio||1);
@@ -261,6 +274,7 @@
   }
   new ResizeObserver(resize).observe(shell);
 
-  function update(){scope=buildScope();hover=null;tooltip.classList.remove('show');renderSummary();renderLegend();requestDraw();}
-  update();resize();
+  function syncUrl(){const next=new URLSearchParams();if(state.clusters.length)next.set('mapClusters',state.clusters.join(','));if(state.projects.length)next.set('mapProjects',state.projects.join(','));if(state.countries.length)next.set('mapCountries',state.countries.join(','));history.replaceState(null,'',`${location.pathname}${next.size?`?${next}`:''}${location.hash}`)}
+  function update(){scope=buildScope();hover=null;tooltip.classList.remove('show');renderSummary();renderLegend();requestDraw();syncUrl();}
+  clusterControl.set(state.clusters);projectControl.set(state.projects);countryControl.set(state.countries);update();resize();
 })();

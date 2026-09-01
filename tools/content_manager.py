@@ -17,6 +17,8 @@ from xml.sax.saxutils import escape
 
 EVENT_TYPES = {"event", "deadline", "news", "site-update"}
 CONTENT_STATUSES = {"draft", "published", "archived"}
+PROJECT_RESULT_STAGES = {"planned", "ongoing", "outputs", "completed"}
+PROJECT_OUTPUT_TYPES = {"deliverable", "paper", "pilot", "demonstrator", "policy-report", "dataset", "other"}
 DEFAULT_ASSOCIATION_SOURCE = "https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe_en"
 DEFAULT_ELIGIBILITY_SOURCE = "https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2026-2027/wp-15-general-annexes_horizon-2026-2027_en.pdf"
 PUBLIC_SITE_URL = "https://manuelstocco.github.io/horizon-europe-in-new-zealand/"
@@ -183,6 +185,77 @@ def write_event_outputs(root: Path, store: dict) -> dict:
     ensure_rss_discovery(root)
     refresh_asset_references(root, {"assets/updates-events-data.js"})
     return cleaned
+
+
+def default_project_results() -> dict:
+    return {"metadata": {"updated": date.today().isoformat(), "schemaVersion": 1}, "projects": []}
+
+
+def validate_project_results(store: dict) -> tuple[dict, list[str]]:
+    cleaned = {"metadata": {"updated": date.today().isoformat(), "schemaVersion": 1}, "projects": []}
+    errors: list[str] = []
+    seen: set[str] = set()
+    for index, raw in enumerate(store.get("projects", []), start=1):
+        project_id = str(raw.get("projectId", "")).strip()
+        stage = str(raw.get("stage", "ongoing")).strip()
+        reviewed = str(raw.get("reviewed", "")).strip()
+        record = {
+            "projectId": project_id,
+            "stage": stage,
+            "reviewed": reviewed,
+            "summary": str(raw.get("summary", "")).strip(),
+            "outputs": [],
+        }
+        label = project_id or f"Project result row {index}"
+        if not re.fullmatch(r"\d{6,12}", project_id):
+            errors.append(f"{label}: enter a valid CORDIS project ID.")
+        elif project_id in seen:
+            errors.append(f"{label}: the project appears more than once.")
+        seen.add(project_id)
+        if stage not in PROJECT_RESULT_STAGES:
+            errors.append(f"{label}: choose a valid implementation stage.")
+        if reviewed:
+            try:
+                date.fromisoformat(reviewed)
+            except ValueError:
+                errors.append(f"{label}: the review date must use YYYY-MM-DD.")
+        for output_index, output in enumerate(raw.get("outputs", []), start=1):
+            output_type = str(output.get("type", "other")).strip()
+            title = str(output.get("title", "")).strip()
+            url = str(output.get("url", "")).strip()
+            published = str(output.get("published", "")).strip()
+            if output_type not in PROJECT_OUTPUT_TYPES:
+                errors.append(f"{label}, output {output_index}: choose a valid output type.")
+            if not title:
+                errors.append(f"{label}, output {output_index}: title is required.")
+            if not valid_url(url, allow_relative=False):
+                errors.append(f"{label}, output {output_index}: enter a valid public http or https link.")
+            if published:
+                try:
+                    date.fromisoformat(published)
+                except ValueError:
+                    errors.append(f"{label}, output {output_index}: the date must use YYYY-MM-DD.")
+            record["outputs"].append({"type": output_type, "title": title, "url": url, "published": published})
+        cleaned["projects"].append(record)
+    cleaned["projects"].sort(key=lambda row: row["projectId"])
+    return cleaned, errors
+
+
+def write_project_result_outputs(root: Path, store: dict) -> dict:
+    cleaned, errors = validate_project_results(store)
+    if errors:
+        raise ValueError("\n".join(errors))
+    cleaned["metadata"]["updated"] = date.today().isoformat()
+    atomic_write(root / "content" / "project-results.json", json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n")
+    payload = json.dumps(cleaned, ensure_ascii=False, separators=(",", ":"))
+    atomic_write(root / "site" / "assets" / "project-results-data.js", f"window.HE_PROJECT_RESULTS={payload};\n")
+    refresh_asset_references(root, {"assets/project-results-data.js"})
+    return cleaned
+
+
+def ensure_project_results(root: Path) -> dict:
+    path = root / "content" / "project-results.json"
+    return write_project_result_outputs(root, read_json(path, default_project_results()))
 
 
 def _rss_date(value: str) -> str:

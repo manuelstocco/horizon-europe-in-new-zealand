@@ -24,7 +24,10 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="assets/styles.css?v=7cf690472826">
+  <link rel="preload" as="image" href="assets/story-timeline/timeline-foundations-semicircle.png" fetchpriority="high">
+  <link rel="preload" as="image" href="assets/story-timeline/timeline-association-semicircle.png" fetchpriority="high">
+  <link rel="preload" as="image" href="assets/story-timeline/timeline-collaboration-semicircle.png" fetchpriority="high">
+  <link rel="stylesheet" href="assets/styles.css?v=efb626e9a2f3">
   <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
 </head>
 <body data-page="story">
@@ -55,6 +58,7 @@
       <div class="hero-nz-map" aria-label="Map of Aotearoa New Zealand and its principal university cities">
         <canvas data-hero-nz-map role="img" aria-label="Aotearoa New Zealand with markers for its principal university cities"></canvas>
         <div class="hero-city-tooltip" data-hero-city-tooltip aria-hidden="true"></div>
+        <ul class="sr-only"><li>Auckland</li><li>Hamilton</li><li>Palmerston North</li><li>Wellington</li><li>Christchurch</li><li>Dunedin</li></ul>
         <div class="hero-nz-label"><span>Aotearoa</span><strong>New Zealand</strong><small>Pillar II associate country</small></div>
       </div>
       <details class="page-download story-page-download" data-story-download>
@@ -101,7 +105,7 @@
         <div class="timeline-line" aria-hidden="true"><span></span></div>
         <article class="timeline-item left" data-timeline>
           <div class="timeline-card"><span class="timeline-index">Foundation</span><h3>Building the foundations</h3><p>The European Union and New Zealand establish a formal framework for closer science and technology cooperation.</p><a class="timeline-source" href="https://eur-lex.europa.eu/EN/legal-content/summary/scientific-and-technological-cooperation-between-the-eu-and-new-zealand.html" target="_blank" rel="noreferrer">Read the agreement summary ↗</a></div>
-          <div class="timeline-dot" aria-hidden="true"></div><div class="timeline-year-scene"><img src="assets/story-timeline/timeline-foundations-semicircle.png" alt="" aria-hidden="true" loading="lazy" decoding="async"><time class="timeline-year" datetime="2009">2009</time></div>
+          <div class="timeline-dot" aria-hidden="true"></div><div class="timeline-year-scene"><img src="assets/story-timeline/timeline-foundations-semicircle.png" alt="" aria-hidden="true" loading="eager" fetchpriority="high" decoding="async"><time class="timeline-year" datetime="2009">2009</time></div>
         </article>
         <article class="timeline-item right" data-timeline>
           <div class="timeline-card"><span class="timeline-index">Exploration</span><h3>Exploring a closer partnership</h3><p>The European Commission and the New Zealand Government hold three rounds of exploratory talks. The discussions confirm a shared interest in taking research cooperation to the next level.</p><a class="timeline-source" href="https://euraxess.ec.europa.eu/worldwide/australia-nz/conclusion-exploratory-talks-association-new-zealand-horizon" target="_blank" rel="noreferrer">European Commission update ↗</a></div>
@@ -121,7 +125,7 @@
         </article>
         <article class="timeline-item right milestone" data-timeline>
           <div class="timeline-card"><span class="timeline-index">Association</span><h3>New Zealand joins Horizon Europe</h3><p>The Association Agreement is signed in Brussels and provisionally applies from that day. New Zealand is formally associated to Pillar II—the programme's collaborative research and innovation pillar.</p><a class="timeline-source" href="https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe/new-zealand_en" target="_blank" rel="noreferrer">Association policy page ↗</a></div>
-          <div class="timeline-dot" aria-hidden="true"></div><div class="timeline-year-scene"><img src="assets/story-timeline/timeline-association-semicircle.png" alt="" aria-hidden="true" loading="lazy" decoding="async"><time class="timeline-year" datetime="2023-07-09">9 July<br>2023</time></div>
+          <div class="timeline-dot" aria-hidden="true"></div><div class="timeline-year-scene"><img src="assets/story-timeline/timeline-association-semicircle.png" alt="" aria-hidden="true" loading="eager" fetchpriority="high" decoding="async"><time class="timeline-year" datetime="2023-07-09">9 July<br>2023</time></div>
         </article>
         <article class="timeline-item left" data-timeline>
           <div class="timeline-card"><span class="timeline-index">Launch</span><h3>Horizon Europe launches in New Zealand</h3><p>More than 200 researchers, innovators and institutional partners gather in Christchurch, turning the new association into practical opportunities for collaboration.</p><a class="timeline-source" href="https://research-and-innovation.ec.europa.eu/news/all-research-and-innovation-news/horizon-europe-launch-event-new-zealand-2023-07-28_en" target="_blank" rel="noreferrer">Launch event report ↗</a></div>
@@ -133,7 +137,7 @@
         </article>
         <article class="timeline-item left portfolio-entry" data-timeline>
           <div class="timeline-card"><span class="timeline-index">Delivery</span><h3>Collaboration begins on the ground</h3><p><strong>Four projects move at once.</strong> d@rts, EU-CIEMBLY, VITAL and STELLA begin together—spanning culture, democracy, personalised health and plant resilience.</p><div class="timeline-project-links"><a href="projects.html#101132352">d@rts</a><a href="projects.html#101132694">EU-CIEMBLY</a><a href="projects.html#101136728">VITAL</a><a href="projects.html#101134750">STELLA</a></div></div>
-          <div class="timeline-dot" aria-hidden="true"></div><div class="timeline-year-scene"><img src="assets/story-timeline/timeline-collaboration-semicircle.png" alt="" aria-hidden="true" loading="lazy" decoding="async"><time class="timeline-year" datetime="2024-01-01">2024</time></div>
+          <div class="timeline-dot" aria-hidden="true"></div><div class="timeline-year-scene"><img src="assets/story-timeline/timeline-collaboration-semicircle.png" alt="" aria-hidden="true" loading="eager" fetchpriority="high" decoding="async"><time class="timeline-year" datetime="2024-01-01">2024</time></div>
         </article>
       </div>
     </section>
@@ -149,13 +153,18 @@
           <div class="filter-field"><label>Clusters</label><div data-map-filter="clusters"></div></div>
           <div class="filter-field"><label>Projects</label><div data-map-filter="projects"></div></div>
           <div class="filter-field"><label>Partner countries</label><div data-map-filter="countries"></div></div>
-          <button class="map-clear-filters" type="button" data-map-clear>Clear filters</button>
+          <div class="story-network-filter-actions"><button class="map-clear-filters" type="button" data-map-clear>Clear filters</button><button class="share-view-button" type="button" data-map-share>Share this view</button></div>
         </div>
         <div class="story-map-metrics" data-map-metrics></div>
         <div class="story-map-frame">
           <div class="story-map-head"><div><strong>Participation status and active portfolio</strong><span>Europe is centred. Colour shows Horizon Europe status; a dark outline marks countries represented in the selected projects.</span></div><div class="map-view-controls"><button type="button" data-map-zoom-out aria-label="Zoom out">−</button><button type="button" data-map-reset-view>Reset</button><button type="button" data-map-zoom-in aria-label="Zoom in">+</button></div></div>
           <div class="network-map-shell story-network-map-shell"><canvas class="network-map-canvas" data-network-map role="img" aria-label="World map centred on Europe showing Horizon Europe country status and countries participating in the selected projects"></canvas><div class="network-map-tooltip" data-map-tooltip role="status"></div><div class="network-map-empty" data-map-empty hidden>No projects match the selected filters.</div></div>
           <div class="network-map-legend" data-map-legend></div>
+          <details class="map-data-alternative">
+            <summary>View the map data as an accessible table</summary>
+            <p>The table contains the same country status and selected-portfolio participation shown by the map. It updates with the filters above.</p>
+            <div class="table-scroll" data-map-accessible-table tabindex="0" aria-label="Country status and participation table"></div>
+          </details>
           <p class="map-source-note">Status follows the <a data-country-status-eligibility-source href="https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2026-2027/wp-15-general-annexes_horizon-2026-2027_en.pdf" target="_blank" rel="noreferrer">2026–2027 General Annexes</a>, the Commission’s <a data-country-status-association-source href="https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe_en" target="_blank" rel="noreferrer">association list</a> and its guidance on <a href="https://oceans-and-fisheries.ec.europa.eu/coastal-communities/europes-outermost-regions_en" target="_blank" rel="noreferrer">EU outermost regions</a>. Associated status takes precedence over income eligibility. Participation in a project does not by itself imply eligibility for EU funding. Status checked <span data-country-status-checked>31 August 2026</span>.</p>
         </div>
         <div hidden data-map-selection></div><div hidden data-geocoding-summary></div><div hidden data-map-detail></div><div hidden data-map-projects></div>
@@ -171,13 +180,13 @@
   </main>
 
   <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
-  <script src="assets/data.js?v=2a7164321211"></script>
-  <script src="assets/common.js?v=31e1991a6d72"></script>
+  <script src="assets/data.js?v=2c04c42a471a"></script>
+  <script src="assets/common.js?v=05500bfa8bad"></script>
   <script src="assets/world-map.js?v=e71b7a9f1d36"></script>
   <script src="assets/country-status.js?v=d6b6036b5d28"></script>
   <script src="assets/country-status-overrides.js?v=f2919a8abbf7"></script>
-  <script src="assets/story.js?v=d65926d66b6d"></script>
-  <script src="assets/network-map.js?v=4004cce23c2f"></script>
+  <script src="assets/story.js?v=44765425b03b"></script>
+  <script src="assets/network-map.js?v=460020fef900"></script>
   <script src="assets/vendor/pptxgen.bundle.js?v=4fb9eac5cfef"></script>
   <script src="assets/vendor/pdf-lib.min.js?v=0f9a5cad0794"></script>
   <script src="assets/vendor/fontkit.umd.min.js?v=d8df561b9fba"></script>

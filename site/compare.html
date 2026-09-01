@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Compare partner countries or New Zealand organisations across the Horizon Europe portfolio.">
+  <title>Compare · Horizon Europe in New Zealand</title>
+  <link rel="icon" href="assets/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png"><link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="assets/styles.css?v=efb626e9a2f3"><link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
+</head>
+<body class="page-shell compare-page" data-page="compare">
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a><nav class="primary-nav" aria-label="Main navigation"></nav></header>
+  <section class="page-hero"><p class="eyebrow">Compare</p><h1>Put partnerships side by side.</h1><p>Compare up to three partner countries or New Zealand organisations using consistent portfolio measures.</p></section>
+  <main class="page-content" id="main-content">
+    <section class="compare-controls panel" aria-labelledby="compare-controls-title">
+      <div class="compare-control-head"><div><h2 id="compare-controls-title">Choose what to compare</h2><p class="panel-subtitle">Values count distinct projects and organisations in the current CORDIS dataset.</p></div><button class="share-view-button" type="button" data-share-view>Share this view</button></div>
+      <div class="country-scope-control compare-mode-control" role="group" aria-label="Comparison type"><button class="active" type="button" data-compare-mode="country" aria-pressed="true">Countries</button><button type="button" data-compare-mode="organisation" aria-pressed="false">NZ organisations</button></div>
+      <div class="compare-selectors" data-compare-selectors></div>
+    </section>
+    <p class="compare-announcement sr-only" data-compare-announcement role="status" aria-live="polite"></p>
+    <section class="compare-summary-grid" data-compare-summary aria-label="Comparison summary"></section>
+    <section class="compare-dashboard">
+      <article class="panel compare-metrics-panel"><h2>Portfolio measures</h2><p class="panel-subtitle">Each bar is scaled against the largest selected value for that measure.</p><div data-compare-bars></div></article>
+      <article class="panel compare-clusters-panel"><h2>Cluster profile</h2><p class="panel-subtitle">Distinct projects by Horizon Europe Pillar II cluster.</p><div data-compare-clusters></div></article>
+      <article class="panel compare-table-panel"><h2>Accessible comparison table</h2><div class="table-scroll" data-compare-table></div></article>
+    </section>
+  </main>
+  <div class="focus-toast" data-toast role="status" aria-live="polite"></div>
+  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated></span></span><a href="methodology.html">About the data</a></footer>
+  <script src="assets/data.js?v=2c04c42a471a"></script><script src="assets/common.js?v=05500bfa8bad"></script><script src="assets/compare.js?v=0c9ced19a793"></script>
+</body>
+</html>

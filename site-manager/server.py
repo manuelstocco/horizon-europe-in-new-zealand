@@ -31,12 +31,15 @@ from content_manager import (  # noqa: E402
     default_country_overrides,
     default_event_store,
     ensure_content,
+    ensure_project_results,
     read_json,
     refresh_asset_references,
     validate_country_overrides,
     validate_event_store,
+    validate_project_results,
     write_country_outputs,
     write_event_outputs,
+    write_project_result_outputs,
 )
 from portfolio_manager import (  # noqa: E402
     apply_exchange_rate,
@@ -95,6 +98,17 @@ def portfolio_summary() -> dict:
         "updated": data.get("metadata", {}).get("projectDataUpdated", ""),
         "exchangeRate": data.get("metadata", {}).get("exchangeRate", {}),
     }
+
+
+def project_reference() -> list[dict]:
+    data = load_assignment(SITE / "assets" / "data.js", "window.HE_DATA = ")
+    return [{
+        "id": str(project.get("id", "")),
+        "acronym": str(project.get("acronym", "")),
+        "title": str(project.get("title", "")),
+        "start": str(project.get("start", "")),
+        "end": str(project.get("end", "")),
+    } for project in data.get("projects", [])]
 
 
 class ManagerServer(ThreadingHTTPServer):
@@ -177,11 +191,14 @@ class Handler(BaseHTTPRequestHandler):
         route = unquote(urlparse(self.path).path)
         if route == "/api/state":
             events, countries = ensure_content(ROOT)
+            project_results = ensure_project_results(ROOT)
             project_store = ensure_project_store(ROOT)
             exchange_store = current_exchange_store(ROOT)
             self._json({
                 "ok": True,
                 "events": events,
+                "projectResults": project_results,
+                "projectReference": project_reference(),
                 "countryStatus": countries,
                 "countryReference": country_reference(),
                 "portfolio": portfolio_summary(),
@@ -227,6 +244,15 @@ class Handler(BaseHTTPRequestHandler):
                 saved = write_event_outputs(ROOT, cleaned)
                 self._json({"ok": True, "message": "Updates and events saved.", "events": saved})
                 return
+            if route == "/api/project-results":
+                payload = self._read_json()
+                cleaned, errors = validate_project_results(payload)
+                if errors:
+                    self._error("Some project-result information needs attention.", details=errors)
+                    return
+                saved = write_project_result_outputs(ROOT, cleaned)
+                self._json({"ok": True, "message": "Project results saved locally.", "projectResults": saved})
+                return
             if route == "/api/country-status":
                 payload = self._read_json()
                 cleaned, errors = validate_country_overrides(payload)
@@ -253,6 +279,7 @@ class Handler(BaseHTTPRequestHandler):
             if route == "/api/prepare":
                 events = read_json(ROOT / "content" / "updates-events.json", default_event_store())
                 countries = read_json(ROOT / "content" / "country-status-overrides.json", default_country_overrides(ROOT))
+                project_results = ensure_project_results(ROOT)
                 cleaned_events, event_errors = validate_event_store(events)
                 cleaned_countries, country_errors = validate_country_overrides(countries)
                 errors = event_errors + country_errors
@@ -267,8 +294,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not errors:
                     write_event_outputs(ROOT, cleaned_events)
                     write_country_outputs(ROOT, cleaned_countries)
+                    write_project_result_outputs(ROOT, project_results)
                     refresh_asset_references(ROOT)
-                required = [SITE / "updates.html", SITE / "feed.xml", SITE / "assets" / "updates-events-data.js", SITE / "assets" / "country-status-overrides.js", ROOT / "content" / "portfolio-projects.json", ROOT / "content" / "exchange-rate.json"]
+                required = [SITE / "updates.html", SITE / "feed.xml", SITE / "assets" / "updates-events-data.js", SITE / "assets" / "country-status-overrides.js", SITE / "assets" / "project-results-data.js", ROOT / "content" / "project-results.json", ROOT / "content" / "portfolio-projects.json", ROOT / "content" / "exchange-rate.json"]
                 missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
                 if errors or missing:
                     self._error("The publication package is not ready.", details=errors + [f"Missing: {name}" for name in missing])
@@ -285,10 +313,13 @@ class Handler(BaseHTTPRequestHandler):
                         "content/country-status-overrides.json",
                         "content/portfolio-projects.json",
                         "content/exchange-rate.json",
+                        "content/project-results.json",
                         "site/assets/updates-events-data.js",
                         "site/assets/country-status-overrides.js",
+                        "site/assets/project-results-data.js",
                         "site/feed.xml",
                         "site/updates.html",
+                        "site/results.html",
                     ]
                 self._json({
                     "ok": True,

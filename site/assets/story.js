@@ -6,6 +6,13 @@
   const timeline = [...document.querySelectorAll('[data-timeline]')];
   const progress = document.querySelector('.timeline-line span');
 
+  // Download and decode the three decorative milestones immediately so they
+  // are already present when the reader reaches the timeline.
+  timeline.forEach(item => {
+    const image = item.querySelector('.timeline-year-scene img');
+    if (image?.decode) image.decode().catch(() => {});
+  });
+
   if (stage && H) {
     const clusterLayer = document.createElement('div');
     clusterLayer.className = 'story-cluster-layer';

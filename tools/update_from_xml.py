@@ -228,6 +228,10 @@ def parse_organisation(node: ET.Element, existing_names: dict[str, str]) -> tupl
     name = node_text(node, "c:legalName") or node_text(node, "c:shortName") or node_text(node, "c:id")
     city = node_text(node, "c:address/c:city")
     contribution = number(node.attrib.get("netEcContribution", node.attrib.get("ecContribution")))
+    activity_type = node.find(
+        "c:relations/c:categories/c:category[@classification='organizationActivityType']",
+        NS,
+    )
     organisation = {
         "id": node_text(node, "c:id"),
         "name": name,
@@ -238,6 +242,8 @@ def parse_organisation(node: ET.Element, existing_names: dict[str, str]) -> tupl
         "role": role,
         "coordinator": role == "coordinator",
         "sme": boolean(node.attrib.get("sme")),
+        "organisationTypeCode": node_text(activity_type, "c:code") if activity_type is not None else "",
+        "organisationType": node_text(activity_type, "c:title") if activity_type is not None else "Not reported",
         "contribution": contribution,
         "totalCost": number(node.attrib.get("totalCost")),
     }

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore a precise country profile across Horizon Europe projects involving New Zealand.">
+  <title>Country Profiles · Horizon Europe in New Zealand</title>
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="assets/styles.css?v=efb626e9a2f3">
+  <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
+</head>
+<body class="page-shell country-profile-page" data-page="country-profile">
+  <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a><nav class="primary-nav" aria-label="Main navigation"></nav></header>
+
+  <section class="page-hero country-profile-hero">
+    <div class="country-profile-hero-copy">
+      <p class="eyebrow">Country Profiles</p>
+      <h1 data-country-title>Country partnership profile.</h1>
+      <p data-country-intro>Select a partner country to see its projects, organisations, funding and links with New Zealand.</p>
+    </div>
+    <div class="country-profile-identity">
+      <label for="country-profile-country">Partner country</label>
+      <select id="country-profile-country" class="native-select country-profile-select" data-country-select></select>
+      <div class="country-profile-status-row"><span class="country-code-badge" data-country-code>—</span><strong data-country-status>Programme status</strong><button type="button" data-share-view></button></div>
+    </div>
+  </section>
+
+  <main class="page-content" id="main-content">
+    <div class="data-strip"><span>CORDIS project and organisation records · <strong data-project-count></strong> projects in the full portfolio</span><span>Data updated <strong data-project-updated></strong></span></div>
+
+    <section class="country-profile-filters filter-panel" aria-label="Country profile filters">
+      <div class="filter-field"><label>Clusters</label><div data-filter="clusters"></div></div>
+      <div class="filter-field"><label>Funding schemes</label><div data-filter="schemes"></div></div>
+      <div class="filter-field"><label>Participation roles</label><div data-filter="roles"></div></div>
+      <div class="filter-field"><label>Organisation types</label><div data-filter="types"></div></div>
+      <div class="filter-field"><label for="country-profile-sme">SME status</label><select id="country-profile-sme" class="native-select" data-filter-sme><option value="">All organisations</option><option value="sme">SMEs only</option><option value="non-sme">Non-SMEs only</option></select></div>
+      <div class="filter-field"><label for="country-profile-search">Projects</label><input id="country-profile-search" class="text-search" type="search" data-filter-search placeholder="Acronym, title or grant ID…"></div>
+      <button class="country-profile-clear map-clear-filters" type="button" data-clear-filters>Clear filters</button>
+    </section>
+
+    <div class="selection-line" data-selection-summary aria-live="polite"></div>
+    <section class="country-profile-insight" data-profile-insight aria-live="polite"></section>
+    <section class="country-profile-metrics" data-profile-metrics aria-label="Country partnership measures"></section>
+
+    <section class="country-profile-dashboard">
+      <article class="panel country-profile-type-panel">
+        <div class="panel-heading-row"><div><h2>Organisations by type</h2><p class="panel-subtitle">Distinct country organisations using the official CORDIS organisation activity type.</p></div></div>
+        <div class="country-type-cards" data-type-cards></div>
+      </article>
+      <article class="panel country-profile-cluster-panel">
+        <div class="panel-heading-row"><div><h2>Cluster profile</h2><p class="panel-subtitle" data-cluster-subtitle>Distinct projects by Pillar II cluster.</p></div><div class="country-scope-control" role="group" aria-label="Cluster measure"><button class="active" type="button" data-cluster-measure="projects" aria-pressed="true">Projects</button><button type="button" data-cluster-measure="allocation" aria-pressed="false">Country allocation</button></div></div>
+        <div class="country-cluster-chart" data-cluster-chart></div>
+      </article>
+      <article class="panel country-profile-scheme-panel"><h2>Funding schemes</h2><p class="panel-subtitle">Distinct projects in the active country scope.</p><div data-scheme-chart></div></article>
+      <article class="panel country-profile-role-panel"><h2>Participation roles</h2><p class="panel-subtitle">Distinct country organisations recorded in each role.</p><div data-role-chart></div></article>
+
+      <article class="panel wide country-profile-organisations-panel">
+        <div class="panel-heading-row"><div><h2 data-organisation-heading>Country organisations</h2><p class="panel-subtitle">Each organisation is shown once; roles, projects, clusters and contributions are aggregated across the selected scope.</p></div><span class="table-result-count" data-organisation-count></span></div>
+        <div class="organisation-table-wrap" data-organisation-table></div>
+      </article>
+
+      <article class="panel wide country-profile-projects-panel">
+        <div class="panel-heading-row"><div><h2>Projects in this profile</h2><p class="panel-subtitle">Project-level detail, including the selected country’s role, recorded allocation and connected New Zealand organisations.</p></div><span class="table-result-count" data-project-result-count></span></div>
+        <div class="table-scroll" data-country-project-table></div>
+      </article>
+    </section>
+
+    <details class="country-profile-method">
+      <summary>How these figures are counted</summary>
+      <div><p><strong>Projects</strong> are distinct CORDIS grant records containing at least one organisation from the selected country. <strong>Organisations</strong> are deduplicated using the CORDIS organisation identifier where available. <strong>Country allocation</strong> sums recorded net EU contributions to the selected country’s organisations; zero or unreported allocations remain visible as such.</p><p><strong>Active NZ–country links</strong> count a distinct New Zealand organisation–country organisation pair once per cluster when both participate in the same project. Organisation type, role and SME status are copied from the CORDIS XML record and are not inferred by this website.</p></div>
+    </details>
+  </main>
+  <div class="focus-toast" data-toast role="status" aria-live="polite"></div>
+  <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated></span></span><a href="methodology.html">About the data</a></footer>
+  <script src="assets/data.js?v=2c04c42a471a"></script><script src="assets/country-status.js?v=d6b6036b5d28"></script><script src="assets/country-status-overrides.js?v=f2919a8abbf7"></script><script src="assets/common.js?v=05500bfa8bad"></script><script src="assets/country-profile.js?v=3e7d96f101d8"></script>
+</body>
+</html>

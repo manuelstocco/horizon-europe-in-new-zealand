@@ -14,9 +14,14 @@
         ['overview.html','Partnership Overview'],
         ['funding-flows.html','Funding & Country Flows']
       ]},
-      { label:'Explore the Network', pages:[
-        ['eu27-network.html','EU27 Collaboration Network'],
-        ['projects.html','Project Explorer']
+      { label:'Country Analysis', pages:[
+        ['country-profile.html','Country Profiles'],
+        ['compare.html','Compare']
+      ]},
+      { label:'Projects & Results', pages:[
+        ['projects.html','Project Explorer'],
+        ['results.html','Project Results'],
+        ['eu27-network.html','EU27 Collaboration Network']
       ]},
       { label:'Resources', pages:[
         ['updates.html','Updates & Events'],
@@ -42,6 +47,7 @@
     drawer.id = 'site-navigation-drawer';
     drawer.setAttribute('aria-label', 'Main navigation');
     drawer.setAttribute('aria-hidden', 'true');
+    drawer.inert = true;
     drawer.innerHTML = '<div class="site-nav-drawer-head"><div><span>Explore</span><strong>Horizon Europe in New Zealand</strong></div><button class="site-nav-close" type="button" aria-label="Close menu">&times;</button></div>';
     nav.removeAttribute('aria-label');
     drawer.appendChild(nav);
@@ -58,13 +64,14 @@
       if (open) {
         previousFocus = document.activeElement;
         overlay.hidden = false;
-        requestAnimationFrame(() => document.body.classList.add('site-menu-open'));
+        document.body.classList.add('site-menu-open');
       } else {
         document.body.classList.remove('site-menu-open');
         closeTimer = window.setTimeout(() => { overlay.hidden = true; }, 260);
       }
       menuButton.setAttribute('aria-expanded', String(open));
       drawer.setAttribute('aria-hidden', String(!open));
+      drawer.inert = !open;
       if (open) drawer.querySelector('.site-nav-close').focus();
       else if (previousFocus) previousFocus.focus();
     };
@@ -75,7 +82,41 @@
     nav.addEventListener('click', event => { if (event.target.closest('a')) setOpen(false); });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && document.body.classList.contains('site-menu-open')) setOpen(false);
+      if (event.key === 'Tab' && document.body.classList.contains('site-menu-open')) {
+        const focusable = [...drawer.querySelectorAll('a[href],button:not([disabled])')];
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
     });
+  }
+
+  function mountAccessibilityShell() {
+    const main = document.querySelector('main');
+    if (main && !main.id) main.id = 'main-content';
+    if (main && !document.querySelector('.skip-link')) {
+      const skip = document.createElement('a');
+      skip.className = 'skip-link';
+      skip.href = `#${main.id}`;
+      skip.textContent = 'Skip to main content';
+      document.body.prepend(skip);
+    }
+    if (!document.querySelector('[data-global-status]')) {
+      const status = document.createElement('div');
+      status.className = 'sr-only';
+      status.dataset.globalStatus = '';
+      status.setAttribute('role','status');
+      status.setAttribute('aria-live','polite');
+      document.body.appendChild(status);
+    }
+    const prepareScrollableRegions = () => document.querySelectorAll('.organisation-table-wrap,.leading-country-scroll,.table-scroll,.flow-shell,.flow-wrap').forEach(region => {
+      if (!region.hasAttribute('tabindex')) region.tabIndex = 0;
+      if (!region.hasAttribute('aria-label')) region.setAttribute('aria-label','Scrollable data region');
+    });
+    prepareScrollableRegions();
+    requestAnimationFrame(prepareScrollableRegions);
+    new MutationObserver(prepareScrollableRegions).observe(main || document.body,{childList:true,subtree:true});
   }
 
   const D = window.HE_DATA;
@@ -182,8 +223,10 @@
     updateStaticCurrencyValues();
   }
 
+  mountAccessibilityShell();
   mountNavigationDrawer();
   mountCurrencySwitch();
+  mountShareView();
 
   function filterProjects({ countries=[], clusters=[], schemes=[], search='' } = {}) {
     const countrySet = new Set(countries);
@@ -232,28 +275,45 @@
   }
 
   function mountMultiSelect(element, { options, placeholder='All', searchable=false, searchPlaceholder='Search…', countryActions=false, clearAction=false, onChange=()=>{} }) {
+    if (!element) return { values:[], set(){}, clear(){} };
     const selected = new Set();
+    const menuId = `multi-menu-${Math.random().toString(36).slice(2,9)}`;
     element.classList.add('multi-select');
-    element.innerHTML = `<button class="multi-trigger" type="button" aria-expanded="false"><span class="multi-label">${placeholder}</span><span class="count" hidden>0</span></button><div class="multi-menu">${searchable?`<div class="multi-search-wrap"><input class="multi-search" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}"></div>`:''}${countryActions||clearAction?`<div class="multi-actions">${countryActions?'<button type="button" data-action="eu">Select EU27</button><button type="button" data-action="non-eu">Select non-EU</button>':''}<button type="button" data-action="clear">Clear all</button></div>`:''}<div class="multi-options"></div></div>`;
+    element.innerHTML = `<button class="multi-trigger" type="button" aria-expanded="false" aria-controls="${menuId}"><span class="multi-label">${placeholder}</span><span class="count" hidden>0</span></button><div class="multi-menu" id="${menuId}" hidden>${searchable?`<div class="multi-search-wrap"><input class="multi-search" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}"></div>`:''}${countryActions||clearAction?`<div class="multi-actions">${countryActions?'<button type="button" data-action="eu">Select EU27</button><button type="button" data-action="non-eu">Select non-EU</button>':''}<button type="button" data-action="clear">Clear all</button></div>`:''}<div class="multi-options" role="group" aria-label="${placeholder}"></div></div>`;
     const trigger = element.querySelector('.multi-trigger');
+    const fieldLabel = element.closest('.filter-field')?.querySelector('label')?.textContent?.trim();
+    trigger.setAttribute('aria-label', fieldLabel ? `${fieldLabel}: ${placeholder}` : placeholder);
     const label = element.querySelector('.multi-label');
     const count = element.querySelector('.count');
     const list = element.querySelector('.multi-options');
     const search = element.querySelector('.multi-search');
+    const menu = element.querySelector('.multi-menu');
+    const setMenuOpen = open => {
+      element.classList.toggle('open', open);
+      trigger.setAttribute('aria-expanded', String(open));
+      menu.hidden = !open;
+      if (open && search) requestAnimationFrame(() => search.focus());
+    };
 
     const render = (term='') => {
       const lower = term.trim().toLowerCase();
       list.innerHTML = options.filter(o => !lower || o.label.toLowerCase().includes(lower)).map(o => `<label class="multi-option"><input type="checkbox" value="${o.value}" ${selected.has(o.value)?'checked':''}><span>${o.label}</span></label>`).join('');
       const values = [...selected];
       label.textContent = values.length ? (values.length === 1 ? options.find(o => o.value === values[0])?.label : `${values.length} selected`) : placeholder;
+      trigger.setAttribute('aria-label', `${fieldLabel || placeholder}: ${label.textContent}`);
       count.hidden = values.length === 0;
       count.textContent = values.length;
     };
     const notify = () => { render(search?.value || ''); onChange([...selected]); };
     trigger.addEventListener('click', () => {
-      const open = element.classList.toggle('open');
-      trigger.setAttribute('aria-expanded', String(open));
-      if (open && search) requestAnimationFrame(() => search.focus());
+      setMenuOpen(!element.classList.contains('open'));
+    });
+    trigger.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown') { event.preventDefault(); setMenuOpen(true); (search || list.querySelector('input'))?.focus(); }
+      if (event.key === 'Escape') setMenuOpen(false);
+    });
+    menu.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { event.preventDefault(); setMenuOpen(false); trigger.focus(); }
     });
     list.addEventListener('change', event => {
       const input = event.target.closest('input[type="checkbox"]');
@@ -271,7 +331,7 @@
       notify();
     });
     document.addEventListener('click', event => {
-      if (!element.contains(event.target)) { element.classList.remove('open'); trigger.setAttribute('aria-expanded','false'); }
+      if (!element.contains(event.target)) setMenuOpen(false);
     });
     render();
     return {
@@ -279,6 +339,60 @@
       set(values) { selected.clear(); values.forEach(v => selected.add(v)); notify(); },
       clear() { selected.clear(); notify(); },
     };
+  }
+
+  async function copyCurrentView(button, message='View link copied') {
+    const url = location.href;
+    try { await navigator.clipboard.writeText(url); }
+    catch (error) {
+      const input = document.createElement('textarea'); input.value = url; input.style.position='fixed'; input.style.opacity='0';
+      document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove();
+    }
+    if (button) {
+      const originalTooltip = button.dataset.tooltip || 'Share this view';
+      const originalLabel = button.getAttribute('aria-label') || 'Share this view';
+      button.dataset.tooltip = 'Link copied';
+      button.setAttribute('aria-label','Link copied');
+      button.classList.add('copied');
+      window.setTimeout(() => {
+        button.dataset.tooltip = originalTooltip;
+        button.setAttribute('aria-label',originalLabel);
+        button.classList.remove('copied');
+      }, 1600);
+    }
+    const status = document.querySelector('[data-global-status]'); if (status) status.textContent = message;
+  }
+
+  function decorateShareButton(button) {
+    if (!button || button.dataset.shareDecorated === 'true') return button;
+    button.dataset.shareDecorated = 'true';
+    button.classList.add('share-view-button');
+    button.dataset.tooltip = 'Share this view';
+    button.setAttribute('aria-label','Share this view');
+    button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="6" r="2.5"></circle><circle cx="18" cy="18" r="2.5"></circle><path d="m8.2 10.9 7.6-3.8M8.2 13.1l7.6 3.8"></path></svg>';
+    return button;
+  }
+
+  function mountShareView() {
+    document.querySelectorAll('[data-share-view],[data-map-share]').forEach(decorateShareButton);
+    if (document.querySelector('[data-share-view]')) return;
+    if (!['overview','funding-flows','projects','eu27-network','country-profile'].includes(document.body.dataset.page)) return;
+    const page = document.body.dataset.page;
+    const target = page === 'overview'
+      ? document.querySelector('.overview-hero-actions')
+      : page === 'funding-flows'
+        ? document.querySelector('.page-hero')
+        : document.querySelector('.filter-panel,.focus-sidebar,.circle-controls');
+    if (!target) return;
+    const button = document.createElement('button');
+    button.type = 'button'; button.dataset.shareView = '';
+    decorateShareButton(button);
+    button.addEventListener('click', () => copyCurrentView(button));
+    if (target.classList.contains('overview-hero-actions')) target.appendChild(button);
+    else if (target.classList.contains('page-hero')) { button.classList.add('page-hero-share-view'); target.appendChild(button); }
+    else if (target.classList.contains('circle-controls')) { button.classList.add('circle-share-view'); target.insertAdjacentElement('afterend',button); }
+    else if (target.classList.contains('focus-sidebar')) (target.querySelector('.focus-results-meta') || target).appendChild(button);
+    else target.appendChild(button);
   }
 
   function renderChips(element, items, empty='All projects') {
@@ -313,7 +427,8 @@
     if (!rows.length) { element.innerHTML='<div class="chart-empty">No projects match the selection.</div>'; return; }
     const max = Math.max(...rows.map(r => r.value),1);
     element.className='bar-chart';
-    element.innerHTML = rows.map(row => `<div class="bar-item"><span class="bar-value">${fmtNumber(row.value)}</span><span class="bar-column" style="height:${Math.max(4,row.value/max*140)}px;background:${typeof color==='function'?color(row):color}"></span><span class="bar-label">${row.label || row.key}</span></div>`).join('');
+    element.setAttribute('role','list');
+    element.innerHTML = rows.map(row => `<div class="bar-item" role="listitem" aria-label="${row.label || row.key}: ${fmtNumber(row.value)} projects"><span class="bar-value">${fmtNumber(row.value)}</span><span class="bar-column" aria-hidden="true" style="height:${Math.max(4,row.value/max*140)}px;background:${typeof color==='function'?color(row):color}"></span><span class="bar-label">${row.label || row.key}</span></div>`).join('');
   }
 
   function renderHbars(element, rows, { label=v=>v.key, value=v=>v.value, color=()=> '#397fd8', formatter=fmtNumber, limit=8 }={}) {
@@ -321,7 +436,8 @@
     if (!rows.length) { element.innerHTML='<div class="chart-empty">No projects match the selection.</div>'; return; }
     const max = Math.max(...rows.map(value),1);
     element.className='hbars';
-    element.innerHTML = rows.map(row => `<div class="hbar-row"><span class="hbar-label" title="${label(row)}">${label(row)}</span><span class="hbar-track"><i class="hbar-fill" style="width:${Math.max(2,value(row)/max*100)}%;--bar-color:${color(row)}"></i></span><span class="hbar-value">${formatter(value(row))}</span></div>`).join('');
+    element.setAttribute('role','list');
+    element.innerHTML = rows.map(row => `<div class="hbar-row" role="listitem" aria-label="${label(row)}: ${formatter(value(row))}"><span class="hbar-label" title="${label(row)}">${label(row)}</span><span class="hbar-track" aria-hidden="true"><i class="hbar-fill" style="width:${Math.max(2,value(row)/max*100)}%;--bar-color:${color(row)}"></i></span><span class="hbar-value">${formatter(value(row))}</span></div>`).join('');
   }
 
   function renderRank(element, rows, { label=r=>r.key, value=r=>r.value, formatter=fmtNumber, limit=8 }={}) {
@@ -346,7 +462,7 @@
   function renderProjectTable(element, projects, limit=12, { countryCodes=null }={}) {
     const allowed=countryCodes?(countryCodes instanceof Set?countryCodes:new Set(countryCodes)):null;
     const partnerCount=project=>allowed?projectPartnerCodes(project).filter(code=>allowed.has(code)).length:projectPartnerNames(project).length;
-    element.innerHTML = `<table class="project-table"><thead><tr><th>Project</th><th>Cluster</th><th>Funding scheme</th><th>Start</th><th>Partner countries</th><th>EU contribution</th></tr></thead><tbody>${projects.slice(0,limit).map(p => `<tr><td class="project-title-cell"><a href="projects.html#${p.id}">${p.acronym}</a><span>${p.title}</span></td><td>${clusterMap.get(p.clusterCode)?.short || p.cluster}</td><td>${p.scheme}</td><td>${formatDate(p.start)}</td><td>${partnerCount(p)}</td><td>${fmtMoney(p.ecContribution)}</td></tr>`).join('')}</tbody></table>${projects.length>limit?`<p class="panel-subtitle">Showing ${limit} of ${projects.length} projects. Open Project explorer for the complete list.</p>`:''}`;
+    element.innerHTML = `<table class="project-table"><thead><tr><th scope="col">Project</th><th scope="col">Cluster</th><th scope="col">Funding scheme</th><th scope="col">Start</th><th scope="col">Partner countries</th><th scope="col">EU contribution</th></tr></thead><tbody>${projects.slice(0,limit).map(p => `<tr><td class="project-title-cell"><a href="projects.html#${p.id}">${p.acronym}</a><span>${p.title}</span></td><td>${clusterMap.get(p.clusterCode)?.short || p.cluster}</td><td>${p.scheme}</td><td>${formatDate(p.start)}</td><td>${partnerCount(p)}</td><td>${fmtMoney(p.ecContribution)}</td></tr>`).join('')}</tbody></table>${projects.length>limit?`<p class="panel-subtitle">Showing ${limit} of ${projects.length} projects. Open Project explorer for the complete list.</p>`:''}`;
   }
 
   function packBubbleNodes(nodes, gap=4, targetAspect=null) {
@@ -411,7 +527,7 @@
       return {cluster,count,size,labelSize,countSize,padding,detail,order};
     });
     const packed=packBubbleNodes(bubbleData,4,packAspect);
-    element.innerHTML=`<div class="cluster-pack-inner" style="width:${packed.width}px;height:${packed.height}px">${packed.nodes.map(node=>`<button class="cluster-profile-bubble" type="button" data-cluster="${node.cluster.code}" data-count="${node.count}" data-tooltip="${node.detail}" title="${node.detail}" aria-label="${node.detail}. Select to filter." style="--bubble-left:${node.left}px;--bubble-top:${node.top}px;--bubble-size:${node.size}px;--bubble-label-size:${node.labelSize}px;--bubble-count-size:${node.countSize}px;--bubble-padding:${node.padding}px;background:${node.cluster.color}"><strong>${node.cluster.short}</strong><span>${node.count}</span><small>${node.count===1?'project':'projects'}</small></button>`).join('')}</div>`;
+    element.innerHTML=`<div class="cluster-pack-inner" style="width:${packed.width}px;height:${packed.height}px">${packed.nodes.map(node=>`<button class="cluster-profile-bubble" type="button" data-cluster="${node.cluster.code}" data-count="${node.count}" data-tooltip="${node.detail}" title="${node.detail}" aria-label="${node.detail}. Select to filter." style="--bubble-left:${node.left}px;--bubble-top:${node.top}px;--bubble-size:${node.size}px;--bubble-label-size:${node.labelSize}px;--bubble-count-size:${node.countSize}px;--bubble-padding:${node.padding}px;--cluster-colour:${node.cluster.color}"><strong>${node.cluster.short}</strong><span>${node.count}</span><small>${node.count===1?'project':'projects'}</small></button>`).join('')}</div>`;
     element._clusterPackObserver?.disconnect();
     if(fit&&typeof ResizeObserver!=='undefined'){
       const inner=element.querySelector('.cluster-pack-inner'),buttons=[...inner.querySelectorAll('.cluster-profile-bubble')];
@@ -502,5 +618,5 @@
     if (!nav.querySelector('a[href="repository.html"]')) projectsLink.insertAdjacentHTML('afterend','<a href="repository.html">Repository</a>');
   });
 
-  window.HE = { D, EU27, clusterMap, countryMap, uniqueOptions, filterProjects, metrics, projectPartnerCodes, projectPartnerNames, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, formatDate, fmtMoney, fmtExactMoney, fmtNumber, currentCurrency:()=>activeCurrency, exchangeRate, updateFooters };
+  window.HE = { D, EU27, clusterMap, countryMap, uniqueOptions, filterProjects, metrics, projectPartnerCodes, projectPartnerNames, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, formatDate, fmtMoney, fmtExactMoney, fmtNumber, currentCurrency:()=>activeCurrency, exchangeRate, updateFooters, copyCurrentView, decorateShareButton };
 })();

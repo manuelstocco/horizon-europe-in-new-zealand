@@ -2,7 +2,8 @@
   const D=window.HE_DATA,H=window.HE;
   const EU27=['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','EL','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'];
   const stage=document.querySelector('[data-circle-stage]'),canvas=document.querySelector('[data-circle-canvas]'),context=canvas.getContext('2d'),countryLayer=document.querySelector('[data-circle-country-layer]');
-  const state={measure:'projects',clusters:[],projectId:'',hover:'',locked:''};
+  const params=new URLSearchParams(location.search),validClusters=new Set(D.clusters.map(cluster=>cluster.code)),validProjects=new Set(D.projects.map(project=>project.id));
+  const state={measure:params.get('measure')==='organisations'?'organisations':'projects',clusters:(params.get('clusters')||'').split(',').filter(code=>validClusters.has(code)),projectId:validProjects.has(params.get('project'))?params.get('project'):'',hover:'',locked:EU27.includes(params.get('country'))?params.get('country'):''};
   const countryMap=new Map(D.countries.map(country=>[country.code,country.name])),clusterMap=new Map(D.clusters.map(cluster=>[cluster.code,cluster])),projectMap=new Map(D.projects.map(project=>[project.id,project]));
   let rows=new Map(),filteredProjects=[],layout=new Map(),searchIndex=-1,suppressCluster=false;
 
@@ -18,7 +19,7 @@
       update();
     }
   });
-  function closeClusterMenu(){clusterRoot.classList.remove('open');clusterRoot.querySelector('.multi-trigger')?.setAttribute('aria-expanded','false')}
+  function closeClusterMenu(){clusterRoot.classList.remove('open');clusterRoot.querySelector('.multi-trigger')?.setAttribute('aria-expanded','false');const menu=clusterRoot.querySelector('.multi-menu');if(menu)menu.hidden=true}
   function closeProjectMenu(){const results=document.querySelector('[data-project-results]'),input=document.querySelector('[data-project-search]');results.hidden=true;results.classList.remove('is-open');input.setAttribute('aria-expanded','false')}
   clusterRoot.addEventListener('change',()=>requestAnimationFrame(closeClusterMenu));
   clusterRoot.querySelector('.multi-trigger')?.addEventListener('click',closeProjectMenu);
@@ -54,12 +55,12 @@
     countryLayer.innerHTML=EU27.map(code=>`<button class="circle-country" type="button" data-country="${code}" aria-label="${countryMap.get(code)||code}"><span class="flag">${flag(code)}</span><span class="country-name">${countryMap.get(code)||code}</span><b>0</b></button>`).join('');
     countryLayer.addEventListener('pointerover',event=>{const node=event.target.closest('[data-country]');if(!node)return;state.hover=node.dataset.country;refreshFocus();updateReadout();draw()});
     countryLayer.addEventListener('pointerout',event=>{const node=event.target.closest('[data-country]');if(!node||node.contains(event.relatedTarget))return;state.hover='';refreshFocus();updateReadout();draw()});
-    countryLayer.addEventListener('click',event=>{const node=event.target.closest('[data-country]');if(!node)return;state.locked=state.locked===node.dataset.country?'':node.dataset.country;state.hover='';refreshFocus();updateReadout();draw()});
+    countryLayer.addEventListener('click',event=>{const node=event.target.closest('[data-country]');if(!node)return;state.locked=state.locked===node.dataset.country?'':node.dataset.country;state.hover='';refreshFocus();updateReadout();draw();syncUrl()});
   }
 
   stage.addEventListener('click',event=>{
     if(event.target.closest('[data-country]')||!state.locked)return;
-    state.locked='';state.hover='';refreshFocus();updateReadout();draw();
+    state.locked='';state.hover='';refreshFocus();updateReadout();draw();syncUrl();
   });
 
   function computeLayout(size){
@@ -88,8 +89,9 @@
     context.globalAlpha=1;context.shadowBlur=0;refreshFocus();
   }
 
-  function update(){filteredProjects=D.projects.filter(project=>(!state.projectId||project.id===state.projectId)&&(!state.clusters.length||state.clusters.includes(project.clusterCode)));rows=buildRows();const connected=[...rows.values()].filter(row=>row.value),orgs=new Set();connected.forEach(row=>row.organisations.forEach(org=>orgs.add(org)));document.querySelector('[data-circle-nz-summary]').textContent=state.measure==='projects'?`${filteredProjects.length} projects in view`:`${orgs.size} EU27 organisations in view`;const clusterText=state.clusters.length===1?clusterMap.get(state.clusters[0])?.short:state.clusters.length?`${state.clusters.length} clusters`:'All clusters',projectText=state.projectId?projectMap.get(state.projectId)?.acronym:'All projects';document.querySelector('[data-circle-selection]').textContent=`${clusterText} · ${projectText}`;document.querySelector('[data-circle-empty]').hidden=connected.length>0;if(state.locked&&!rows.get(state.locked)?.value)state.locked='';updateReadout();draw()}
+  function syncUrl(){const next=new URLSearchParams();if(state.measure!=='projects')next.set('measure',state.measure);if(state.clusters.length)next.set('clusters',state.clusters.join(','));if(state.projectId)next.set('project',state.projectId);if(state.locked)next.set('country',state.locked);history.replaceState(null,'',`${location.pathname}${next.size?`?${next}`:''}`)}
+  function update(){filteredProjects=D.projects.filter(project=>(!state.projectId||project.id===state.projectId)&&(!state.clusters.length||state.clusters.includes(project.clusterCode)));rows=buildRows();const connected=[...rows.values()].filter(row=>row.value),orgs=new Set();connected.forEach(row=>row.organisations.forEach(org=>orgs.add(org)));document.querySelector('[data-circle-nz-summary]').textContent=state.measure==='projects'?`${filteredProjects.length} projects in view`:`${orgs.size} EU27 organisations in view`;const clusterText=state.clusters.length===1?clusterMap.get(state.clusters[0])?.short:state.clusters.length?`${state.clusters.length} clusters`:'All clusters',projectText=state.projectId?projectMap.get(state.projectId)?.acronym:'All projects';document.querySelector('[data-circle-selection]').textContent=`${clusterText} · ${projectText}`;document.querySelector('[data-circle-empty]').hidden=connected.length>0;if(state.locked&&!rows.get(state.locked)?.value)state.locked='';updateReadout();draw();syncUrl()}
 
-  document.querySelectorAll('input[name="circle-measure"]').forEach(input=>input.addEventListener('change',()=>{state.measure=input.value;update()}));document.querySelector('[data-circle-reset]').addEventListener('click',()=>{state.measure='projects';state.projectId='';state.locked='';state.hover='';document.querySelector('input[name="circle-measure"][value="projects"]').checked=true;clearProject(false);clusterControl.clear();closeClusterMenu()});document.addEventListener('keydown',event=>{if(event.key==='Escape'){state.locked='';state.hover='';closeClusterMenu();closeProjectMenu();refreshFocus();updateReadout();draw()}});new ResizeObserver(draw).observe(stage);
-  setupSearch();createCountries();update();
+  document.querySelectorAll('input[name="circle-measure"]').forEach(input=>input.addEventListener('change',()=>{state.measure=input.value;update()}));document.querySelector('[data-circle-reset]').addEventListener('click',()=>{state.measure='projects';state.projectId='';state.locked='';state.hover='';document.querySelector('input[name="circle-measure"][value="projects"]').checked=true;clearProject(false);clusterControl.clear();closeClusterMenu()});document.addEventListener('keydown',event=>{if(event.key==='Escape'){state.locked='';state.hover='';closeClusterMenu();closeProjectMenu();refreshFocus();updateReadout();draw();syncUrl()}});new ResizeObserver(draw).observe(stage);
+  setupSearch();createCountries();document.querySelector(`input[name="circle-measure"][value="${state.measure}"]`).checked=true;if(state.projectId){const project=projectMap.get(state.projectId),input=document.querySelector('[data-project-search]');input.value=`${project.acronym} — ${project.title}`;document.querySelector('[data-project-clear]').hidden=false}clusterControl.set(state.clusters);update();
 })();

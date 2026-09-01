@@ -2,15 +2,33 @@
   const { D, uniqueOptions, filterProjects, metrics, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, projectPartnerCodes, projectPartnerNames, formatDate, fmtMoney, fmtExactMoney, fmtNumber } = window.HE;
   const page = document.body.dataset.page;
 
+  const readListParam = (params, key, allowed) => (params.get(key) || '').split(',').filter(value => value && allowed.has(value));
+  function updateViewUrl(state, hash=location.hash) {
+    const params = new URLSearchParams();
+    if (state.clusters?.length) params.set('clusters', state.clusters.join(','));
+    if (state.schemes?.length) params.set('schemes', state.schemes.join(','));
+    if (state.countries?.length) params.set('countries', state.countries.join(','));
+    if (state.search?.trim()) params.set('search', state.search.trim());
+    history.replaceState(null, '', `${location.pathname}${params.toString()?`?${params}`:''}${hash || ''}`);
+  }
+
   function commonFilters({ countries=true, clusters=false, schemes=false, search=false, eu27OnlyCountries=false, onUpdate }) {
-    const state={countries:[],clusters:[],schemes:[],search:''};
-    const update=()=>onUpdate({...state});
+    const params=new URLSearchParams(location.search);
     const countryOptions=uniqueOptions('countries').filter(option=>!eu27OnlyCountries||option.eu);
-    if(countries) mountMultiSelect(document.querySelector('[data-filter="countries"]'),{options:countryOptions,placeholder:eu27OnlyCountries?'All EU27 partner countries':'All partner countries',searchable:true,countryActions:!eu27OnlyCountries,clearAction:true,onChange:v=>{state.countries=v;update();}});
-    if(clusters) state.clusterControl=mountMultiSelect(document.querySelector('[data-filter="clusters"]'),{options:uniqueOptions('clusters'),placeholder:'All clusters',clearAction:true,onChange:v=>{state.clusters=v;update();}});
-    if(schemes) mountMultiSelect(document.querySelector('[data-filter="schemes"]'),{options:uniqueOptions('schemes'),placeholder:'All funding schemes',clearAction:true,onChange:v=>{state.schemes=v;update();}});
-    if(search) document.querySelector('[data-filter="search"]').addEventListener('input',event=>{state.search=event.target.value;update();});
+    const state={
+      countries:readListParam(params,'countries',new Set(countryOptions.map(option=>option.value))),
+      clusters:readListParam(params,'clusters',new Set(uniqueOptions('clusters').map(option=>option.value))),
+      schemes:readListParam(params,'schemes',new Set(uniqueOptions('schemes').map(option=>option.value))),
+      search:params.get('search')||''
+    };
+    let ready=false;
+    const update=()=>{if(!ready)return;updateViewUrl(state);onUpdate({...state});};
+    if(countries) { state.countryControl=mountMultiSelect(document.querySelector('[data-filter="countries"]'),{options:countryOptions,placeholder:eu27OnlyCountries?'All EU27 partner countries':'All partner countries',searchable:true,countryActions:!eu27OnlyCountries,clearAction:true,onChange:v=>{state.countries=v;update();}}); state.countryControl.set(state.countries); }
+    if(clusters) { state.clusterControl=mountMultiSelect(document.querySelector('[data-filter="clusters"]'),{options:uniqueOptions('clusters'),placeholder:'All clusters',clearAction:true,onChange:v=>{state.clusters=v;update();}}); state.clusterControl.set(state.clusters); }
+    if(schemes) { state.schemeControl=mountMultiSelect(document.querySelector('[data-filter="schemes"]'),{options:uniqueOptions('schemes'),placeholder:'All funding schemes',clearAction:true,onChange:v=>{state.schemes=v;update();}}); state.schemeControl.set(state.schemes); }
+    if(search) { const input=document.querySelector('[data-filter="search"]'); input.value=state.search; input.addEventListener('input',event=>{state.search=event.target.value;update();}); }
     state.refresh=update;
+    ready=true;
     update();
     return state;
   }
@@ -90,7 +108,7 @@
     if(!rows.length){element.innerHTML='<div class="chart-empty">No funded New Zealand organisations match the selection.</div>';return;}
     const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
     const table=document.createElement('table');table.className='organisation-table';
-    const thead=document.createElement('thead');thead.innerHTML='<tr><th>Organisation</th><th>Head office city</th><th>Role</th><th>Projects</th><th>Total EU contribution</th></tr>';
+    const thead=document.createElement('thead');thead.innerHTML='<tr><th scope="col">Organisation</th><th scope="col">Head office city</th><th scope="col">Role</th><th scope="col">Projects</th><th scope="col">Total EU contribution</th></tr>';
     const tbody=document.createElement('tbody');
     rows.forEach(row=>{
       const tr=document.createElement('tr');
@@ -112,7 +130,7 @@
     if(!rows.length){element.innerHTML='<div class="chart-empty">No funded EU27 organisations match the selection.</div>';return;}
     const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
     const table=document.createElement('table');table.className='organisation-table eu27-organisation-table';
-    const thead=document.createElement('thead');thead.innerHTML='<tr><th>Organisation</th><th>Country</th><th>Head office city</th><th>Role</th><th>Projects</th><th>Total EU contribution</th></tr>';
+    const thead=document.createElement('thead');thead.innerHTML='<tr><th scope="col">Organisation</th><th scope="col">Country</th><th scope="col">Head office city</th><th scope="col">Role</th><th scope="col">Projects</th><th scope="col">Total EU contribution</th></tr>';
     const tbody=document.createElement('tbody');
     rows.forEach(row=>{
       const tr=document.createElement('tr');
@@ -141,7 +159,7 @@
     if(!rows.length){element.innerHTML=`<div class="chart-empty">No funded ${scopeName} organisations match the selection.</div>`;return;}
     const roleNames={participant:'Participant',coordinator:'Coordinator',thirdParty:'Third party',associatedPartner:'Associated partner'};
     const table=document.createElement('table');table.className='organisation-table eu27-organisation-table';
-    const thead=document.createElement('thead');thead.innerHTML='<tr><th>Organisation</th><th>Country</th><th>Head office city</th><th>Role</th><th>Projects</th><th>Total EU contribution</th></tr>';
+    const thead=document.createElement('thead');thead.innerHTML='<tr><th scope="col">Organisation</th><th scope="col">Country</th><th scope="col">Head office city</th><th scope="col">Role</th><th scope="col">Projects</th><th scope="col">Total EU contribution</th></tr>';
     const tbody=document.createElement('tbody');
     rows.forEach(row=>{
       const tr=document.createElement('tr');
@@ -350,7 +368,15 @@
   }
 
   function initProjects(){
-    const state={countries:[],clusters:[],schemes:[],search:'',filtered:[...D.projects],selectedId:''};
+    const params=new URLSearchParams(location.search);
+    const state={
+      countries:readListParam(params,'countries',new Set(uniqueOptions('countries').map(option=>option.value))),
+      clusters:readListParam(params,'clusters',new Set(uniqueOptions('clusters').map(option=>option.value))),
+      schemes:readListParam(params,'schemes',new Set(uniqueOptions('schemes').map(option=>option.value))),
+      search:params.get('search')||'',filtered:[...D.projects],selectedId:''
+    };
+    const resultRecords=new Map((window.HE_PROJECT_RESULTS?.projects||[]).map(record=>[String(record.projectId),record]));
+    const resultStages=[['planned','Planned'],['ongoing','Ongoing'],['outputs','Outputs available'],['completed','Completed']];
     const list=document.querySelector('[data-project-list]');
     const slide=document.querySelector('[data-focus-slide]');
     const previous=document.querySelector('[data-previous]');
@@ -391,11 +417,14 @@
       slide.hidden=!state.filtered.length;
       updatePosition();
       publishExportState();
+      updateViewUrl(state,state.selectedId?`#${state.selectedId}`:'');
     };
 
     const clusterControl=mountMultiSelect(document.querySelector('[data-filter="clusters"]'),{options:uniqueOptions('clusters'),placeholder:'All clusters',onChange:values=>{state.clusters=values;applyFilters();}});
     const schemeControl=mountMultiSelect(document.querySelector('[data-filter="schemes"]'),{options:uniqueOptions('schemes'),placeholder:'All funding schemes',onChange:values=>{state.schemes=values;applyFilters();}});
     const countryControl=mountMultiSelect(document.querySelector('[data-filter="countries"]'),{options:uniqueOptions('countries'),placeholder:'All partner countries',searchable:true,countryActions:true,onChange:values=>{state.countries=values;applyFilters();}});
+    clusterControl.set(state.clusters);schemeControl.set(state.schemes);countryControl.set(state.countries);
+    document.querySelector('[data-filter="search"]').value=state.search;
     controlsReady=true;
 
     function renderList(){
@@ -462,6 +491,17 @@
       put('[data-project-organisations]',`${fmtNumber(project.organisationCount||project.organisations.length)} organisations`);put('[data-project-countries]',`${fmtNumber(project.countryCount||countryRows.length)} countries represented`);
       put('[data-project-nz-funding]',money(nzFunding));put('[data-project-nz-count]',`${nz.length} NZ ${nz.length===1?'organisation':'organisations'}`);
       put('[data-project-focus]',project.focus||project.teaser||'No project objective is available in the source record.');put('[data-project-scheme]',project.scheme||'Not reported');put('[data-project-scheme-code]',project.schemeCode);put('[data-project-call]',project.callCode||'Not reported');put('[data-project-topic]',project.topic||'Not reported');put('[data-project-topic-code]',project.topicCode);
+      const manual=resultRecords.get(String(project.id));
+      const today=new Date().toISOString().slice(0,10);
+      const inferred=project.end&&project.end<today?'completed':project.start&&project.start>today?'planned':'ongoing';
+      const stage=manual?.stage||inferred;
+      const stageIndex=resultStages.findIndex(([key])=>key===stage);
+      const stageTrack=document.querySelector('[data-project-stage]');stageTrack.replaceChildren();
+      resultStages.forEach(([key,label],index)=>{const item=document.createElement('li');item.className=index<stageIndex?'complete':index===stageIndex?'active':'';item.setAttribute('aria-current',index===stageIndex?'step':'false');item.innerHTML=`<span aria-hidden="true">${index<stageIndex?'✓':index+1}</span><strong>${label}</strong>`;stageTrack.appendChild(item);});
+      const resultSummary=document.querySelector('[data-project-result-summary]');resultSummary.textContent=manual?.summary||`Current stage inferred from the project dates: ${resultStages[stageIndex]?.[1]||'Ongoing'}.`;
+      const outputs=document.querySelector('[data-project-outputs]');outputs.replaceChildren();
+      (manual?.outputs||[]).forEach(output=>{const link=document.createElement('a');link.className='project-output-link';link.href=output.url;link.target='_blank';link.rel='noopener';link.innerHTML=`<span>${String(output.type||'output').replace('-', ' ')}</span><strong>${output.title}</strong><small>${output.published?formatDate(output.published):'Public output'} ↗</small>`;outputs.appendChild(link);});
+      outputs.hidden=!outputs.children.length;
       const coordinator=project.coordinator||project.organisations.find(org=>org.coordinator);
       put('[data-coordinator-name]',coordinator?(coordinator.short||coordinator.name):'Not reported');put('[data-coordinator-meta]',coordinator?[countryName(coordinator.countryCode),coordinator.city,coordinator.contribution>0?`${money(coordinator.contribution)} EU contribution`:null].filter(Boolean).join(' · '):'');
 
@@ -477,14 +517,14 @@
 
     function selectProject(id,updateHash=false){
       const project=D.projects.find(item=>item.id===id);if(!project)return;state.selectedId=project.id;renderProject(project);renderList();updatePosition();
-      if(updateHash&&location.hash.slice(1)!==project.id)history.replaceState(null,'',`#${project.id}`);
+      if(updateHash&&location.hash.slice(1)!==project.id)updateViewUrl(state,`#${project.id}`);
       list.querySelector('.focus-project-item.active')?.scrollIntoView({block:'nearest'});
       publishExportState();
     }
     function updatePosition(){const index=state.filtered.findIndex(project=>project.id===state.selectedId);put('[data-position]',index>=0?`${index+1} of ${state.filtered.length}`:'—');previous.disabled=index<=0;next.disabled=index<0||index>=state.filtered.length-1;}
     function move(direction){const index=state.filtered.findIndex(project=>project.id===state.selectedId);const target=state.filtered[index+direction];if(target)selectProject(target.id,true);}
     let toastTimer;function showToast(message){const toast=document.querySelector('[data-toast]');toast.textContent=message;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1800);}
-    async function copyLink(){const url=`${location.href.split('#')[0]}#${state.selectedId}`;try{await navigator.clipboard.writeText(url);}catch(error){const input=document.createElement('textarea');input.value=url;input.style.position='fixed';input.style.opacity='0';document.body.appendChild(input);input.select();document.execCommand('copy');input.remove();}showToast('Project link copied');}
+    async function copyLink(){updateViewUrl(state,`#${state.selectedId}`);const url=location.href;try{await navigator.clipboard.writeText(url);}catch(error){const input=document.createElement('textarea');input.value=url;input.style.position='fixed';input.style.opacity='0';document.body.appendChild(input);input.select();document.execCommand('copy');input.remove();}showToast('Project and active filters link copied');}
 
     document.querySelector('[data-filter="search"]').addEventListener('input',event=>{state.search=event.target.value;applyFilters();});
     document.querySelector('[data-clear-filters]').addEventListener('click',()=>{document.querySelector('[data-filter="search"]').value='';state.search='';clusterControl.clear();schemeControl.clear();countryControl.clear();applyFilters();document.querySelector('[data-filter="search"]').focus();});

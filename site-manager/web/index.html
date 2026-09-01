@@ -19,10 +19,11 @@
       <nav>
         <button class="active" type="button" data-view-button="dashboard"><span>01</span>Overview</button>
         <button type="button" data-view-button="content"><span>02</span>Updates &amp; events</button>
-        <button type="button" data-view-button="countries"><span>03</span>Country status</button>
-        <button type="button" data-view-button="portfolio"><span>04</span>Portfolio XML</button>
-        <button type="button" data-view-button="exchange"><span>05</span>Exchange rate</button>
-        <button type="button" data-view-button="publish"><span>06</span>Prepare update</button>
+        <button type="button" data-view-button="results"><span>03</span>Project results</button>
+        <button type="button" data-view-button="countries"><span>04</span>Country status</button>
+        <button type="button" data-view-button="portfolio"><span>05</span>Portfolio XML</button>
+        <button type="button" data-view-button="exchange"><span>06</span>Exchange rate</button>
+        <button type="button" data-view-button="publish"><span>07</span>Prepare update</button>
       </nav>
       <div class="sidebar-note"><strong>No automatic publishing</strong><p>Changes remain on this Mac until you publish them with GitHub Desktop.</p></div>
     </aside>
@@ -62,6 +63,29 @@
               <label class="check-field"><input name="featured" type="checkbox"><span><b>Featured item</b><small>Show this item prominently on the public page.</small></span></label>
               <input name="id" type="hidden">
               <div class="editor-footer"><span data-editor-state>No unsaved changes</span><button class="primary-action" type="button" data-editor-save>Save changes</button></div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="manager-view" data-view="results">
+        <div class="view-heading compact"><div><p class="eyebrow">Implementation evidence</p><h1>Project results</h1><p>Track implementation progress and link public deliverables, papers, pilots, demonstrators, policy reports and datasets.</p></div><a class="secondary-action" href="/site/results.html" target="_blank">Preview results tracker ↗</a></div>
+        <div class="results-manager-workspace">
+          <section class="manager-card result-project-list-card">
+            <div class="register-head"><div><span class="card-kicker">Portfolio</span><h2>Select a project</h2></div><label class="compact-search"><span class="sr-only">Search projects</span><input type="search" placeholder="Search acronym, title or ID…" data-result-search></label></div>
+            <div class="result-project-list" data-result-project-list></div>
+          </section>
+          <form class="manager-card result-editor" data-result-form novalidate>
+            <div class="editor-empty" data-result-empty><span>→</span><h2>Select a project</h2><p>Add implementation information only when it has been verified from a public source.</p></div>
+            <div class="result-editor-fields" data-result-fields hidden>
+              <div class="editor-head"><div><span class="card-kicker">Project record</span><h2 data-result-title>Project results</h2></div><button class="quiet-action danger" type="button" data-result-reset>Clear manual record</button></div>
+              <input name="projectId" type="hidden">
+              <div class="field-grid two"><label>Implementation stage<select name="stage"><option value="planned">Planned</option><option value="ongoing">Ongoing</option><option value="outputs">Outputs available</option><option value="completed">Completed</option></select></label><label>Last verified<input name="reviewed" type="date"></label></div>
+              <label>Public implementation summary<textarea name="summary" rows="4" maxlength="800" placeholder="Brief factual summary based on public evidence"></textarea></label>
+              <div class="result-outputs-head"><div><span class="card-kicker">Public evidence</span><h3>Outputs</h3></div><button class="secondary-action" type="button" data-result-output-add>Add output</button></div>
+              <div class="result-output-list" data-result-output-list></div>
+              <div class="form-errors" data-result-errors hidden role="alert"></div>
+              <div class="editor-footer"><span data-result-state>No unsaved changes</span><button class="primary-action" type="submit">Save project results</button></div>
             </div>
           </form>
         </div>

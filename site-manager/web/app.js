@@ -1,7 +1,7 @@
 (() => {
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const state = {events:null, countryStatus:null, countryReference:[], portfolio:{}, projectStore:{projects:[]}, exchangeStore:{current:{},history:[]}, exchangeCandidate:null, today:'', activeItemId:null};
+  const state = {events:null, projectResults:{projects:[]}, projectReference:[], countryStatus:null, countryReference:[], portfolio:{}, projectStore:{projects:[]}, exchangeStore:{current:{},history:[]}, exchangeCandidate:null, today:'', activeItemId:null, activeResultId:null};
   const typeLabels = {'event':'Event','deadline':'Deadline','news':'News','site-update':'Site update'};
   const typeColors = {'event':'#397fd8','deadline':'#ef6a61','news':'#8b68d0','site-update':'#2aa99d'};
   const dateFormat = new Intl.DateTimeFormat('en-NZ',{day:'numeric',month:'short',year:'numeric'});
@@ -170,6 +170,37 @@
   function showErrors(selector,error){const box=$(selector);box.hidden=false;box.textContent=[error.message,...(error.details||[])].join('\n')}
   function hideErrors(selector){const box=$(selector);box.hidden=true;box.textContent=''}
 
+  const resultForm=$('[data-result-form]');
+  const outputTypeLabels={deliverable:'Deliverable',paper:'Paper',pilot:'Pilot',demonstrator:'Demonstrator','policy-report':'Policy report',dataset:'Dataset',other:'Other'};
+  function inferredResultStage(project){if(project.start&&project.start>state.today)return'planned';if(project.end&&project.end<state.today)return'completed';return'ongoing'}
+  function resultRecord(projectId){return state.projectResults.projects.find(row=>row.projectId===projectId)||null}
+  function renderResultProjects(){
+    const term=$('[data-result-search]').value.trim().toLowerCase(),list=$('[data-result-project-list]');list.replaceChildren();
+    state.projectReference.filter(project=>!term||`${project.id} ${project.acronym} ${project.title}`.toLowerCase().includes(term)).forEach(project=>{
+      const record=resultRecord(project.id),stage=record?.stage||inferredResultStage(project),button=document.createElement('button');button.type='button';button.className=`result-project-row${project.id===state.activeResultId?' active':''}`;button.setAttribute('aria-pressed',String(project.id===state.activeResultId));
+      const copy=document.createElement('span'),title=document.createElement('strong'),meta=document.createElement('small'),pill=document.createElement('span');title.textContent=project.acronym||project.id;meta.textContent=project.title;copy.append(title,meta);pill.className=`result-stage-pill ${stage}`;pill.textContent=record?stage.replace('outputs','outputs available'):`${stage} · inferred`;button.append(copy,pill);button.addEventListener('click',()=>editProjectResult(project.id));list.append(button);
+    });
+  }
+  function outputRow(output={type:'deliverable',title:'',url:'',published:''}){
+    const row=document.createElement('div');row.className='result-output-row';
+    row.innerHTML=`<label>Type<select data-output="type">${Object.entries(outputTypeLabels).map(([value,label])=>`<option value="${value}"${value===output.type?' selected':''}>${label}</option>`).join('')}</select></label><label>Title<input data-output="title" maxlength="220"></label><label>Public link<input data-output="url" type="url" placeholder="https://…"></label><label>Date<input data-output="published" type="date"></label><button class="quiet-action danger" type="button" aria-label="Remove output">Remove</button>`;
+    row.querySelector('[data-output="title"]').value=output.title||'';row.querySelector('[data-output="url"]').value=output.url||'';row.querySelector('[data-output="published"]').value=output.published||'';
+    row.querySelector('button').addEventListener('click',()=>{row.remove();markResultsDirty()});row.addEventListener('input',markResultsDirty);return row;
+  }
+  function editProjectResult(projectId){
+    const project=state.projectReference.find(row=>row.id===projectId);if(!project)return;state.activeResultId=projectId;
+    $('[data-result-empty]').hidden=true;$('[data-result-fields]').hidden=false;$('[data-result-title]').textContent=`${project.acronym} · ${project.id}`;
+    const record=resultRecord(projectId)||{projectId,stage:inferredResultStage(project),reviewed:'',summary:'',outputs:[]};
+    resultForm.elements.namedItem('projectId').value=projectId;resultForm.elements.namedItem('stage').value=record.stage;resultForm.elements.namedItem('reviewed').value=record.reviewed||'';resultForm.elements.namedItem('summary').value=record.summary||'';
+    const outputs=$('[data-result-output-list]');outputs.replaceChildren(...record.outputs.map(outputRow));$('[data-result-state]').textContent=resultRecord(projectId)?'Saved local record':'Using stage inferred from project dates';hideErrors('[data-result-errors]');renderResultProjects();
+  }
+  function readProjectResult(){return{projectId:resultForm.elements.namedItem('projectId').value,stage:resultForm.elements.namedItem('stage').value,reviewed:resultForm.elements.namedItem('reviewed').value,summary:resultForm.elements.namedItem('summary').value.trim(),outputs:$$('.result-output-row',resultForm).map(row=>({type:$('[data-output="type"]',row).value,title:$('[data-output="title"]',row).value.trim(),url:$('[data-output="url"]',row).value.trim(),published:$('[data-output="published"]',row).value})).filter(output=>output.title||output.url)}}
+  function markResultsDirty(){$('[data-result-state]').textContent='Unsaved changes'}
+  $('[data-result-search]').addEventListener('input',renderResultProjects);resultForm.addEventListener('input',markResultsDirty);
+  $('[data-result-output-add]').addEventListener('click',()=>{$('[data-result-output-list]').append(outputRow());markResultsDirty()});
+  resultForm.addEventListener('submit',async event=>{event.preventDefault();const record=readProjectResult(),next={...state.projectResults,projects:[...state.projectResults.projects.filter(row=>row.projectId!==record.projectId),record]};try{const payload=await api('/api/project-results',{method:'POST',body:JSON.stringify(next)});state.projectResults=payload.projectResults;$('[data-result-state]').textContent='Saved locally';hideErrors('[data-result-errors]');renderResultProjects();notify(payload.message)}catch(error){showErrors('[data-result-errors]',error);$('[data-result-state]').textContent='Not saved';notify(error.message,true)}});
+  $('[data-result-reset]').addEventListener('click',async()=>{const project=state.projectReference.find(row=>row.id===state.activeResultId);if(!project||!resultRecord(project.id))return;if(!confirm(`Clear the manual implementation record for ${project.acronym}?\n\nThe public tracker will return to the stage inferred from the project dates.`))return;const next={...state.projectResults,projects:state.projectResults.projects.filter(row=>row.projectId!==project.id)};try{const payload=await api('/api/project-results',{method:'POST',body:JSON.stringify(next)});state.projectResults=payload.projectResults;editProjectResult(project.id);notify('Manual project-results record cleared.')}catch(error){showErrors('[data-result-errors]',error);notify(error.message,true)}});
+
   function countryName(code){return state.countryReference.find(row=>row.code===code)?.name||code}
   function renderCountries() {
     const associated=new Set(state.countryStatus.associated),lmic=new Set(state.countryStatus.lowMiddleIncome);
@@ -252,6 +283,6 @@
 
   $('[data-prepare]').addEventListener('click',async()=>{const card=$('.readiness-card');try{const payload=await api('/api/prepare',{method:'POST',body:JSON.stringify({})});card.classList.remove('error');$('[data-readiness-icon]').textContent='✓';$('[data-readiness-title]').textContent='Website files are ready';$('[data-readiness-copy]').textContent=payload.message;const result=$('[data-prepare-result]');result.hidden=false;const list=$('[data-prepared-files]');list.replaceChildren(...payload.files.map(file=>{const item=document.createElement('li');item.textContent=file;return item}));notify(payload.message)}catch(error){card.classList.add('error');$('[data-readiness-icon]').textContent='!';$('[data-readiness-title]').textContent='Some items need attention';$('[data-readiness-copy]').textContent=[error.message,...(error.details||[])].join(' ');notify(error.message,true)}});
 
-  async function init(){try{const payload=await api('/api/state');Object.assign(state,{events:payload.events,countryStatus:payload.countryStatus,countryReference:payload.countryReference,portfolio:payload.portfolio,projectStore:payload.projectStore,exchangeStore:payload.exchangeStore,today:payload.today});$('[data-xml-form] [name="date"]').value=state.today;$('[data-sync-form] [name="date"]').value=state.today;$('[data-rate-form] [name="period"]').value=state.portfolio.exchangeRate?.period||state.today.slice(0,7);renderDashboard();renderContentList();renderCountries();renderProjectList();renderExchange();const requested=location.hash.slice(1);if($(`[data-view="${requested}"]`))switchView(requested)}catch(error){notify(`The Site Manager could not start: ${error.message}`,true)}}
+  async function init(){try{const payload=await api('/api/state');Object.assign(state,{events:payload.events,projectResults:payload.projectResults,projectReference:payload.projectReference,countryStatus:payload.countryStatus,countryReference:payload.countryReference,portfolio:payload.portfolio,projectStore:payload.projectStore,exchangeStore:payload.exchangeStore,today:payload.today});$('[data-xml-form] [name="date"]').value=state.today;$('[data-sync-form] [name="date"]').value=state.today;$('[data-rate-form] [name="period"]').value=state.portfolio.exchangeRate?.period||state.today.slice(0,7);renderDashboard();renderContentList();renderResultProjects();renderCountries();renderProjectList();renderExchange();const requested=location.hash.slice(1);if($(`[data-view="${requested}"]`))switchView(requested)}catch(error){notify(`The Site Manager could not start: ${error.message}`,true)}}
   init();
 })();
