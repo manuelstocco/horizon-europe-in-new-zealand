@@ -17,8 +17,8 @@ from xml.sax.saxutils import escape
 
 EVENT_TYPES = {"event", "deadline", "news", "site-update"}
 CONTENT_STATUSES = {"draft", "published", "archived"}
-PROJECT_RESULT_STAGES = {"planned", "ongoing", "outputs", "completed"}
-PROJECT_OUTPUT_TYPES = {"deliverable", "paper", "pilot", "demonstrator", "policy-report", "dataset", "other"}
+PROJECT_RESULT_STAGES = {"signed", "ongoing", "outputs", "completed"}
+PROJECT_OUTPUT_TYPES = {"deliverable", "paper", "pilot", "demonstrator", "policy-report", "dataset", "report", "website", "other"}
 DEFAULT_ASSOCIATION_SOURCE = "https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe_en"
 DEFAULT_ELIGIBILITY_SOURCE = "https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2026-2027/wp-15-general-annexes_horizon-2026-2027_en.pdf"
 PUBLIC_SITE_URL = "https://manuelstocco.github.io/horizon-europe-in-new-zealand/"
@@ -188,57 +188,215 @@ def write_event_outputs(root: Path, store: dict) -> dict:
 
 
 def default_project_results() -> dict:
-    return {"metadata": {"updated": date.today().isoformat(), "schemaVersion": 1}, "projects": []}
+    return {"metadata": {"updated": date.today().isoformat(), "schemaVersion": 2}, "projects": []}
+
+
+def _normalise_result_stage(value: object, allow_empty: bool = False) -> str:
+    stage = str(value or "").strip().lower()
+    if stage == "planned":  # migrate the original Site Manager vocabulary
+        stage = "signed"
+    if allow_empty and not stage:
+        return ""
+    return stage or "ongoing"
+
+
+def _clean_project_output(output: dict, label: str, index: int, errors: list[str], source: str) -> dict:
+    output_type = str(output.get("type", "other")).strip()
+    title = str(output.get("title", "")).strip()
+    url = str(output.get("url", "")).strip()
+    published = str(output.get("published", "")).strip()
+    published_year = str(output.get("publishedYear", "")).strip()
+    doi = str(output.get("doi", "")).strip()
+    if not url and doi:
+        url = f"https://doi.org/{doi}"
+    if output_type not in PROJECT_OUTPUT_TYPES:
+        errors.append(f"{label}, output {index}: choose a valid output type.")
+    if not title:
+        errors.append(f"{label}, output {index}: title is required.")
+    if not valid_url(url, allow_relative=False):
+        errors.append(f"{label}, output {index}: enter a valid public http or https link.")
+    if published:
+        try:
+            date.fromisoformat(published)
+        except ValueError:
+            errors.append(f"{label}, output {index}: the date must use YYYY-MM-DD.")
+    if published_year and not re.fullmatch(r"\d{4}", published_year):
+        errors.append(f"{label}, output {index}: the publication year must use YYYY.")
+    authors = output.get("authors", [])
+    if isinstance(authors, str):
+        authors = [item.strip() for item in authors.split(";") if item.strip()]
+    elif isinstance(authors, list):
+        authors = [str(item).strip() for item in authors if str(item).strip()]
+    else:
+        authors = []
+    return {
+        "id": str(output.get("id", "")).strip(),
+        "type": output_type,
+        "subtype": str(output.get("subtype", "")).strip(),
+        "title": title,
+        "description": str(output.get("description", "")).strip(),
+        "url": url,
+        "published": published,
+        "publishedYear": published_year,
+        "doi": doi,
+        "authors": authors,
+        "journal": str(output.get("journal", "")).strip(),
+        "publisher": str(output.get("publisher", "")).strip(),
+        "source": source,
+        "sourceUpdated": str(output.get("sourceUpdated", "")).strip()[:10],
+    }
+
+
+def _output_identity(output: dict) -> str:
+    if output.get("id"):
+        return f"id:{output['id'].casefold()}"
+    if output.get("doi"):
+        return f"doi:{output['doi'].casefold()}"
+    if output.get("url"):
+        return f"url:{output['url'].casefold()}"
+    title = re.sub(r"\W+", "", output.get("title", "").casefold())
+    return f"title:{output.get('type', 'other')}:{title}"
+
+
+def _merge_project_outputs(cordis_outputs: list[dict], manual_outputs: list[dict]) -> list[dict]:
+    merged = {_output_identity(output): output for output in cordis_outputs}
+    for output in manual_outputs:
+        merged[_output_identity(output)] = output
+    return sorted(
+        merged.values(),
+        key=lambda output: (
+            output.get("published", "") or output.get("publishedYear", "") or output.get("sourceUpdated", ""),
+            output.get("title", "").casefold(),
+        ),
+        reverse=True,
+    )
 
 
 def validate_project_results(store: dict) -> tuple[dict, list[str]]:
-    cleaned = {"metadata": {"updated": date.today().isoformat(), "schemaVersion": 1}, "projects": []}
+    metadata = dict(store.get("metadata", {}))
+    metadata.update({"updated": str(metadata.get("updated") or date.today().isoformat()), "schemaVersion": 2})
+    cleaned = {"metadata": metadata, "projects": []}
     errors: list[str] = []
     seen: set[str] = set()
     for index, raw in enumerate(store.get("projects", []), start=1):
         project_id = str(raw.get("projectId", "")).strip()
-        stage = str(raw.get("stage", "ongoing")).strip()
-        reviewed = str(raw.get("reviewed", "")).strip()
-        record = {
-            "projectId": project_id,
-            "stage": stage,
-            "reviewed": reviewed,
-            "summary": str(raw.get("summary", "")).strip(),
-            "outputs": [],
-        }
         label = project_id or f"Project result row {index}"
         if not re.fullmatch(r"\d{6,12}", project_id):
             errors.append(f"{label}: enter a valid CORDIS project ID.")
         elif project_id in seen:
             errors.append(f"{label}: the project appears more than once.")
         seen.add(project_id)
-        if stage not in PROJECT_RESULT_STAGES:
-            errors.append(f"{label}: choose a valid implementation stage.")
+
+        cordis_raw = raw.get("cordis") if isinstance(raw.get("cordis"), dict) else {}
+        manual_raw = raw.get("manual") if isinstance(raw.get("manual"), dict) else None
+        if manual_raw is None:  # migrate schema version 1 records as manual additions
+            manual_raw = {
+                "stage": raw.get("stage", "") if not cordis_raw else "",
+                "reviewed": raw.get("reviewed", "") if not cordis_raw else "",
+                "summary": raw.get("summary", "") if not cordis_raw else "",
+                "outputs": raw.get("outputs", []) if not cordis_raw else [],
+            }
+
+        cordis_stage = _normalise_result_stage(cordis_raw.get("stage", raw.get("stage", "ongoing")))
+        if cordis_stage not in PROJECT_RESULT_STAGES:
+            errors.append(f"{label}: the automatic CORDIS stage is invalid.")
+            cordis_stage = "ongoing"
+        manual_stage = _normalise_result_stage(manual_raw.get("stage"), allow_empty=True)
+        if manual_stage and manual_stage not in PROJECT_RESULT_STAGES:
+            errors.append(f"{label}: choose a valid implementation-stage override.")
+        reviewed = str(manual_raw.get("reviewed", "")).strip()
         if reviewed:
             try:
                 date.fromisoformat(reviewed)
             except ValueError:
                 errors.append(f"{label}: the review date must use YYYY-MM-DD.")
-        for output_index, output in enumerate(raw.get("outputs", []), start=1):
-            output_type = str(output.get("type", "other")).strip()
-            title = str(output.get("title", "")).strip()
-            url = str(output.get("url", "")).strip()
-            published = str(output.get("published", "")).strip()
-            if output_type not in PROJECT_OUTPUT_TYPES:
-                errors.append(f"{label}, output {output_index}: choose a valid output type.")
-            if not title:
-                errors.append(f"{label}, output {output_index}: title is required.")
-            if not valid_url(url, allow_relative=False):
-                errors.append(f"{label}, output {output_index}: enter a valid public http or https link.")
-            if published:
-                try:
-                    date.fromisoformat(published)
-                except ValueError:
-                    errors.append(f"{label}, output {output_index}: the date must use YYYY-MM-DD.")
-            record["outputs"].append({"type": output_type, "title": title, "url": url, "published": published})
-        cleaned["projects"].append(record)
+
+        cordis_outputs = [
+            _clean_project_output(output, label, output_index, errors, "CORDIS")
+            for output_index, output in enumerate(cordis_raw.get("outputs", []), start=1)
+        ]
+        manual_outputs = [
+            _clean_project_output(output, label, output_index, errors, "Manual")
+            for output_index, output in enumerate(manual_raw.get("outputs", []), start=1)
+        ]
+        outputs = _merge_project_outputs(cordis_outputs, manual_outputs)
+        stage = manual_stage or cordis_stage
+        cordis_source_updated = str(cordis_raw.get("sourceUpdated", "")).strip()[:10]
+        manual = {
+            "stage": manual_stage,
+            "reviewed": reviewed,
+            "summary": str(manual_raw.get("summary", "")).strip(),
+            "outputs": manual_outputs,
+        }
+        cordis = {
+            "status": str(cordis_raw.get("status", "")).strip(),
+            "stage": cordis_stage,
+            "sourceUpdated": cordis_source_updated,
+            "outputs": cordis_outputs,
+        }
+        cleaned["projects"].append({
+            "projectId": project_id,
+            "stage": stage,
+            "stageSource": "manual" if manual_stage else "CORDIS results" if cordis_outputs else "project dates",
+            "reviewed": reviewed or cordis_source_updated,
+            "summary": manual["summary"],
+            "outputs": outputs,
+            "cordis": cordis,
+            "manual": manual,
+        })
     cleaned["projects"].sort(key=lambda row: row["projectId"])
+    cleaned["metadata"].update({
+        "projectCount": len(cleaned["projects"]),
+        "projectsWithOutputs": sum(bool(row["outputs"]) for row in cleaned["projects"]),
+        "outputCount": sum(len(row["outputs"]) for row in cleaned["projects"]),
+        "cordisOutputCount": sum(len(row["cordis"]["outputs"]) for row in cleaned["projects"]),
+        "manualOutputCount": sum(len(row["manual"]["outputs"]) for row in cleaned["projects"]),
+    })
     return cleaned, errors
+
+
+def _infer_project_result_stage(project: dict, published_date: str) -> str:
+    status = str(project.get("status", "")).strip().upper()
+    end = str(project.get("end", ""))[:10]
+    start = str(project.get("start", ""))[:10]
+    if status in {"CLOSED", "COMPLETED", "FINISHED"} or (end and end < published_date):
+        return "completed"
+    if start and start > published_date:
+        return "signed"
+    if project.get("results"):
+        return "outputs"
+    return "ongoing"
+
+
+def build_project_results_store(projects: list[dict], existing: dict, published_date: str) -> dict:
+    existing_cleaned, _ = validate_project_results(existing)
+    manual_by_id = {row["projectId"]: row["manual"] for row in existing_cleaned["projects"]}
+    records = []
+    for project in projects:
+        result_dates = [str(output.get("sourceUpdated", ""))[:10] for output in project.get("results", []) if output.get("sourceUpdated")]
+        records.append({
+            "projectId": str(project.get("id", "")),
+            "cordis": {
+                "status": str(project.get("status", "")),
+                "stage": _infer_project_result_stage(project, published_date),
+                "sourceUpdated": max(result_dates, default=published_date),
+                "outputs": project.get("results", []),
+            },
+            "manual": manual_by_id.get(str(project.get("id", "")), {"stage": "", "reviewed": "", "summary": "", "outputs": []}),
+        })
+    store = {
+        "metadata": {
+            "updated": published_date,
+            "sourceUpdated": published_date,
+            "source": "CORDIS — European Commission, with Site Manager additions",
+            "schemaVersion": 2,
+        },
+        "projects": records,
+    }
+    cleaned, errors = validate_project_results(store)
+    if errors:
+        raise ValueError("\n".join(errors))
+    return cleaned
 
 
 def write_project_result_outputs(root: Path, store: dict) -> dict:
@@ -255,7 +413,21 @@ def write_project_result_outputs(root: Path, store: dict) -> dict:
 
 def ensure_project_results(root: Path) -> dict:
     path = root / "content" / "project-results.json"
-    return write_project_result_outputs(root, read_json(path, default_project_results()))
+    existing = read_json(path, default_project_results())
+    data_path = root / "site" / "assets" / "data.js"
+    if data_path.is_file():
+        raw = data_path.read_text(encoding="utf-8").strip()
+        prefix = "window.HE_DATA = "
+        if raw.startswith(prefix):
+            payload = raw[len(prefix):]
+            if payload.endswith(";"):
+                payload = payload[:-1]
+            portfolio = json.loads(payload)
+            projects = portfolio.get("projects", [])
+            if projects:
+                published_date = str(portfolio.get("metadata", {}).get("projectDataUpdated") or date.today().isoformat())
+                existing = build_project_results_store(projects, existing, published_date)
+    return write_project_result_outputs(root, existing)
 
 
 def _rss_date(value: str) -> str:

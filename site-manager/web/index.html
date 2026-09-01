@@ -76,13 +76,18 @@
             <div class="result-project-list" data-result-project-list></div>
           </section>
           <form class="manager-card result-editor" data-result-form novalidate>
-            <div class="editor-empty" data-result-empty><span>→</span><h2>Select a project</h2><p>Add implementation information only when it has been verified from a public source.</p></div>
+            <div class="editor-empty" data-result-empty><span>→</span><h2>Select a project</h2><p>CORDIS outputs are imported automatically. Use this editor only for verified additions or corrections.</p></div>
             <div class="result-editor-fields" data-result-fields hidden>
-              <div class="editor-head"><div><span class="card-kicker">Project record</span><h2 data-result-title>Project results</h2></div><button class="quiet-action danger" type="button" data-result-reset>Clear manual record</button></div>
+              <div class="editor-head"><div><span class="card-kicker">Project record</span><h2 data-result-title>Project results</h2></div><button class="quiet-action danger" type="button" data-result-reset>Clear manual additions</button></div>
               <input name="projectId" type="hidden">
-              <div class="field-grid two"><label>Implementation stage<select name="stage"><option value="planned">Planned</option><option value="ongoing">Ongoing</option><option value="outputs">Outputs available</option><option value="completed">Completed</option></select></label><label>Last verified<input name="reviewed" type="date"></label></div>
-              <label>Public implementation summary<textarea name="summary" rows="4" maxlength="800" placeholder="Brief factual summary based on public evidence"></textarea></label>
-              <div class="result-outputs-head"><div><span class="card-kicker">Public evidence</span><h3>Outputs</h3></div><button class="secondary-action" type="button" data-result-output-add>Add output</button></div>
+              <div class="result-cordis-evidence" data-result-cordis>
+                <div class="result-outputs-head"><div><span class="card-kicker">Automatic source</span><h3>CORDIS evidence</h3></div><strong data-result-cordis-count></strong></div>
+                <p data-result-cordis-status></p>
+                <div class="result-cordis-output-list" data-result-cordis-output-list></div>
+              </div>
+              <div class="field-grid two"><label>Stage override<select name="stage"><option value="">Automatic from CORDIS and project dates</option><option value="signed">Signed</option><option value="ongoing">Ongoing</option><option value="outputs">Outputs available</option><option value="completed">Completed</option></select></label><label>Manual review date<input name="reviewed" type="date"></label></div>
+              <label>Additional public implementation summary<textarea name="summary" rows="4" maxlength="800" placeholder="Optional factual summary not available in CORDIS"></textarea></label>
+              <div class="result-outputs-head"><div><span class="card-kicker">Manual evidence</span><h3>Additional outputs</h3></div><button class="secondary-action" type="button" data-result-output-add>Add output</button></div>
               <div class="result-output-list" data-result-output-list></div>
               <div class="form-errors" data-result-errors hidden role="alert"></div>
               <div class="editor-footer"><span data-result-state>No unsaved changes</span><button class="primary-action" type="submit">Save project results</button></div>

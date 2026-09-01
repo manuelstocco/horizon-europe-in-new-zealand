@@ -20,7 +20,13 @@ from datetime import date, datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from content_manager import record_portfolio_update
+from content_manager import (
+    build_project_results_store,
+    default_project_results,
+    read_json,
+    record_portfolio_update,
+    write_project_result_outputs,
+)
 
 
 NS = {"c": "http://cordis.europa.eu"}
@@ -255,6 +261,54 @@ def related(associations: ET.Element, tag: str, relation_type: str) -> ET.Elemen
     return associations.find(f"c:{tag}[@type='{relation_type}']", NS)
 
 
+def parse_result(node: ET.Element, project_id: str) -> dict:
+    categories = node.findall("c:relations/c:categories/c:category", NS)
+    collection_code = next((node_text(category, "c:code") for category in categories if category.attrib.get("classification") == "collection"), "")
+    subtype = next((node_text(category, "c:title") for category in categories if category.attrib.get("classification") in {"deliverableType", "projectPublication"}), "")
+    category_titles = {node_text(category, "c:title") for category in categories}
+    title = node_text(node, "c:title")
+    description = node_text(node, "c:description")
+    searchable = f"{title} {subtype}".casefold()
+    if collection_code == "publication":
+        output_type = "paper"
+    elif "Report Summary" in category_titles:
+        output_type = "report"
+    elif "policy" in searchable:
+        output_type = "policy-report"
+    elif "demonstrator" in searchable:
+        output_type = "demonstrator"
+    elif "pilot" in searchable:
+        output_type = "pilot"
+    elif any(term in searchable for term in ("dataset", "data set", "data repository")):
+        output_type = "dataset"
+    elif any(term in searchable for term in ("website", "web-site", "digital platform", "e-learning platform")):
+        output_type = "website"
+    else:
+        output_type = "deliverable" if collection_code == "deliverable" else "other"
+
+    doi = node_text(node, "c:identifiers/c:doi")
+    physical_url = next((node_text(link, "c:physUrl") for link in node.findall(".//c:webLink", NS) if node_text(link, "c:physUrl")), "")
+    source_url = f"https://cordis.europa.eu/project/id/{project_id}/results"
+    url = physical_url or (f"https://doi.org/{doi}" if doi else source_url)
+    source_updated = node_text(node, "c:sourceUpdateDate")[:10]
+    return {
+        "id": node_text(node, "c:id") or node_text(node, "c:rcn"),
+        "type": output_type,
+        "subtype": subtype or ("Project publication" if collection_code == "publication" else "Project result"),
+        "title": title or f"CORDIS result {node_text(node, 'c:rcn')}",
+        "description": description,
+        "url": url,
+        "published": "",
+        "publishedYear": node_text(node, "c:details/c:publishedYear"),
+        "doi": doi,
+        "authors": [node_text(node, "c:details/c:authors")] if node_text(node, "c:details/c:authors") else [],
+        "journal": node_text(node, "c:details/c:journalTitle"),
+        "publisher": node_text(node, "c:details/c:publisher"),
+        "source": "CORDIS",
+        "sourceUpdated": source_updated,
+    }
+
+
 def parse_project(xml_bytes: bytes, existing_names: dict[str, str]) -> tuple[dict, dict[str, tuple[float, float]]]:
     root = ET.fromstring(xml_bytes)
     associations = root.find("c:relations/c:associations", NS)
@@ -299,8 +353,10 @@ def parse_project(xml_bytes: bytes, existing_names: dict[str, str]) -> tuple[dic
     scheme_title = SCHEME_NAMES.get(scheme_code, re.sub(r"^HORIZON\s+", "", raw_scheme_title).strip())
     counts = Counter(org["countryCode"] for org in organisations)
     country_codes = sorted(counts)
+    project_id = node_text(root, "c:id")
+    results = [parse_result(node, project_id) for node in associations.findall("c:result[@type='relatedResult']", NS)]
     project = {
-        "id": node_text(root, "c:id"),
+        "id": project_id,
         "acronym": node_text(root, "c:acronym"),
         "title": node_text(root, "c:title"),
         "teaser": node_text(root, "c:teaser"),
@@ -311,6 +367,8 @@ def parse_project(xml_bytes: bytes, existing_names: dict[str, str]) -> tuple[dic
         "duration": int(number(node_text(root, "c:duration"))),
         "signature": node_text(root, "c:ecSignatureDate"),
         "status": node_text(root, "c:status"),
+        "resultCount": len(results),
+        "results": results,
         "totalCost": number(node_text(root, "c:totalCost")),
         "ecContribution": number(node_text(root, "c:ecMaxContribution")),
         "clusterCode": node_text(cluster_node, "c:code"),
@@ -543,6 +601,9 @@ def main() -> int:
         "projects": projects,
         "ncps": current_data.get("ncps", []),
     }
+    result_store_path = site_dir.parent / "content" / "project-results.json"
+    existing_result_store = read_json(result_store_path, default_project_results())
+    project_result_store = build_project_results_store(projects, existing_result_store, published_date)
     rebuilt_geo, missing_geo = rebuild_geo(projects, xml_coordinates, current_geo, published_date)
     data_output = f"{DATA_PREFIX}{json.dumps(rebuilt_data, ensure_ascii=False, separators=(',', ':'))};\n"
     geo_output = f"{GEO_PREFIX}{json.dumps(rebuilt_geo, ensure_ascii=False, separators=(',', ':'))};\n"
@@ -559,6 +620,7 @@ def main() -> int:
     print(f"Removed projects: {', '.join(removed) if removed else 'none'}")
     print(f"Locations using country fallback: {rebuilt_geo['metadata']['countryPrecision']}")
     print(f"Locations missing coordinates: {len(missing_geo)}")
+    print(f"CORDIS project results: {project_result_store['metadata']['cordisOutputCount']} across {project_result_store['metadata']['projectsWithOutputs']} projects")
     rate_action = "preserved" if args.keep_exchange_rate else "checked"
     print(f"InforEuro rate {rate_action}: EUR 1 = NZD {exchange_rate['value']:.4f} ({exchange_rate['period']})")
     print(f"Pages receiving fresh data cache markers: {len(page_updates)}")
@@ -572,6 +634,11 @@ def main() -> int:
         backup_dir.mkdir(parents=True, exist_ok=False)
         shutil.copy2(data_path, backup_dir / "data.js")
         shutil.copy2(geo_path, backup_dir / "organisation-locations.js")
+        if result_store_path.is_file():
+            shutil.copy2(result_store_path, backup_dir / "project-results.json")
+        result_data_path = site_dir / "assets" / "project-results-data.js"
+        if result_data_path.is_file():
+            shutil.copy2(result_data_path, backup_dir / "project-results-data.js")
         for page_path in page_updates:
             shutil.copy2(page_path, backup_dir / page_path.name)
         print(f"Backup created: {backup_dir}")
@@ -580,6 +647,7 @@ def main() -> int:
     atomic_write(geo_path, geo_output)
     for page_path, content in page_updates.items():
         atomic_write(page_path, content)
+    write_project_result_outputs(site_dir.parent, project_result_store)
     try:
         if record_portfolio_update(site_dir.parent, published_date, len(projects), added, removed):
             print("Added a public site-update item for the changed portfolio")
@@ -587,6 +655,7 @@ def main() -> int:
         print(f"WARNING: The portfolio was updated, but the public update item could not be created: {exc}", file=sys.stderr)
     print(f"Updated: {data_path}")
     print(f"Updated: {geo_path}")
+    print(f"Updated: {result_store_path}")
     if page_updates:
         print(f"Updated cache markers in {len(page_updates)} HTML pages")
     print("The website is ready for local review. GitHub has not been changed.")

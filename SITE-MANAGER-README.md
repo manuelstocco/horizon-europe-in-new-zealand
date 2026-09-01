@@ -44,19 +44,20 @@ The public feed is generated as `site/feed.xml`. It contains published items onl
 ## Project-results workflow
 
 1. Open **Project results** and choose a project from the list.
-2. Confirm its implementation stage. When no manual record exists, the public tracker infers Planned, Ongoing or Completed from the CORDIS dates.
-3. Add only reader-facing information: a concise implementation summary and verified public outputs with their source links.
-4. Save locally, then check **Project Results** and the project’s own Project Explorer view.
-5. Use the normal **Prepare update** and GitHub Desktop workflow to publish the changes.
+2. Review the read-only CORDIS evidence. Deliverables, publications, reports, DOI metadata and public links are imported automatically with every portfolio update.
+3. Leave **Stage override** on automatic unless a verified source justifies a correction. The automatic stages are Signed, Ongoing, Outputs available and Completed.
+4. Add only information not supplied by CORDIS: a concise implementation summary or additional verified public outputs with their source links.
+5. Save locally, then check **Project Results** and the project’s own Project Explorer view.
+6. Use the normal **Prepare update** and GitHub Desktop workflow to publish the changes.
 
-Manual result records are stored in `content/project-results.json` and are preserved when the XML portfolio is refreshed.
+The unified result registry is stored in `content/project-results.json`. It keeps the current CORDIS snapshot and manual additions separately, presents their merged result to the website, and preserves manual additions when the XML portfolio is refreshed.
 
 ## Portfolio workflow
 
 1. Paste one or more CORDIS project IDs or project-page links into **Portfolio XML**.
 2. Save the list. Projects can be temporarily excluded with their checkbox or removed from the register.
 3. Run **Download & validate**. The manager downloads one fresh XML record for every included project and checks the full portfolio without changing the website.
-4. If the report is correct, run **Update website**.
+4. If the report is correct, run **Update website**. The same operation refreshes the project database, organisations, public outputs and implementation stages as one consistent snapshot.
 
 During either operation, the progress panel shows the number of CORDIS records processed, the current phase and the elapsed time. The final website-building phase can continue briefly after every project has been downloaded.
 

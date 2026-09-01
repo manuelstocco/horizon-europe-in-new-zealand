@@ -22,11 +22,15 @@ The approved EUR–NZD rate is preserved during this process. Check and apply a 
 6. Open `site/index.html` and review the website locally.
 7. If the result is correct, commit and push the changes using GitHub Desktop.
 
-The updater changes only the generated data and the page references that prevent visitors from seeing an old cached copy:
+The updater refreshes the complete project snapshot and the page references that prevent visitors from seeing an old cached copy:
 
 - `site/assets/data.js`
 - `site/assets/organisation-locations.js`
+- `content/project-results.json`
+- `site/assets/project-results-data.js`
 - the version marker on those files in the website's HTML pages
+
+CORDIS `<result>` records are imported with their titles, descriptions, result types, public document links, publication metadata and DOI identifiers. Manual additions made in the Site Manager are merged with—not substituted for—the CORDIS records and survive later XML updates.
 
 The Site Manager keeps project data and exchange-rate approval separate. Visitors do not make live exchange-rate requests: the manually approved value and its reference month are stored in `site/assets/data.js`.
 

@@ -376,8 +376,8 @@
       search:params.get('search')||'',filtered:[...D.projects],selectedId:''
     };
     const resultRecords=new Map((window.HE_PROJECT_RESULTS?.projects||[]).map(record=>[String(record.projectId),record]));
-    const lifecycleLabels={signed:'Signed',ongoing:'Ongoing',completed:'Completed'};
-    const lifecyclePositions={signed:'12%',ongoing:'50%',completed:'88%'};
+    const lifecycleLabels={signed:'Signed',ongoing:'Ongoing',outputs:'Outputs available',completed:'Completed'};
+    const lifecyclePositions={signed:'10%',ongoing:'37%',outputs:'64%',completed:'90%'};
     const list=document.querySelector('[data-project-list]');
     const slide=document.querySelector('[data-focus-slide]');
     const previous=document.querySelector('[data-previous]');
@@ -492,16 +492,16 @@
       put('[data-project-organisations]',`${fmtNumber(project.organisationCount||project.organisations.length)} organisations`);put('[data-project-countries]',`${fmtNumber(project.countryCount||countryRows.length)} countries represented`);
       put('[data-project-nz-funding]',money(nzFunding));put('[data-project-nz-count]',`${nz.length} NZ ${nz.length===1?'organisation':'organisations'}`);
       put('[data-project-focus]',project.focus||project.teaser||'No project objective is available in the source record.');put('[data-project-scheme]',project.scheme||'Not reported');put('[data-project-scheme-code]',project.schemeCode);put('[data-project-call]',project.callCode||'Not reported');put('[data-project-topic]',project.topic||'Not reported');put('[data-project-topic-code]',project.topicCode);
-      const manual=resultRecords.get(String(project.id));
+      const resultRecord=resultRecords.get(String(project.id));
       const today=new Date().toISOString().slice(0,10);
       const inferred=project.end&&project.end<today?'completed':project.start&&project.start>today?'signed':'ongoing';
-      const stage=manual?.stage==='completed'?'completed':manual?.stage==='planned'?'signed':manual?.stage==='ongoing'||manual?.stage==='outputs'?'ongoing':inferred;
+      const stage=lifecycleLabels[resultRecord?.stage]?resultRecord.stage:project.results?.length?'outputs':inferred;
       const stageLabel=lifecycleLabels[stage]||'Ongoing';
       slide.dataset.projectStage=stage;slide.style.setProperty('--stage-position',lifecyclePositions[stage]||lifecyclePositions.ongoing);
       put('[data-project-status]',stageLabel);put('[data-project-stage-label]',stageLabel);
       const rail=document.querySelector('[data-project-stage-rail]');
       rail.setAttribute('aria-label',`Project status: ${stageLabel}. Project dates: ${formatDate(project.start)} to ${formatDate(project.end)}.`);
-      const outputCount=manual?.outputs?.length||0,hasOutputs=outputCount>0||manual?.stage==='outputs';
+      const outputCount=resultRecord?.outputs?.length||project.results?.length||0,hasOutputs=outputCount>0||stage==='outputs';
       const outputStatus=document.querySelector('[data-project-output-status]');
       outputStatus.hidden=!hasOutputs;outputStatus.textContent=outputCount?`${fmtNumber(outputCount)} public ${outputCount===1?'output':'outputs'}`:'Outputs available';outputStatus.href=`results.html?q=${encodeURIComponent(project.acronym)}`;
       const coordinator=project.coordinator||project.organisations.find(org=>org.coordinator);

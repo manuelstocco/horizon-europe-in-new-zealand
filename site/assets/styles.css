@@ -634,3 +634,8 @@ body:not([data-page="story"]) .cluster-profile-bubble{border:clamp(6px,calc(var(
 body:not([data-page="story"]) .cluster-profile-bubble small{color:#52697d!important}
 body[data-page="story"] .story-cluster-layer .cluster-profile-bubble{border:clamp(6px,calc(var(--bubble-size) * .055),12px) solid var(--cluster-colour)!important;background:#173e69!important;color:#fff!important;box-shadow:0 14px 42px rgba(0,0,0,.28)}
 body[data-page="story"] .story-cluster-layer .cluster-profile-bubble small{color:#fff!important;opacity:.86}
+
+/* CORDIS project results */
+.focus-slide[data-project-stage="outputs"] .focus-status{border-color:#d7c8ef;background:#f6f1fd;color:#6f4cab}.focus-slide[data-project-stage="outputs"] .focus-status-dot{background:#8b63ce}
+.public-result-body h3>span{margin-left:5px;color:#6e8294;font-size:9px}.public-output-item{display:grid;gap:3px;padding:9px;border:1px solid #cbdce8;background:#fff;color:#23669e;text-decoration:none}.public-output-item span{color:#75899a;font-size:7px;text-transform:uppercase}.public-output-item strong{color:#173a5e;font-size:10px}.public-output-item small{color:#778b9b;font-size:8px}.public-output-extra{grid-column:1/-1;border-top:1px solid #dde7ee}.public-output-extra summary{padding:10px 0;color:#246ba5;font-size:9px;font-weight:850;cursor:pointer}.public-output-extra>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:900px){.public-output-extra>div{grid-template-columns:1fr}}
