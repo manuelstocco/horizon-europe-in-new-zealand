@@ -24,7 +24,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="assets/styles.css?v=084a1564f5fd">
+  <link rel="stylesheet" href="assets/styles.css?v=e18828f18b35">
   <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
 </head>
 <body class="page-shell focus-explorer" data-page="projects">
@@ -40,7 +40,7 @@
         <h1>Move from the portfolio to each project.</h1>
         <p>Select a project to generate a concise, presentation-ready focus page with its funding context, consortium, objective and country participation.</p>
       </div>
-      <details class="page-download project-page-download" data-project-download>
+      <div class="overview-hero-actions page-hero-actions" aria-label="Page actions"><details class="page-download project-page-download" data-project-download>
         <summary><span class="download-arrow" aria-hidden="true">↓</span>Download</summary>
         <div class="page-download-menu project-page-download-menu" aria-label="Download Project Explorer slides">
           <p class="download-group-label">Projects to include</p>
@@ -54,11 +54,12 @@
           <button data-project-export-format="pdf" type="button"><span class="download-type-icon pdf" aria-hidden="true">PDF</span><span><strong>PDF</strong><small>Presentation-ready document · .pdf</small></span></button>
           <span class="download-status" data-project-export-status aria-live="polite"></span>
         </div>
-      </details>
+      </details></div>
     </div>
   </section>
 
   <main class="page-content focus-page-content">
+    <nav class="workspace-tabs" aria-label="Projects and results views"><a class="active" href="projects.html" aria-current="page">Project explorer</a><a href="results.html">Results &amp; outputs</a></nav>
     <div class="data-strip"><span data-result-count>Projects in current dataset</span></div>
 
     <div class="focus-workspace">
@@ -68,7 +69,7 @@
           <div class="filter-field"><label>Clusters</label><div data-filter="clusters"></div></div>
           <div class="filter-field"><label>Funding schemes</label><div data-filter="schemes"></div></div>
           <div class="filter-field"><label>Partner countries</label><div data-filter="countries"></div></div>
-          <div class="focus-results-meta"><span data-list-count aria-live="polite"></span><button class="focus-clear" data-clear-filters type="button">Clear filters</button></div>
+          <div class="focus-results-meta"><span data-list-count aria-live="polite"></span><button class="focus-clear" data-clear-filters type="button">Reset</button></div>
         </div>
         <div class="focus-project-list" data-project-list role="listbox" aria-label="Projects"></div>
       </aside>
@@ -82,10 +83,7 @@
         </div>
 
         <article class="focus-slide" data-focus-slide>
-          <div class="focus-progress-rail" data-project-stage-rail tabindex="0" role="img">
-            <div class="focus-accent" aria-hidden="true"></div>
-            <div class="focus-stage-drop" aria-hidden="true"><span></span><strong data-project-stage-label></strong></div>
-          </div>
+          <div class="focus-progress-rail" aria-hidden="true"><div class="focus-accent"></div></div>
           <div class="focus-slide-inner">
             <header class="focus-slide-header">
               <div>
@@ -134,6 +132,6 @@
 
   <div class="focus-toast" data-toast role="status" aria-live="polite"></div>
   <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated>22 August 2026</span></span><a href="methodology.html">About the data</a></footer>
-  <script src="assets/data.js?v=9d2417ac5171"></script><script src="assets/project-results-data.js?v=982592906197"></script><script src="assets/common.js?v=fd70e7881e05"></script><script src="assets/app.js?v=e9dde444a9db"></script><script src="assets/vendor/pptxgen.bundle.js?v=4fb9eac5cfef"></script><script src="assets/vendor/pdf-lib.min.js?v=0f9a5cad0794"></script><script src="assets/vendor/fontkit.umd.min.js?v=d8df561b9fba"></script><script src="assets/font-data.js?v=6d6cd22bc83f"></script><script src="assets/project-export.js?v=93078430a9b5"></script>
+  <script src="assets/data.js?v=9d2417ac5171"></script><script src="assets/project-results-data.js?v=c7fa6b235341"></script><script src="assets/common.js?v=854f15f8ded8"></script><script src="assets/app.js?v=f44cca80a58f"></script><script src="assets/vendor/pptxgen.bundle.js?v=4fb9eac5cfef"></script><script src="assets/vendor/pdf-lib.min.js?v=0f9a5cad0794"></script><script src="assets/vendor/fontkit.umd.min.js?v=d8df561b9fba"></script><script src="assets/font-data.js?v=6d6cd22bc83f"></script><script src="assets/project-export.js?v=93078430a9b5"></script>
 </body>
 </html>

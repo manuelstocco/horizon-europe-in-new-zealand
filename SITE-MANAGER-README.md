@@ -14,6 +14,7 @@ The Site Manager is the local control centre for the Horizon Europe in New Zeala
 - **Project results** — assign an implementation stage, add a concise verified summary and link public deliverables, papers, pilots, demonstrators, policy reports or datasets.
 - **Country status** — maintain associated countries, low- and middle-income eligibility, source links and the date on which the reference was checked.
 - **Portfolio XML** — maintain the project register, download fresh XML records directly from the official CORDIS links, validate the complete portfolio and update the website. A complete ZIP remains available as a fallback.
+- **Resource Library** — upload public documents with their title, description, country, language, date and version; preview the current catalogue; and remove obsolete items. Removed files are retained locally in `content/resource-library-trash/` for recovery.
 - **Exchange rate** — check an official monthly EUR–NZD InforEuro rate and apply it only after manual approval.
 - **Prepare update** — confirm that the generated website files are ready for review in GitHub Desktop.
 
@@ -62,6 +63,14 @@ The unified result registry is stored in `content/project-results.json`. It keep
 During either operation, the progress panel shows the number of CORDIS records processed, the current phase and the elapsed time. The final website-building phase can continue briefly after every project has been downloaded.
 
 The project update preserves the currently approved exchange rate. Currency changes are handled separately in **Exchange rate**.
+
+## Resource Library workflow
+
+1. Open **Resource Library** and choose the document to add.
+2. Complete the public title and useful catalogue information. The document date is required; the format is inferred from the filename when left blank.
+3. Use **Add to Resource Library** and preview the public library from the link at the top of the page.
+4. Use **Remove** only after checking the selected item. The document disappears from the public catalogue, but a recoverable local copy is moved to `content/resource-library-trash/`.
+5. Run **Prepare update** before publishing through GitHub Desktop so the catalogue and its refreshed web address are included together.
 
 ## Exchange-rate workflow
 

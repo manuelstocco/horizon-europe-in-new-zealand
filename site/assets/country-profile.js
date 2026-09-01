@@ -9,10 +9,9 @@
   const params = new URLSearchParams(location.search);
   const validCountries = D.countries.filter(country => country.code !== 'NZ' && D.projects.some(project => project.countryCodes.includes(country.code))).sort((a,b) => a.name.localeCompare(b.name));
   const countryCounts = new Map(validCountries.map(country => [country.code,D.projects.filter(project => project.countryCodes.includes(country.code)).length]));
-  const defaultCountry = [...validCountries].sort((a,b) => (countryCounts.get(b.code) || 0) - (countryCounts.get(a.code) || 0) || a.name.localeCompare(b.name))[0]?.code || '';
   const parseList = name => (params.get(name) || '').split(',').filter(Boolean);
   const state = {
-    country: validCountries.some(country => country.code === params.get('country')) ? params.get('country') : defaultCountry,
+    country: validCountries.some(country => country.code === params.get('country')) ? params.get('country') : '',
     clusters: parseList('clusters'), schemes: parseList('schemes'), roles: parseList('roles'), types: parseList('types'),
     sme: ['sme','non-sme'].includes(params.get('sme')) ? params.get('sme') : '', search: params.get('search') || '',
     clusterMeasure: params.get('measure') === 'allocation' ? 'allocation' : 'projects', sort:'contribution', direction:'desc'
@@ -167,14 +166,47 @@
     const labels = selectedLabels(); document.querySelector('[data-selection-summary]').innerHTML = labels.length ? labels.map(label => `<span class="selection-chip">${esc(label)}</span>`).join('') : '<span class="selection-chip">All projects and organisations for this country</span>';
   }
   function render() {
-    if (!state.country) return;
+    const hasCountry = Boolean(state.country);
+    document.querySelector('[data-country-rest]').hidden = hasCountry;
+    document.querySelectorAll('[data-country-content]').forEach(element => { element.hidden = !hasCountry; });
+    if (!hasCountry) {
+      syncUrl();
+      document.querySelector('[data-country-title]').textContent = 'Country partnership profile.';
+      document.querySelector('[data-country-intro]').textContent = 'Select a partner country to see its projects, organisations, funding and links with New Zealand.';
+      document.title = 'Country Profiles · Horizon Europe in New Zealand';
+      return;
+    }
     syncUrl(); renderIdentity(); renderSelection();
     const projects = selectedScope(), organisations = aggregateOrganisations(projects), metrics = profileMetrics(projects,organisations);
     renderInsight(metrics); renderMetrics(metrics); renderTypeCards(organisations); renderClusterChart(projects); renderSchemeChart(projects); renderRoleChart(projects); renderOrganisationTable(organisations); renderProjectTable(projects);
   }
   function setupControls() {
     document.querySelector('[data-project-count]').textContent = H.fmtNumber(D.projects.length);
-    const select = document.querySelector('[data-country-select]'); validCountries.forEach(item => { const count=countryCounts.get(item.code); select.append(new Option(`${item.name} · ${count} ${count === 1 ? 'project' : 'projects'}`,item.code)); }); select.value = state.country;
+    const select = document.querySelector('[data-country-select]');
+    select.append(new Option('Select a country',''));
+    validCountries.forEach(item => select.append(new Option(item.name,item.code)));
+    select.value = state.country;
+    const picker = document.querySelector('[data-country-picker]'), trigger = picker.querySelector('[data-country-trigger]'), menu = picker.querySelector('[data-country-menu]'), search = picker.querySelector('[data-country-search]'), optionRoot = picker.querySelector('[data-country-options]');
+    const updateCountryTrigger = () => {
+      const item = validCountries.find(country => country.code === state.country);
+      picker.querySelector('[data-country-trigger-label]').textContent = item?.name || 'Select a country';
+      picker.querySelector('[data-country-trigger-flag]').textContent = item ? flag(item.code) : '◎';
+      document.querySelector('[data-country-status-row]').hidden = !item;
+    };
+    const closeCountryMenu = () => { menu.hidden = true; trigger.setAttribute('aria-expanded','false'); };
+    const chooseCountry = code => { state.country = code; select.value = code; updateCountryTrigger(); closeCountryMenu(); render(); };
+    const renderCountryOptions = query => {
+      const needle = String(query || '').trim().toLowerCase();
+      const rows = validCountries.filter(item => !needle || item.name.toLowerCase().includes(needle) || item.code.toLowerCase().includes(needle));
+      optionRoot.replaceChildren();
+      rows.forEach(item => { const button = document.createElement('button'); button.type='button'; button.className='country-profile-country-option'; button.setAttribute('role','option'); button.setAttribute('aria-selected',String(item.code === state.country)); button.innerHTML=`<span aria-hidden="true">${flag(item.code)}</span><strong>${esc(item.name)}</strong>`; button.addEventListener('click',() => chooseCountry(item.code)); optionRoot.append(button); });
+      if (!rows.length) optionRoot.innerHTML='<p>No matching countries.</p>';
+    };
+    trigger.addEventListener('click',() => { const opening = menu.hidden; menu.hidden = !opening; trigger.setAttribute('aria-expanded',String(opening)); if (opening) { search.value=''; renderCountryOptions(''); requestAnimationFrame(() => search.focus()); } });
+    search.addEventListener('input',event => renderCountryOptions(event.target.value));
+    document.addEventListener('click',event => { if (!picker.contains(event.target)) closeCountryMenu(); });
+    document.addEventListener('keydown',event => { if (event.key === 'Escape') closeCountryMenu(); });
+    updateCountryTrigger();
     const allOrganisations = D.projects.flatMap(project => project.organisations);
     const roleOptions = [...new Set(allOrganisations.map(org => org.role))].map(value => ({value,label:roleLabels[value] || value})).sort((a,b) => a.label.localeCompare(b.label));
     const typeMap = new Map(); allOrganisations.forEach(org => typeMap.set(org.organisationTypeCode || 'NR',org.organisationType || 'Not reported'));
@@ -188,10 +220,10 @@
     };
     controls.clusters.set(state.clusters); controls.schemes.set(state.schemes); controls.roles.set(state.roles); controls.types.set(state.types);
     document.querySelector('[data-filter-sme]').value = state.sme; document.querySelector('[data-filter-search]').value = state.search;
-    select.addEventListener('change',event => { state.country=event.target.value; render(); });
+    select.addEventListener('change',event => chooseCountry(event.target.value));
     document.querySelector('[data-filter-sme]').addEventListener('change',event => { state.sme=event.target.value; render(); });
     document.querySelector('[data-filter-search]').addEventListener('input',event => { state.search=event.target.value.trim(); render(); });
-    document.querySelector('[data-clear-filters]').addEventListener('click',() => { Object.values(controls).forEach(control => control.clear()); state.sme='';state.search='';document.querySelector('[data-filter-sme]').value='';document.querySelector('[data-filter-search]').value='';render(); });
+    document.querySelector('[data-clear-filters]').addEventListener('click',() => { controlsReady=false;Object.values(controls).forEach(control => control.clear());controlsReady=true;state.clusters=[];state.schemes=[];state.roles=[];state.types=[];state.sme='';state.search='';document.querySelector('[data-filter-sme]').value='';document.querySelector('[data-filter-search]').value='';chooseCountry(''); });
     document.querySelectorAll('[data-cluster-measure]').forEach(button => { const active = button.dataset.clusterMeasure === state.clusterMeasure; button.classList.toggle('active',active); button.setAttribute('aria-pressed',String(active)); button.addEventListener('click',() => { state.clusterMeasure=button.dataset.clusterMeasure; document.querySelectorAll('[data-cluster-measure]').forEach(item => { const selected=item===button;item.classList.toggle('active',selected);item.setAttribute('aria-pressed',String(selected)); }); render(); }); });
     document.querySelector('[data-share-view]').addEventListener('click',async event => { syncUrl(); await H.copyCurrentView(event.currentTarget,'Country profile link copied'); document.querySelector('[data-toast]').textContent='Country profile link copied'; document.querySelector('[data-toast]').classList.add('show'); setTimeout(() => document.querySelector('[data-toast]').classList.remove('show'),1600); });
     controlsReady = true;

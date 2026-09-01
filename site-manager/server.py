@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import json
+import csv
 import mimetypes
 import os
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -14,7 +16,7 @@ import tempfile
 import threading
 import time
 import webbrowser
-from datetime import date
+from datetime import date, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -53,6 +55,12 @@ from portfolio_manager import (  # noqa: E402
 
 MAX_JSON_BYTES = 3 * 1024 * 1024
 MAX_ZIP_BYTES = 180 * 1024 * 1024
+MAX_RESOURCE_BYTES = 100 * 1024 * 1024
+REPOSITORY_DIR = SITE / "repository"
+REPOSITORY_FILES = REPOSITORY_DIR / "files"
+REPOSITORY_CATALOG = REPOSITORY_DIR / "catalog.csv"
+REPOSITORY_FIELDS = ["id", "country", "country_code", "title", "description", "file", "format", "language", "updated", "version", "featured"]
+RESOURCE_EXTENSIONS = {".pdf", ".pptx", ".docx", ".xlsx", ".csv", ".zip", ".txt", ".png", ".jpg", ".jpeg"}
 
 
 def load_assignment(path: Path, prefix: str) -> dict:
@@ -109,6 +117,70 @@ def project_reference() -> list[dict]:
         "start": str(project.get("start", "")),
         "end": str(project.get("end", "")),
     } for project in data.get("projects", [])]
+
+
+def repository_rows() -> list[dict]:
+    if not REPOSITORY_CATALOG.is_file():
+        return []
+    with REPOSITORY_CATALOG.open(encoding="utf-8-sig", newline="") as source:
+        rows = list(csv.DictReader(source))
+    result = []
+    for row in rows:
+        relative = str(row.get("file", "")).strip()
+        path = SITE / relative
+        result.append({
+            "id": str(row.get("id", "")).strip(),
+            "country": str(row.get("country", "")).strip(),
+            "countryCode": str(row.get("country_code", "")).strip(),
+            "title": str(row.get("title", "")).strip(),
+            "description": str(row.get("description", "")).strip(),
+            "file": relative,
+            "fileName": path.name,
+            "format": str(row.get("format", "")).strip(),
+            "language": str(row.get("language", "")).strip(),
+            "updated": str(row.get("updated", "")).strip(),
+            "version": str(row.get("version", "")).strip(),
+            "featured": str(row.get("featured", "")).strip().lower() in {"true", "yes", "1"},
+            "sizeBytes": path.stat().st_size if path.is_file() else 0,
+            "exists": path.is_file(),
+        })
+    return result
+
+
+def write_repository_rows(rows: list[dict]) -> None:
+    REPOSITORY_DIR.mkdir(parents=True, exist_ok=True)
+    temporary = REPOSITORY_CATALOG.with_suffix(".csv.tmp")
+    with temporary.open("w", encoding="utf-8", newline="") as target:
+        writer = csv.DictWriter(target, fieldnames=REPOSITORY_FIELDS)
+        writer.writeheader()
+        writer.writerows([{field: row.get(field, "") for field in REPOSITORY_FIELDS} for row in rows])
+    temporary.replace(REPOSITORY_CATALOG)
+
+
+def rebuild_repository() -> None:
+    result = subprocess.run(
+        [sys.executable, str(REPOSITORY_DIR / "build_repository.py")],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if result.returncode != 0:
+        raise ValueError((result.stderr or result.stdout or "The Resource Library catalogue could not be rebuilt.").strip())
+
+
+def resource_slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug[:72] or "resource"
+
+
+def clean_resource_filename(value: str) -> str:
+    name = Path(value).name.strip()
+    stem = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(name).stem).strip("-._") or "resource"
+    suffix = Path(name).suffix.lower()
+    if suffix not in RESOURCE_EXTENSIONS:
+        raise ValueError("Choose a PDF, PowerPoint, Word, Excel, CSV, ZIP, text or image file.")
+    return f"{stem[:90]}{suffix}"
 
 
 class ManagerServer(ThreadingHTTPServer):
@@ -204,6 +276,7 @@ class Handler(BaseHTTPRequestHandler):
                 "portfolio": portfolio_summary(),
                 "projectStore": project_store,
                 "exchangeStore": exchange_store,
+                "resourceLibrary": {"items": repository_rows()},
                 "today": date.today().isoformat(),
             })
             return
@@ -270,6 +343,12 @@ class Handler(BaseHTTPRequestHandler):
             if route == "/api/portfolio-sync":
                 self._run_portfolio_sync()
                 return
+            if route == "/api/repository-upload":
+                self._upload_repository_file()
+                return
+            if route == "/api/repository-delete":
+                self._delete_repository_file()
+                return
             if route == "/api/exchange-rate/apply":
                 period = parse_qs(urlparse(self.path).query).get("period", [""])[0]
                 rate = fetch_infoeuro_rate(period)
@@ -296,7 +375,7 @@ class Handler(BaseHTTPRequestHandler):
                     write_country_outputs(ROOT, cleaned_countries)
                     write_project_result_outputs(ROOT, project_results)
                     refresh_asset_references(ROOT)
-                required = [SITE / "updates.html", SITE / "feed.xml", SITE / "assets" / "updates-events-data.js", SITE / "assets" / "country-status-overrides.js", SITE / "assets" / "project-results-data.js", ROOT / "content" / "project-results.json", ROOT / "content" / "portfolio-projects.json", ROOT / "content" / "exchange-rate.json"]
+                required = [SITE / "updates.html", SITE / "feed.xml", SITE / "assets" / "updates-events-data.js", SITE / "assets" / "country-status-overrides.js", SITE / "assets" / "project-results-data.js", SITE / "assets" / "repository-data.js", SITE / "repository" / "catalog.csv", ROOT / "content" / "project-results.json", ROOT / "content" / "portfolio-projects.json", ROOT / "content" / "exchange-rate.json"]
                 missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
                 if errors or missing:
                     self._error("The publication package is not ready.", details=errors + [f"Missing: {name}" for name in missing])
@@ -320,6 +399,8 @@ class Handler(BaseHTTPRequestHandler):
                         "site/feed.xml",
                         "site/updates.html",
                         "site/results.html",
+                        "site/assets/repository-data.js",
+                        "site/repository/catalog.csv",
                     ]
                 self._json({
                     "ok": True,
@@ -337,6 +418,100 @@ class Handler(BaseHTTPRequestHandler):
             self._error(f"The operation could not be completed: {exc}", 500)
             return
         self.send_error(HTTPStatus.NOT_FOUND)
+
+    def _upload_repository_file(self) -> None:
+        query = parse_qs(urlparse(self.path).query)
+        value = lambda name, default="": str(query.get(name, [default])[0]).strip()
+        title = value("title")
+        if not title:
+            self._error("Add a public title for the resource.")
+            return
+        updated = value("updated", date.today().isoformat())
+        try:
+            date.fromisoformat(updated)
+        except ValueError:
+            self._error("The resource date must use YYYY-MM-DD.")
+            return
+        size = int(self.headers.get("Content-Length", "0"))
+        if size <= 0 or size > MAX_RESOURCE_BYTES:
+            self._error("The selected file is empty or larger than 100 MB.")
+            return
+        try:
+            filename = clean_resource_filename(value("filename"))
+        except ValueError as exc:
+            self._error(str(exc))
+            return
+        rows = []
+        if REPOSITORY_CATALOG.is_file():
+            with REPOSITORY_CATALOG.open(encoding="utf-8-sig", newline="") as source:
+                rows = list(csv.DictReader(source))
+        item_id = resource_slug(value("id") or title)
+        if any(str(row.get("id", "")).strip() == item_id for row in rows):
+            self._error("A Resource Library item already uses this identifier. Change the title or identifier.")
+            return
+        REPOSITORY_FILES.mkdir(parents=True, exist_ok=True)
+        destination = REPOSITORY_FILES / filename
+        counter = 2
+        while destination.exists():
+            destination = REPOSITORY_FILES / f"{Path(filename).stem}-{counter}{Path(filename).suffix}"
+            counter += 1
+        payload = self.rfile.read(size)
+        original_catalog = REPOSITORY_CATALOG.read_bytes() if REPOSITORY_CATALOG.is_file() else b""
+        destination.write_bytes(payload)
+        row = {
+            "id": item_id,
+            "country": value("country", "General"),
+            "country_code": value("countryCode", "INT").upper(),
+            "title": title,
+            "description": value("description"),
+            "file": f"repository/files/{destination.name}",
+            "format": value("format", destination.suffix.lstrip(".").upper()),
+            "language": value("language", "English"),
+            "updated": updated,
+            "version": value("version"),
+            "featured": "true" if value("featured").lower() in {"true", "1", "yes"} else "false",
+        }
+        rows.append(row)
+        try:
+            write_repository_rows(rows)
+            rebuild_repository()
+        except Exception:
+            destination.unlink(missing_ok=True)
+            if original_catalog:
+                REPOSITORY_CATALOG.write_bytes(original_catalog)
+            raise
+        self._json({"ok": True, "message": "Resource added to the local library.", "resourceLibrary": {"items": repository_rows()}})
+
+    def _delete_repository_file(self) -> None:
+        payload = self._read_json()
+        item_id = str(payload.get("id", "")).strip()
+        if not item_id:
+            self._error("Choose a Resource Library item to remove.")
+            return
+        with REPOSITORY_CATALOG.open(encoding="utf-8-sig", newline="") as source:
+            rows = list(csv.DictReader(source))
+        target = next((row for row in rows if str(row.get("id", "")).strip() == item_id), None)
+        if not target:
+            self._error("The selected Resource Library item no longer exists.", 404)
+            return
+        original_catalog = REPOSITORY_CATALOG.read_bytes()
+        file_path = (SITE / str(target.get("file", ""))).resolve()
+        files_root = REPOSITORY_FILES.resolve()
+        moved_to = None
+        if file_path.is_file() and (file_path == files_root or files_root in file_path.parents):
+            trash = ROOT / "content" / "resource-library-trash"
+            trash.mkdir(parents=True, exist_ok=True)
+            moved_to = trash / f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{file_path.name}"
+            shutil.move(str(file_path), str(moved_to))
+        try:
+            write_repository_rows([row for row in rows if str(row.get("id", "")).strip() != item_id])
+            rebuild_repository()
+        except Exception:
+            REPOSITORY_CATALOG.write_bytes(original_catalog)
+            if moved_to and moved_to.is_file():
+                shutil.move(str(moved_to), str(file_path))
+            raise
+        self._json({"ok": True, "message": "Resource removed from the public library. A recoverable copy was kept locally.", "resourceLibrary": {"items": repository_rows()}})
 
     def _run_xml_update(self) -> None:
         query = parse_qs(urlparse(self.path).query)

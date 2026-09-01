@@ -8,28 +8,21 @@
     const currentFile = location.pathname.split('/').pop() || 'index.html';
     const navigationGroups = [
       { label:'Discover', pages:[
-        ['index.html','The Story']
+        ['index.html','The Story',[]]
       ]},
-      { label:'Explore the Portfolio', pages:[
-        ['overview.html','Partnership Overview'],
-        ['funding-flows.html','Funding & Country Flows']
+      { label:'Explore', pages:[
+        ['overview.html','Partnership',['funding-flows.html']],
+        ['country-profile.html','Countries & Connections',['compare.html','eu27-network.html']],
+        ['projects.html','Projects & Results',['results.html']]
       ]},
-      { label:'Country Analysis', pages:[
-        ['country-profile.html','Country Profiles'],
-        ['compare.html','Compare']
-      ]},
-      { label:'Projects & Results', pages:[
-        ['projects.html','Project Explorer'],
-        ['results.html','Project Results'],
-        ['eu27-network.html','EU27 Collaboration Network']
+      { label:'Stay current', pages:[
+        ['updates.html','Updates & Events',[]]
       ]},
       { label:'Resources', pages:[
-        ['updates.html','Updates & Events'],
-        ['repository.html','Country Presentations'],
-        ['methodology.html','Data & Methodology']
+        ['repository.html','Resource Library',['methodology.html']]
       ]}
     ];
-    nav.innerHTML = navigationGroups.map(group => `<section class="site-nav-group"><h2>${group.label}</h2>${group.pages.map(([href,label]) => `<a href="${href}"${currentFile === href ? ' class="active" aria-current="page"' : ''}>${label}</a>`).join('')}</section>`).join('');
+    nav.innerHTML = navigationGroups.map(group => `<section class="site-nav-group"><h2>${group.label}</h2>${group.pages.map(([href,label,related]) => { const active=currentFile===href||related.includes(currentFile); return `<a href="${href}"${active?' class="active" aria-current="page"':''}>${label}</a>`; }).join('')}</section>`).join('');
     const activeLink = nav.querySelector('a.active');
     const menuButton = document.createElement('button');
     menuButton.className = 'site-menu-button';
@@ -279,7 +272,7 @@
     const selected = new Set();
     const menuId = `multi-menu-${Math.random().toString(36).slice(2,9)}`;
     element.classList.add('multi-select');
-    element.innerHTML = `<button class="multi-trigger" type="button" aria-expanded="false" aria-controls="${menuId}"><span class="multi-label">${placeholder}</span><span class="count" hidden>0</span></button><div class="multi-menu" id="${menuId}" hidden>${searchable?`<div class="multi-search-wrap"><input class="multi-search" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}"></div>`:''}${countryActions||clearAction?`<div class="multi-actions">${countryActions?'<button type="button" data-action="eu">Select EU27</button><button type="button" data-action="non-eu">Select non-EU</button>':''}<button type="button" data-action="clear">Clear all</button></div>`:''}<div class="multi-options" role="group" aria-label="${placeholder}"></div></div>`;
+    element.innerHTML = `<button class="multi-trigger" type="button" aria-expanded="false" aria-controls="${menuId}"><span class="multi-label">${placeholder}</span><span class="count" hidden>0</span></button><div class="multi-menu" id="${menuId}" hidden>${searchable?`<div class="multi-search-wrap"><input class="multi-search" type="search" placeholder="${searchPlaceholder}" aria-label="${searchPlaceholder}"></div>`:''}${countryActions||clearAction?`<div class="multi-actions">${countryActions?'<button type="button" data-action="eu">Select EU27</button><button type="button" data-action="non-eu">Select non-EU</button>':''}<button type="button" data-action="clear">Reset</button></div>`:''}<div class="multi-options" role="group" aria-label="${placeholder}"></div></div>`;
     const trigger = element.querySelector('.multi-trigger');
     const fieldLabel = element.closest('.filter-field')?.querySelector('label')?.textContent?.trim();
     trigger.setAttribute('aria-label', fieldLabel ? `${fieldLabel}: ${placeholder}` : placeholder);
@@ -376,22 +369,14 @@
   function mountShareView() {
     document.querySelectorAll('[data-share-view],[data-map-share]').forEach(decorateShareButton);
     if (document.querySelector('[data-share-view]')) return;
-    if (!['overview','funding-flows','projects','eu27-network','country-profile'].includes(document.body.dataset.page)) return;
-    const page = document.body.dataset.page;
-    const target = page === 'overview'
-      ? document.querySelector('.overview-hero-actions')
-      : page === 'funding-flows'
-        ? document.querySelector('.overview-hero-actions')
-        : document.querySelector('.filter-panel,.focus-sidebar,.circle-controls');
+    if (!['overview','funding-flows','projects','eu27-network','country-profile','compare','results'].includes(document.body.dataset.page)) return;
+    const target = document.querySelector('.page-hero-actions,.overview-hero-actions');
     if (!target) return;
     const button = document.createElement('button');
     button.type = 'button'; button.dataset.shareView = '';
     decorateShareButton(button);
-    button.addEventListener('click', () => copyCurrentView(button));
-    if (target.classList.contains('overview-hero-actions')) target.appendChild(button);
-    else if (target.classList.contains('circle-controls')) { button.classList.add('circle-share-view'); target.insertAdjacentElement('afterend',button); }
-    else if (target.classList.contains('focus-sidebar')) (target.querySelector('.focus-results-meta') || target).appendChild(button);
-    else target.appendChild(button);
+    if (!['country-profile','compare','results'].includes(document.body.dataset.page)) button.addEventListener('click', () => copyCurrentView(button));
+    target.prepend(button);
   }
 
   function renderChips(element, items, empty='All projects') {
@@ -609,13 +594,6 @@
     document.querySelectorAll('[data-ncp-updated]').forEach(el => el.textContent=formatDate(D.metadata.ncpDataVerified));
   }
   updateFooters();
-
-  document.querySelectorAll('.primary-nav').forEach(nav => {
-    const projectsLink = nav.querySelector('a[href="projects.html"]');
-    if (!projectsLink) return;
-    if (!nav.querySelector('a[href="eu27-network.html"]')) projectsLink.insertAdjacentHTML('beforebegin','<a href="eu27-network.html">EU27 network</a>');
-    if (!nav.querySelector('a[href="repository.html"]')) projectsLink.insertAdjacentHTML('afterend','<a href="repository.html">Repository</a>');
-  });
 
   window.HE = { D, EU27, clusterMap, countryMap, uniqueOptions, filterProjects, metrics, projectPartnerCodes, projectPartnerNames, mountMultiSelect, renderChips, setMetrics, groupCount, renderBars, renderHbars, renderRank, organisationRows, renderProjectTable, renderClusterBubbles, renderFlow, clusterColor, countryColor, schemeColor, formatDate, fmtMoney, fmtExactMoney, fmtNumber, currentCurrency:()=>activeCurrency, exchangeRate, updateFooters, copyCurrentView, decorateShareButton };
 })();

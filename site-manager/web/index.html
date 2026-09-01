@@ -22,8 +22,9 @@
         <button type="button" data-view-button="results"><span>03</span>Project results</button>
         <button type="button" data-view-button="countries"><span>04</span>Country status</button>
         <button type="button" data-view-button="portfolio"><span>05</span>Portfolio XML</button>
-        <button type="button" data-view-button="exchange"><span>06</span>Exchange rate</button>
-        <button type="button" data-view-button="publish"><span>07</span>Prepare update</button>
+        <button type="button" data-view-button="resources"><span>06</span>Resource Library</button>
+        <button type="button" data-view-button="exchange"><span>07</span>Exchange rate</button>
+        <button type="button" data-view-button="publish"><span>08</span>Prepare update</button>
       </nav>
       <div class="sidebar-note"><strong>No automatic publishing</strong><p>Changes remain on this Mac until you publish them with GitHub Desktop.</p></div>
     </aside>
@@ -149,6 +150,28 @@
           </div>
           <pre data-xml-output>Save the project list, then use “Download &amp; validate” before updating the website.</pre>
         </article>
+      </section>
+
+      <section class="manager-view" data-view="resources">
+        <div class="view-heading compact"><div><p class="eyebrow">Public documents</p><h1>Resource Library</h1><p>Add documents to the public library or remove items that should no longer be shown. Changes remain local until the website is published through GitHub.</p></div><a class="secondary-action" href="/site/repository.html" target="_blank">Preview library ↗</a></div>
+        <div class="resource-manager-layout">
+          <form class="manager-card resource-upload-card" data-resource-form>
+            <span class="card-kicker">New resource</span><h2>Add a public document</h2>
+            <label class="file-drop compact resource-file-drop"><input type="file" data-resource-file accept=".pdf,.pptx,.docx,.xlsx,.csv,.zip,.txt,.png,.jpg,.jpeg"><span class="file-icon">FILE</span><b data-resource-file-name>Choose a document</b><small>PDF, PowerPoint, Word, Excel, CSV, ZIP, text or image · maximum 100 MB.</small></label>
+            <label>Public title<input name="title" required maxlength="180"></label>
+            <label>Description<textarea name="description" rows="4" maxlength="700"></textarea></label>
+            <div class="field-grid two"><label>Country or scope<input name="country" value="General" placeholder="General, New Zealand, Ireland…"></label><label>Country code<input name="countryCode" value="INT" maxlength="3"></label></div>
+            <div class="field-grid two"><label>Language<input name="language" value="English"></label><label>Version<input name="version" placeholder="September 2026"></label></div>
+            <div class="field-grid two"><label>Document date<input name="updated" type="date" required></label><label>Format label<input name="format" placeholder="Automatic from file"></label></div>
+            <label class="check-field"><input name="featured" type="checkbox"><span><b>Featured resource</b><small>Give this document greater prominence in the public library.</small></span></label>
+            <div class="form-errors" data-resource-errors hidden role="alert"></div>
+            <button class="primary-action" type="submit" data-resource-save>Add to Resource Library</button>
+          </form>
+          <section class="manager-card resource-list-card">
+            <div class="register-head"><div><span class="card-kicker">Current library</span><h2><span data-resource-count>0</span> documents</h2></div><label class="compact-search"><span class="sr-only">Search Resource Library</span><input type="search" placeholder="Search title, country or format…" data-resource-search></label></div>
+            <div class="resource-register" data-resource-list></div>
+          </section>
+        </div>
       </section>
 
       <section class="manager-view" data-view="exchange">

@@ -37,7 +37,7 @@
       return (!term||haystack.includes(term))&&(!country.value||item.country===country.value)&&(!format.value||item.format===format.value);
     }).sort((a,b)=>Number(Boolean(b.featured))-Number(Boolean(a.featured))||String(a.country).localeCompare(String(b.country)));
     count.textContent=visible.length;
-    if(!visible.length){grid.innerHTML='<div class="repository-empty"><strong>No materials match these filters.</strong><br>Try a different country or search term.</div>';return;}
+    if(!visible.length){grid.innerHTML='<div class="repository-empty"><strong>No resources match these filters.</strong><br>Try a different country, format or search term.</div>';return;}
     grid.innerHTML=visible.map(item=>`<article class="repository-card">
       <div class="repository-card-head"><div class="repository-country"><span class="repository-flag" aria-hidden="true">${escapeHtml(flag(item.countryCode))}</span><span>${escapeHtml(item.country)}</span></div><span class="repository-format">${escapeHtml(item.format)}</span></div>
       <h2>${escapeHtml(item.title)}</h2>

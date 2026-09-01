@@ -377,7 +377,6 @@
     };
     const resultRecords=new Map((window.HE_PROJECT_RESULTS?.projects||[]).map(record=>[String(record.projectId),record]));
     const lifecycleLabels={signed:'Signed',ongoing:'Ongoing',outputs:'Outputs available',completed:'Completed'};
-    const lifecyclePositions={signed:'10%',ongoing:'37%',outputs:'64%',completed:'90%'};
     const list=document.querySelector('[data-project-list]');
     const slide=document.querySelector('[data-focus-slide]');
     const previous=document.querySelector('[data-previous]');
@@ -497,10 +496,8 @@
       const inferred=project.end&&project.end<today?'completed':project.start&&project.start>today?'signed':'ongoing';
       const stage=lifecycleLabels[resultRecord?.stage]?resultRecord.stage:project.results?.length?'outputs':inferred;
       const stageLabel=lifecycleLabels[stage]||'Ongoing';
-      slide.dataset.projectStage=stage;slide.style.setProperty('--stage-position',lifecyclePositions[stage]||lifecyclePositions.ongoing);
-      put('[data-project-status]',stageLabel);put('[data-project-stage-label]',stageLabel);
-      const rail=document.querySelector('[data-project-stage-rail]');
-      rail.setAttribute('aria-label',`Project status: ${stageLabel}. Project dates: ${formatDate(project.start)} to ${formatDate(project.end)}.`);
+      slide.dataset.projectStage=stage;
+      put('[data-project-status]',stageLabel);
       const outputCount=resultRecord?.outputs?.length||project.results?.length||0,hasOutputs=outputCount>0||stage==='outputs';
       const outputStatus=document.querySelector('[data-project-output-status]');
       outputStatus.hidden=!hasOutputs;outputStatus.textContent=outputCount?`${fmtNumber(outputCount)} public ${outputCount===1?'output':'outputs'}`:'Outputs available';outputStatus.href=`results.html?q=${encodeURIComponent(project.acronym)}`;

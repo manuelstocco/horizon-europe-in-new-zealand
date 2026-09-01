@@ -1,4 +1,5 @@
 .DS_Store
 .update-backups/
+content/resource-library-trash/
 __pycache__/
 *.pyc
