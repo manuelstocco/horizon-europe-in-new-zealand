@@ -614,6 +614,7 @@ body[data-page="story"] .story-map-head span{color:#52697d}
 .country-profile-clear{grid-column:1/-1;justify-self:end;min-height:40px}
 .country-profile-dashboard>.panel{border-radius:20px}
 .country-profile-cluster-panel,.country-profile-scheme-panel,.country-profile-role-panel{grid-column:span 4;min-width:0}
+.country-chart-heading{min-height:78px}.country-chart-heading>h2,.country-profile-cluster-title-row{min-height:34px}.country-chart-heading .panel-subtitle{margin:4px 0 18px}.country-profile-cluster-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.country-profile-cluster-title-row h2{min-width:0;margin:0}.country-profile-cluster-title-row .country-scope-control{flex:0 0 auto;padding:2px}.country-profile-cluster-title-row .country-scope-control button{min-height:28px;padding:4px 8px;font-size:8px}
 .country-profile-type-panel{order:0}.country-profile-cluster-panel,.country-profile-scheme-panel,.country-profile-role-panel{order:1}.country-profile-organisations-panel,.country-profile-projects-panel{order:2}
 .country-type-cards article{display:flex;flex-direction:column;justify-content:center;min-height:118px;border-radius:14px;background:#fbfdff}
 .country-chart-row,.country-chart-row.compact{grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;padding:10px 0}
@@ -625,7 +626,7 @@ body[data-page="story"] .story-map-head span{color:#52697d}
 .country-profile-table{min-width:960px}
 .country-profile-table th:last-child,.country-profile-table td:last-child{min-width:150px;padding-right:18px}
 @media(max-width:1050px){.country-profile-cluster-panel,.country-profile-scheme-panel,.country-profile-role-panel{grid-column:span 4}}
-@media(max-width:900px){.country-profile-cluster-panel,.country-profile-scheme-panel,.country-profile-role-panel{grid-column:span 12}}
+@media(max-width:900px){.country-profile-cluster-panel,.country-profile-scheme-panel,.country-profile-role-panel{grid-column:span 12}.country-chart-heading{min-height:0}}
 @media(max-width:650px){.country-profile-filters{grid-template-columns:1fr}.country-profile-clear{grid-column:1}}
 
 /* Cluster bubbles use one stable text contrast and the cluster colour as a ring. */

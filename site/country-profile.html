@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="assets/styles.css?v=9f1201fa5c7f">
+  <link rel="stylesheet" href="assets/styles.css?v=f61bd513a92e">
   <link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
 </head>
 <body class="page-shell country-profile-page" data-page="country-profile">
@@ -51,11 +51,14 @@
         <div class="country-type-cards" data-type-cards></div>
       </article>
       <article class="panel country-profile-cluster-panel">
-        <div class="panel-heading-row"><div><h2>Cluster profile</h2><p class="panel-subtitle" data-cluster-subtitle>Distinct projects by Pillar II cluster.</p></div><div class="country-scope-control" role="group" aria-label="Cluster measure"><button class="active" type="button" data-cluster-measure="projects" aria-pressed="true">Projects</button><button type="button" data-cluster-measure="allocation" aria-pressed="false">Country allocation</button></div></div>
+        <div class="country-chart-heading">
+          <div class="country-profile-cluster-title-row"><h2>Cluster profile</h2><div class="country-scope-control" role="group" aria-label="Cluster measure"><button class="active" type="button" data-cluster-measure="projects" aria-pressed="true">Projects</button><button type="button" data-cluster-measure="allocation" aria-pressed="false">Country allocation</button></div></div>
+          <p class="panel-subtitle" data-cluster-subtitle>Distinct projects by Pillar II cluster.</p>
+        </div>
         <div class="country-cluster-chart" data-cluster-chart></div>
       </article>
-      <article class="panel country-profile-scheme-panel"><h2>Funding schemes</h2><p class="panel-subtitle">Distinct projects in the active country scope.</p><div data-scheme-chart></div></article>
-      <article class="panel country-profile-role-panel"><h2>Participation roles</h2><p class="panel-subtitle">Distinct country organisations recorded in each role.</p><div data-role-chart></div></article>
+      <article class="panel country-profile-scheme-panel"><div class="country-chart-heading"><h2>Funding schemes</h2><p class="panel-subtitle">Distinct projects in the active country scope.</p></div><div data-scheme-chart></div></article>
+      <article class="panel country-profile-role-panel"><div class="country-chart-heading"><h2>Participation roles</h2><p class="panel-subtitle">Distinct country organisations recorded in each role.</p></div><div data-role-chart></div></article>
 
       <article class="panel wide country-profile-organisations-panel">
         <div class="panel-heading-row"><div><h2 data-organisation-heading>Country organisations</h2><p class="panel-subtitle">Each organisation is shown once; roles, projects, clusters and contributions are aggregated across the selected scope.</p></div><span class="table-result-count" data-organisation-count></span></div>
