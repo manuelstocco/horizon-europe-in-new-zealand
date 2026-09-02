@@ -10,7 +10,11 @@
   if(!grid||!count||!search||!country||!format)return;
 
   const escapeHtml=value=>String(value??'').replace(/[&<>"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]));
-  const flag=code=>String(code||'').toUpperCase().replace(/./g,char=>String.fromCodePoint(127397+char.charCodeAt(0)));
+  const flag=code=>{
+    const normalised=String(code||'').trim().toUpperCase();
+    if(!/^[A-Z]{2}$/.test(normalised))return'🌐';
+    return String.fromCodePoint(...[...normalised].map(char=>127397+char.charCodeAt(0)));
+  };
   const displayDate=value=>{
     if(!value)return 'Date not specified';
     const parsed=new Date(`${value}T12:00:00`);
