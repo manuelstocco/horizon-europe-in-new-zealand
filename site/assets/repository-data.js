@@ -2,10 +2,10 @@ window.HE_REPOSITORY = {
   "updated": "2026-08-28",
   "items": [
     {
-      "id": "horizone-europe-new-zealand-association",
-      "country": "General",
+      "id": "horizon-europe-new-zealand-association",
+      "country": "New Zealand",
       "countryCode": "INT",
-      "title": "Horizone Europe New Zealand Association",
+      "title": "Horizon Europe New Zealand Association",
       "description": "Overview of the Horizon Europe New Zealand Association",
       "file": "repository/files/HE-NZ-association-August-2026.pdf",
       "format": "PDF",
