@@ -5,7 +5,7 @@
   <meta name="description" content="Track implementation progress and public outputs from Horizon Europe projects involving New Zealand.">
   <title>Project Results · Horizon Europe in New Zealand</title>
   <link rel="icon" href="assets/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"><link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png"><link rel="manifest" href="site.webmanifest">
-  <link rel="stylesheet" href="assets/styles.css?v=e18828f18b35"><link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
+  <link rel="stylesheet" href="assets/styles.css?v=897df258b42f"><link rel="alternate" type="application/rss+xml" title="Horizon Europe in New Zealand — Updates &amp; Events" href="feed.xml">
 </head>
 <body class="page-shell results-page" data-page="results">
   <header class="site-header"><a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span><span>Horizon Europe <b>in New Zealand</b></span></a><nav class="primary-nav" aria-label="Main navigation"></nav></header>
@@ -13,12 +13,16 @@
   <main class="page-content" id="main-content">
     <nav class="workspace-tabs" aria-label="Projects and results views"><a href="projects.html">Project explorer</a><a class="active" href="results.html" aria-current="page">Results &amp; outputs</a></nav>
     <div class="results-workspace">
-      <aside class="results-sidebar" aria-label="Project results filters">
-        <section class="results-filter-panel">
-          <div class="filter-field"><label for="results-search">Search projects or outputs</label><input class="text-search" id="results-search" type="search" data-results-search placeholder="Acronym, title or output…"></div>
+      <aside class="results-sidebar focus-sidebar" aria-label="Project results filters and project selector">
+        <section class="results-filter-panel focus-filters">
+          <div class="filter-field focus-search-field"><label for="results-search">Search projects or outputs</label><input class="text-search" id="results-search" type="search" data-results-search placeholder="Acronym, title, ID, coordinator or output…" autocomplete="off"></div>
           <div class="filter-field"><label for="results-stage">Implementation stage</label><select class="native-select" id="results-stage" data-results-stage><option value="">All stages</option><option value="signed">Signed</option><option value="ongoing">Ongoing</option><option value="outputs">Outputs available</option><option value="completed">Completed</option></select></div>
-          <div class="filter-field"><label for="results-cluster">Cluster</label><select class="native-select" id="results-cluster" data-results-cluster><option value="">All clusters</option></select></div>
+          <div class="filter-field"><label>Clusters</label><div data-results-filter="clusters"></div></div>
+          <div class="filter-field"><label>Funding schemes</label><div data-results-filter="schemes"></div></div>
+          <div class="filter-field"><label>Partner countries</label><div data-results-filter="countries"></div></div>
+          <div class="focus-results-meta"><span data-results-list-count aria-live="polite"></span><button class="focus-clear" data-results-reset type="button">Reset</button></div>
         </section>
+        <div class="focus-project-list results-project-list" data-results-project-list role="listbox" aria-label="Projects"></div>
       </aside>
       <div class="results-main">
         <section class="result-stage-overview" data-stage-overview aria-label="Implementation stage summary"></section>
@@ -29,6 +33,6 @@
   </main>
   <div class="focus-toast" data-toast role="status" aria-live="polite"></div>
   <footer class="site-footer"><span>Horizon Europe in New Zealand</span><span>Last update: <span data-project-updated></span></span><a href="methodology.html">About the data</a></footer>
-  <script src="assets/data.js?v=9d2417ac5171"></script><script src="assets/project-results-data.js?v=c7fa6b235341"></script><script src="assets/common.js?v=854f15f8ded8"></script><script src="assets/results.js?v=ff97167f4535"></script>
+  <script src="assets/data.js?v=821e6503de5f"></script><script src="assets/project-results-data.js?v=c7fa6b235341"></script><script src="assets/common.js?v=854f15f8ded8"></script><script src="assets/results.js?v=c247a864ad5d"></script>
 </body>
 </html>
