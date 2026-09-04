@@ -9,6 +9,7 @@
   const metricPalette=['397FD8','22A99A','8D67CE','77A84B','E5A63B','EC6C5F'];
   const partnershipOverviewFallback='https://manuelstocco.github.io/horizon-europe-in-new-zealand/overview.html';
   const hex=value=>String(value||'').replace('#','').toUpperCase();
+  const slideTitle=value=>String(value||'').replace(/\.+\s*$/,'');
   const money=value=>HE.fmtMoney(value);
   const number=value=>new Intl.NumberFormat('en-NZ',{maximumFractionDigits:0}).format(Number(value||0));
   const countryName=code=>D.countries.find(country=>country.code===code)?.name||code;
@@ -72,6 +73,36 @@
     };
   };
 
+  const sankeyData=(data,state)=>{
+    const selectedCountries=new Set(state.filters?.countries||[]),pairs=[];
+    data.projects.forEach(project=>{
+      const countries=[...new Set((project.countryCodes||[]).filter(code=>code!=='NZ'&&(!selectedCountries.size||selectedCountries.has(code))))];
+      countries.forEach(country=>pairs.push({project:project.id,cluster:project.clusterCode,scheme:project.schemeCode,country}));
+    });
+    const countryTotals=new Map();pairs.forEach(pair=>countryTotals.set(pair.country,(countryTotals.get(pair.country)||0)+1));
+    const rankedCountries=[...countryTotals].sort((a,b)=>b[1]-a[1]||countryName(a[0]).localeCompare(countryName(b[0])));
+    const maxCountries=selectedCountries.size?16:11,kept=new Set(rankedCountries.slice(0,maxCountries).map(row=>row[0]));
+    const collapsedCount=Math.max(0,rankedCountries.length-kept.size),countryKey=code=>kept.has(code)?code:'OTHER';
+    const grouped=(sourceKey,targetKey)=>{
+      const rows=new Map();pairs.forEach(pair=>{const source=sourceKey(pair),target=targetKey(pair),key=`${source}|${target}`,row=rows.get(key)||{source,target,pairs:new Set()};row.pairs.add(`${pair.project}|${pair.country}`);rows.set(key,row);});
+      return [...rows.values()].map(row=>({source:row.source,target:row.target,value:row.pairs.size}));
+    };
+    const first=grouped(pair=>pair.cluster,pair=>pair.scheme),second=grouped(pair=>pair.scheme,pair=>countryKey(pair.country));
+    const nodeRows=(keys,labels,colours)=>keys.map(key=>({key,label:labels(key),colour:colours(key),value:Math.max(
+      first.filter(link=>link.source===key||link.target===key).reduce((sum,link)=>sum+link.value,0),
+      second.filter(link=>link.source===key||link.target===key).reduce((sum,link)=>sum+link.value,0)
+    )})).sort((a,b)=>b.value-a.value||a.label.localeCompare(b.label));
+    const clusterKeys=[...new Set(pairs.map(pair=>pair.cluster))],schemeKeys=[...new Set(pairs.map(pair=>pair.scheme))],countryKeys=[...new Set(pairs.map(pair=>countryKey(pair.country)))];
+    return {
+      levels:[
+        nodeRows(clusterKeys,clusterName,clusterColor),
+        nodeRows(schemeKeys,schemeName,schemeColor),
+        nodeRows(countryKeys,key=>key==='OTHER'?`Other countries (${collapsedCount})`:countryName(key),key=>key==='OTHER'?'7B8B9C':hex(HE.countryColor(key)))
+      ],
+      links:[first,second],collapsedCount,pairs:pairs.length
+    };
+  };
+
   const chartDefinitions=(data,state)=>{
     const years={id:'years',orientation:'column',title:'Projects by starting year',subtitle:'Distinct signed projects by starting year.',rows:data.years,label:row=>row.key,color:(row,index)=>yearPalette[index%yearPalette.length],maxRows:8};
     const clusters={id:'clusters',title:'Cluster mix',subtitle:'Distinct signed projects by Pillar II cluster.',rows:data.clusters,label:row=>clusterName(row.key),color:row=>clusterColor(row.key),maxRows:6};
@@ -118,6 +149,8 @@
       const geography=[];if(data.eu.length)geography.push(charts.eu);if(data.nonEu.length)geography.push(charts.nonEu);
       sections.push({type:'charts',title:'Partner networks span Europe and beyond.',subtitle:'',charts:geography});
     }
+    const flow=sankeyData(data,state);
+    if(flow.pairs)sections.push({type:'sankey',title:'Cluster, funding scheme and country flows',subtitle:flow.collapsedCount?`${flow.pairs} project-country connections; ${flow.collapsedCount} countries grouped as Other countries`:`${flow.pairs} distinct project-country connections in the selected portfolio`,flow});
     return sections;
   };
 
@@ -129,7 +162,7 @@
     slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.72,fill:{color:navy},line:{color:navy}});
     pptText(slide,'HORIZON EUROPE IN NEW ZEALAND',.55,.2,5.7,.28,{fontSize:13,bold:true,color:white});
     pptText(slide,scope.toUpperCase(),7.2,.2,5.55,.28,{fontSize:11,bold:true,color:'8AC8F5',align:'right'});
-    pptText(slide,title,.55,.9,12.1,.62,{fontSize:31,bold:true,color:ink});
+    pptText(slide,slideTitle(title),.55,.9,12.1,.62,{fontSize:31,bold:true,color:ink});
     if(subtitle)pptText(slide,subtitle,.55,1.51,12.1,.3,{fontSize:12.5,color:muted});
     pptText(slide,String(page).padStart(2,'0'),12.2,7.09,.55,.2,{fontSize:9,bold:true,color:muted,align:'right'});
   }
@@ -239,11 +272,36 @@
     }
     pptFooter(slide,state);
   }
+  function sankeyLayout(flow,top=2.18,height=4.28){
+    return flow.levels.map(nodes=>{
+      const cardH=Math.min(.43,Math.max(.23,(height-.06*Math.max(0,nodes.length-1))/Math.max(1,nodes.length)));
+      const step=nodes.length>1?(height-cardH)/(nodes.length-1):0;
+      return nodes.map((node,index)=>({...node,y:top+(nodes.length>1?index*step:(height-cardH)/2),h:cardH}));
+    });
+  }
+  function pptSankey(pptx,slide,section,state,page){
+    pptHeader(pptx,slide,section.title,section.subtitle,page,selectionLabel(state));
+    const columns=sankeyLayout(section.flow),xs=[.58,5.45,10.28],ws=[2.4,2.48,2.5],index=new Map();
+    columns.forEach((nodes,column)=>nodes.forEach(node=>index.set(`${column}|${node.key}`,{...node,x:xs[column],w:ws[column]})));
+    const max=Math.max(1,...section.flow.links.flat().map(link=>link.value));
+    section.flow.links.forEach((links,layer)=>links.slice().sort((a,b)=>b.value-a.value).forEach(link=>{
+      const source=index.get(`${layer}|${link.source}`),target=index.get(`${layer+1}|${link.target}`);if(!source||!target)return;
+      slide.addShape(pptx.ShapeType.line,{x:source.x+source.w,y:source.y+source.h/2,w:target.x-source.x-source.w,h:target.y+target.h/2-source.y-source.h/2,line:{color:source.colour,transparency:68,width:.8+6.2*link.value/max}});
+    }));
+    ['CLUSTERS','FUNDING SCHEMES','PARTNER COUNTRIES'].forEach((label,column)=>pptText(slide,label,xs[column],1.86,ws[column],.18,{fontSize:8.5,bold:true,color:muted,charSpacing:.65,align:column===2?'right':'left'}));
+    columns.forEach((nodes,column)=>nodes.forEach(node=>{
+      slide.addShape(pptx.ShapeType.roundRect,{x:xs[column],y:node.y,w:ws[column],h:node.h,rectRadius:.04,fill:{color:white,transparency:4},line:{color:node.colour,width:1.2}});
+      slide.addShape(pptx.ShapeType.rect,{x:xs[column],y:node.y,w:.06,h:node.h,fill:{color:node.colour},line:{color:node.colour}});
+      pptText(slide,node.label,xs[column]+.15,node.y+.03,ws[column]-.55,node.h-.06,{fontSize:node.h<.3?7:8.2,bold:true,color:ink,fit:'shrink'});
+      pptText(slide,number(node.value),xs[column]+ws[column]-.36,node.y+.03,.25,node.h-.06,{fontSize:node.h<.3?7:8.2,bold:true,color:ink,align:'right'});
+    }));
+    pptFooter(slide,state);
+  }
   async function exportPptx(state){
     const Pptx=window.PptxGenJS;if(!Pptx)throw new Error('PowerPoint generator is unavailable.');
     const data=exportData(state),sections=buildSections(data,state),pptx=new Pptx();
     pptx.layout='LAYOUT_WIDE';pptx.author='Horizon Europe in New Zealand';pptx.subject=selectionLabel(state);pptx.title='Partnership Overview';pptx.company='Horizon Europe in New Zealand';pptx.lang='en-NZ';pptx.theme={headFontFace:'Aptos Display',bodyFontFace:'Aptos',lang:'en-NZ'};
-    sections.forEach((section,index)=>{const slide=pptx.addSlide();section.type==='summary'?pptSummary(pptx,slide,data,state,section,index+1):pptCharts(pptx,slide,section,state,index+1);});
+    sections.forEach((section,index)=>{const slide=pptx.addSlide();if(section.type==='summary')pptSummary(pptx,slide,data,state,section,index+1);else if(section.type==='sankey')pptSankey(pptx,slide,section,state,index+1);else pptCharts(pptx,slide,section,state,index+1);});
     await pptx.writeFile({fileName:'horizon-europe-new-zealand-filtered-partnership-overview.pptx'});
   }
 
@@ -257,7 +315,7 @@
     const text=(page,value,x,top,size=12,color=ink,font=regular,maxWidth)=>page.drawText(String(value),{x,y:pdfY(H,top,size),size,font,color:col(color),maxWidth,lineHeight:size*1.2});
     const fitText=(page,value,x,top,size,color,font,maxWidth,minSize=6.5)=>{const raw=String(value),width=font.widthOfTextAtSize(raw,size),actual=Math.max(minSize,Math.min(size,size*maxWidth/Math.max(width,1)));text(page,raw,x,top,actual,color,font,maxWidth);};
     const rect=(page,x,top,w,h,fill,stroke=fill)=>page.drawRectangle({x,y:pdfY(H,top,h),width:w,height:h,color:col(fill),borderColor:col(stroke),borderWidth:1});
-    const header=(page,section,num)=>{rect(page,0,0,W,52,navy);text(page,'HORIZON EUROPE IN NEW ZEALAND',40,17,10,white,bold);fitText(page,selectionLabel(state).toUpperCase(),520,17,9,'8AC8F5',bold,400,7);fitText(page,section.title,40,70,28,ink,bold,880,20);if(section.subtitle)text(page,section.subtitle,40,112,11,muted,regular,870);text(page,String(num).padStart(2,'0'),903,518,8,muted,bold);};
+    const header=(page,section,num)=>{rect(page,0,0,W,52,navy);text(page,'HORIZON EUROPE IN NEW ZEALAND',40,17,10,white,bold);fitText(page,selectionLabel(state).toUpperCase(),520,17,9,'8AC8F5',bold,400,7);fitText(page,slideTitle(section.title),40,70,28,ink,bold,880,20);if(section.subtitle)text(page,section.subtitle,40,112,11,muted,regular,870);text(page,String(num).padStart(2,'0'),903,518,8,muted,bold);};
     const addLink=(page,url,x,top,w,h)=>{
       const annotation=doc.context.register(doc.context.obj({Type:'Annot',Subtype:'Link',Rect:[x,pdfY(H,top,h),x+w,pdfY(H,top,h)+h],Border:[0,0,0],A:{Type:'Action',S:'URI',URI:PDFString.of(url)}}));
       if(typeof page.node.addAnnot==='function')page.node.addAnnot(annotation);
@@ -273,12 +331,22 @@
     const bars=(page,chart,x,top,w,h)=>{const shown=chart.rows.slice(0,chart.maxRows||10),gap=6,rowH=(h-gap*Math.max(shown.length-1,0))/Math.max(shown.length,1);if(!shown.length){text(page,'No data in the current selection.',x,top+h/2,11,muted);return;}const max=Math.max(...shown.map(row=>row.value),1),labelRatio=chart.id==='schemes'?.29:chart.id==='organisations'?.36:.31;shown.forEach((row,index)=>{const yy=top+index*(rowH+gap),labelW=w*labelRatio,barX=x+labelW,barW=w-labelW-28;fitText(page,pptChartLabel(chart,row),x,yy+rowH*.14,9.5,ink,regular,labelW-8,6.8);rect(page,barX,yy+rowH*.2,Math.max(4,barW*row.value/max),rowH*.6,hex(chart.color(row,index)));text(page,number(row.value),x+w-22,yy+rowH*.13,9.5,ink,bold,22);});};
     const columns=(page,rows,x,top,w,h,label,color,maxRows=8)=>{const shown=rows.slice(0,maxRows);if(!shown.length){text(page,'No data in the current selection.',x,top+h/2,11,muted);return;}const max=Math.max(...shown.map(row=>row.value),1),plotTop=top+10,plotH=h-50,slot=w/shown.length,columnW=Math.min(72,slot*.58);shown.forEach((row,index)=>{const columnH=Math.max(4,plotH*row.value/max),columnX=x+index*slot+(slot-columnW)/2,columnTop=plotTop+plotH-columnH;rect(page,columnX,columnTop,columnW,columnH,hex(color(row,index)));fitText(page,number(row.value),columnX-10,Math.max(top,columnTop-15),10,ink,bold,columnW+20,8);fitText(page,label(row),x+index*slot,plotTop+plotH+12,10,ink,regular,slot,8);});};
     const pdfChart=(page,chart,x,top,w,h)=>chart.orientation==='column'?columns(page,chart.rows,x,top,w,h,chart.label,chart.color,chart.maxRows):bars(page,chart,x,top,w,h);
+    const pdfSankey=(page,section)=>{
+      const layout=sankeyLayout(section.flow,150/72,300/72),scale=72,xs=[42,392,742],ws=[174,178,178],index=new Map();
+      layout.forEach((nodes,column)=>nodes.forEach(node=>index.set(`${column}|${node.key}`,{...node,x:xs[column],w:ws[column],top:node.y*scale,h:node.h*scale})));
+      const max=Math.max(1,...section.flow.links.flat().map(link=>link.value));
+      section.flow.links.forEach((links,layer)=>links.slice().sort((a,b)=>b.value-a.value).forEach(link=>{const source=index.get(`${layer}|${link.source}`),target=index.get(`${layer+1}|${link.target}`);if(!source||!target)return;page.drawLine({start:{x:source.x+source.w,y:pdfY(H,source.top+source.h/2)},end:{x:target.x,y:pdfY(H,target.top+target.h/2)},thickness:.7+5.2*link.value/max,color:col(source.colour),opacity:.34});}));
+      ['CLUSTERS','FUNDING SCHEMES','PARTNER COUNTRIES'].forEach((label,column)=>fitText(page,label,xs[column],132,7.2,muted,bold,ws[column],6));
+      layout.forEach((nodes,column)=>nodes.forEach(node=>{const item=index.get(`${column}|${node.key}`);rect(page,item.x,item.top,item.w,item.h,white,node.colour);rect(page,item.x,item.top,4,item.h,node.colour);fitText(page,node.label,item.x+10,item.top+Math.max(4,(item.h-8)/2),item.h<20?6.2:7.2,ink,bold,item.w-38,5.5);fitText(page,number(node.value),item.x+item.w-25,item.top+Math.max(4,(item.h-8)/2),item.h<20?6.2:7.2,ink,bold,18,5.5); }));
+    };
     sections.forEach((section,index)=>{
       const page=doc.addPage([W,H]);rect(page,0,0,W,H,'F5F8FC');header(page,section,index+1);
       if(section.type==='summary'){
         rect(page,40,133,880,28,'E7F2FC','CFE3F4');fitText(page,selectionLabel(state),55,141,9.5,'2366A9',bold,845,7.5);
         const cardW=282,cardH=112,gap=17;
         data.metrics.forEach((metric,metricIndex)=>{const column=metricIndex%3,row=Math.floor(metricIndex/3),x=40+column*(cardW+gap),top=179+row*132;rect(page,x,top,cardW,cardH,white,line);rect(page,x,top,6,cardH,metricPalette[metricIndex]);text(page,metric[0].toUpperCase(),x+18,top+16,9,muted,bold);fitText(page,metric[1],x+18,top+42,24,ink,bold,cardW-36,16);fitText(page,metric[2],x+18,top+85,9,muted,regular,cardW-36,7);});
+      }else if(section.type==='sankey'){
+        pdfSankey(page,section);
       }else if(section.charts.length===1){
         const chart=section.charts[0];panel(page,40,140,880,340,chart.title,chart.subtitle);pdfChart(page,chart,62,202,836,240);
       }else{

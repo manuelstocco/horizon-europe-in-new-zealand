@@ -165,11 +165,21 @@
   function renderSelection() {
     const labels = selectedLabels(); document.querySelector('[data-selection-summary]').innerHTML = labels.length ? labels.map(label => `<span class="selection-chip">${esc(label)}</span>`).join('') : '<span class="selection-chip">All projects and organisations for this country</span>';
   }
+  function publishExportState(projects,organisations,metrics) {
+    window.HE_COUNTRY_PROFILE_EXPORT_STATE = state.country ? {
+      country:{...country(),status:statusLabel(state.country)},
+      projects:[...projects],organisations:[...organisations],metrics:{...metrics},
+      filters:{clusters:[...state.clusters],schemes:[...state.schemes],roles:[...state.roles],types:[...state.types],sme:state.sme,search:state.search},
+      labels:selectedLabels(),updated:H.formatDate(D.metadata.projectDataUpdated)
+    } : null;
+    window.dispatchEvent(new CustomEvent('he:country-profile-export-ready'));
+  }
   function render() {
     const hasCountry = Boolean(state.country);
     document.querySelector('[data-country-rest]').hidden = hasCountry;
     document.querySelectorAll('[data-country-content]').forEach(element => { element.hidden = !hasCountry; });
     if (!hasCountry) {
+      publishExportState([],[],{});
       syncUrl();
       document.querySelector('[data-country-title]').textContent = 'Country partnership profile.';
       document.querySelector('[data-country-intro]').textContent = 'Select a partner country to see its projects, organisations, funding and links with New Zealand.';
@@ -178,6 +188,7 @@
     }
     syncUrl(); renderIdentity(); renderSelection();
     const projects = selectedScope(), organisations = aggregateOrganisations(projects), metrics = profileMetrics(projects,organisations);
+    publishExportState(projects,organisations,metrics);
     renderInsight(metrics); renderMetrics(metrics); renderTypeCards(organisations); renderClusterChart(projects); renderSchemeChart(projects); renderRoleChart(projects); renderOrganisationTable(organisations); renderProjectTable(projects);
   }
   function setupControls() {

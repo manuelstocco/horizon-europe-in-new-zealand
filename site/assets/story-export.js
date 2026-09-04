@@ -11,14 +11,22 @@
   };
   const fallbackUrl = 'https://manuelstocco.github.io/horizon-europe-in-new-zealand/';
   const hex = value => String(value || '').replace('#','').toUpperCase();
+  const slideTitle = value => String(value || '').replace(/\.+\s*$/,'');
   const number = value => new Intl.NumberFormat('en-NZ',{maximumFractionDigits:0}).format(Number(value || 0));
   const storyUrl = () => typeof location !== 'undefined' && /^https?:$/.test(location.protocol)
     ? location.href.split(/[?#]/)[0] : fallbackUrl;
   const clusterByCode = new Map(D.clusters.map(cluster => [cluster.code, cluster]));
-  const EU27_CODES = new Set(COUNTRY_STATUS?.eu27 || [...HE.EU27].map(code => code === 'EL' ? 'GR' : code));
-  const ASSOCIATED_CODES = new Set(COUNTRY_STATUS?.associated || []);
-  const ASSOCIATION_CHECKED = COUNTRY_STATUS?.metadata?.checked || '31 August 2026';
+  const normaliseCountryCode = code => code === 'UK' ? 'GB' : code === 'EL' ? 'GR' : code;
+  const EU27_CODES = new Set((COUNTRY_STATUS?.eu27 || [...HE.EU27]).map(normaliseCountryCode));
+  const ASSOCIATED_CODES = new Set((COUNTRY_STATUS?.associated || []).map(normaliseCountryCode));
+  const LMIC_CODES = new Set((COUNTRY_STATUS?.lowMiddleIncome || []).map(normaliseCountryCode));
+  const OUTERMOST_REGIONS = COUNTRY_STATUS?.outermostRegions || [];
+  const OVERSEAS_TERRITORIES = COUNTRY_STATUS?.overseasCountriesTerritories || [];
+  const OCT_MAP_CODES = new Set(OVERSEAS_TERRITORIES.map(item => normaliseCountryCode(item.mapCode || item.code)).filter(Boolean));
+  const LMIC_STATUS_CODES = new Set([...LMIC_CODES].filter(code => code !== 'NZ' && !EU27_CODES.has(code) && !ASSOCIATED_CODES.has(code)));
+  const COUNTRY_STATUS_CHECKED = COUNTRY_STATUS?.metadata?.checked || '31 August 2026';
   const associationSourceUrl = COUNTRY_STATUS?.metadata?.source?.association || 'https://research-and-innovation.ec.europa.eu/strategy/strategy-research-and-innovation/europe-world/international-cooperation/association-horizon-europe_en';
+  const eligibilitySourceUrl = COUNTRY_STATUS?.metadata?.source?.eligibility || 'https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/wp-call/2026-2027/wp-15-general-annexes_horizon-2026-2027_en.pdf';
   const countryName = code => D.countries.find(country => country.code === code)?.name || code;
   const projectOrgKey = org => `${org.countryCode}|${org.id || org.name}`;
 
@@ -111,9 +119,33 @@
     ctx.fillStyle='#f5f8fc';ctx.fillRect(0,0,1800,850);
     ctx.save();ctx.beginPath();ctx.rect(box.x,box.y,box.w,box.h);ctx.clip();
     (WORLD?.features||[]).filter(feature=>feature.properties?.code!=='AQ').forEach(feature=>{
-      const code=feature.properties?.code;
-      const fill=code==='NZ'?'#e5a63b':EU27_CODES.has(code)?'#397fd8':ASSOCIATED_CODES.has(code)?'#22a99a':'#dfe7ee';
+      const code=normaliseCountryCode(feature.properties?.code);
+      const fill=code==='NZ'?'#e5a63b':EU27_CODES.has(code)?'#397fd8':ASSOCIATED_CODES.has(code)?'#22a99a':OCT_MAP_CODES.has(code)?'#79b8e8':LMIC_STATUS_CODES.has(code)?'#ef6b61':'#cbd4dc';
       drawFeature(ctx,feature,box,bounds,fill,'#ffffff',1.8);
+    });
+    const markerRows=[
+      ...(COUNTRY_STATUS?.smallCountryMarkers||[]),
+      ...(COUNTRY_STATUS?.pacificIslandCountries||[]),
+      ...OUTERMOST_REGIONS.map(item=>({...item,status:'eu'})),
+      ...OVERSEAS_TERRITORIES.map(item=>({...item,status:'oct'}))
+    ];
+    const sx=box.w/(bounds.maxX-bounds.minX),sy=box.h/(bounds.maxY-bounds.minY),scale=Math.min(sx,sy);
+    const mapW=(bounds.maxX-bounds.minX)*scale,mapH=(bounds.maxY-bounds.minY)*scale;
+    const ox=box.x+(box.w-mapW)/2,oy=box.y+(box.h-mapH)/2;
+    const markerPoint=item=>[ox+(item.lon-bounds.minX)*scale,oy+(bounds.maxY-item.lat)*scale];
+    const seenMarkers=new Set();
+    markerRows.forEach(item=>{
+      const code=normaliseCountryCode(item.code),key=`${code}|${item.lon}|${item.lat}`;
+      if(seenMarkers.has(key))return;seenMarkers.add(key);
+      const status=item.status||(
+        code==='NZ'?'new-zealand':EU27_CODES.has(code)?'eu':ASSOCIATED_CODES.has(code)?'associated':
+        OCT_MAP_CODES.has(code)?'oct':LMIC_STATUS_CODES.has(code)?'lmic':'other'
+      );
+      if(status==='other')return;
+      const colour={
+        'new-zealand':'#e5a63b',eu:'#397fd8',associated:'#22a99a',oct:'#79b8e8',lmic:'#ef6b61'
+      }[status];
+      const [x,y]=markerPoint(item);ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle=colour;ctx.fill();ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke();
     });
     ctx.restore();
     return canvas.toDataURL('image/png');
@@ -142,11 +174,11 @@
     slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.58,fill:{color:C.navy},line:{color:C.navy}});
     pptText(slide,'HORIZON EUROPE IN NEW ZEALAND',.48,.17,5.4,.22,{fontSize:11.5,bold:true,color:C.white});
     pptText(slide,String(page).padStart(2,'0'),12.2,.17,.6,.22,{fontSize:10,bold:true,color:C.aqua,align:'right'});
-    if(title)pptText(slide,title,.52,.78,12.15,.58,{fontSize:30,bold:true});
+    if(title)pptText(slide,slideTitle(title),.52,.78,12.15,.58,{fontSize:30,bold:true});
   }
   function pptButton(slide,label,url,x,y,w) { slide.addText(label,{x,y,w,h:.28,fontFace:'Aptos',fontSize:8,bold:true,color:C.ink,align:'center',valign:'mid',margin:0,fill:{color:C.pale},line:{color:'BBD2E5',width:.7},hyperlink:{url},fit:'shrink'}); }
   function pptFooter(slide,data,{association=false}={}) {
-    pptText(slide,association?`Source: European Commission · Association list checked: ${ASSOCIATION_CHECKED}`:`Source: CORDIS project records · Last update: ${data.updated}`,.48,7.12,8.8,.18,{fontSize:8.5,color:C.muted});
+    pptText(slide,association?`Source: European Commission · Country-status lists checked: ${COUNTRY_STATUS_CHECKED}`:`Source: CORDIS project records · Last update: ${data.updated}`,.48,7.12,8.8,.18,{fontSize:8.5,color:C.muted});
     pptButton(slide,'OPEN STORY',storyUrl(),10.95,7.03,1.75);
   }
   function pptMetric(pptx,slide,label,value,x,y,w,color=C.blue) {
@@ -171,31 +203,39 @@
   }
 
   function pptPillars(pptx,slide,data,page) {
-    pptHeader(pptx,slide,'Three pillars shape Horizon Europe.',page);
+    pptHeader(pptx,slide,'Three pillars shape Horizon Europe',page);
     pptText(slide,'Pillar II is the programme’s collaborative core—and the part to which New Zealand is associated.',.55,1.35,12,.38,{fontSize:13,color:C.muted});
     const pillars=[
-      {x:.95,y:2.3,d:2.3,color:'BCD8EF',label:'Pillar I',sub:'Excellent Science',value:programmeMoney(25e9)},
-      {x:3.53,y:1.74,d:3.65,color:C.blue,label:'Pillar II',sub:'Global Challenges & European Industrial Competitiveness',value:programmeMoney(53.5e9)},
-      {x:7.65,y:2.3,d:2.35,color:'B9DCCE',label:'Pillar III',sub:'Innovative Europe',value:programmeMoney(13.6e9)},
-      {x:10.45,y:2.55,d:1.85,color:'D9E3EB',label:'Widening & ERA',sub:'',value:programmeMoney(3.4e9)}
+      {x:.62,w:2.7,color:'BCD8EF',label:'Pillar I',sub:'Excellent Science',value:programmeMoney(25e9),dark:false},
+      {x:3.48,w:5.0,color:C.blue,label:'Pillar II',sub:'Global Challenges and European Industrial Competitiveness',value:programmeMoney(53.5e9),dark:true},
+      {x:8.64,w:2.55,color:'B9DCCE',label:'Pillar III',sub:'Innovative Europe',value:programmeMoney(13.6e9),dark:false},
+      {x:11.35,w:1.36,color:'D9E3EB',label:'Widening\nand ERA',sub:'',value:programmeMoney(3.4e9),dark:false}
     ];
-    pillars.forEach(item=>{slide.addShape(pptx.ShapeType.ellipse,{x:item.x,y:item.y,w:item.d,h:item.d,fill:{color:item.color},line:{color:C.white,width:1.2}});pptText(slide,item.label,item.x+.14,item.y+item.d*.25,item.d-.28,.31,{fontSize:item.d>3?19:item.d>1.8?13:10,bold:true,color:item.d>3?C.white:C.ink,align:'center'});pptText(slide,item.sub,item.x+.17,item.y+item.d*.46,item.d-.34,item.d*.22,{fontSize:item.d>3?11:item.d>1.8?9:7.5,color:item.d>3?'EAF4FC':C.muted,align:'center'});pptText(slide,item.value,item.x+.15,item.y+item.d*.72,item.d-.3,.25,{fontSize:item.d>3?16:item.d>1.8?11:9,bold:true,color:item.d>3?C.white:C.ink,align:'center'});});
-    pptText(slide,'NEW ZEALAND',3.83,5.54,3.05,.2,{fontSize:9,bold:true,color:C.blue,align:'center',charSpacing:1});
-    pptText(slide,'Associated to Pillar II',3.83,5.75,3.05,.34,{fontSize:15,bold:true,color:C.ink,align:'center'});
-    pptText(slide,`Original 2021–2027 allocation: ${programmeMoney(95.5e9)}`,.75,6.52,6,.3,{fontSize:11,bold:true,color:C.muted});
+    pillars.forEach(item=>{
+      slide.addShape(pptx.ShapeType.roundRect,{x:item.x,y:2.05,w:item.w,h:2.7,rectRadius:.08,fill:{color:item.color},line:{color:C.white,width:1.4}});
+      pptText(slide,item.label,item.x+.22,2.36,item.w-.44,.38,{fontSize:item.w<1.6?13:18,bold:true,color:item.dark?C.white:C.ink,align:'center'});
+      if(item.sub)pptText(slide,item.sub,item.x+.28,2.93,item.w-.56,.7,{fontSize:item.dark?13:10.5,bold:item.dark,color:item.dark?'EAF4FC':C.muted,align:'center'});
+      pptText(slide,item.value,item.x+.22,4.03,item.w-.44,.4,{fontSize:item.dark?20:item.w<1.6?11:15,bold:true,color:item.dark?C.white:C.ink,align:'center'});
+    });
+    slide.addShape(pptx.ShapeType.line,{x:5.98,y:4.78,w:0,h:.62,line:{color:C.blue,width:2}});
+    slide.addShape(pptx.ShapeType.roundRect,{x:4.58,y:5.36,w:2.8,h:.82,rectRadius:.08,fill:{color:C.white},line:{color:C.blue,width:2}});
+    pptText(slide,'NEW ZEALAND',4.82,5.49,2.32,.18,{fontSize:8.5,bold:true,color:C.blue,align:'center',charSpacing:1});
+    pptText(slide,'Associated to Pillar II',4.78,5.71,2.4,.28,{fontSize:14,bold:true,color:C.ink,align:'center'});
+    pptText(slide,`Original 2021–2027 allocation: ${programmeMoney(95.5e9)}`,.62,6.48,6,.3,{fontSize:11,bold:true,color:C.muted});
     pptFooter(slide,data);
   }
 
   function pptClusters(pptx,slide,data,page) {
-    pptHeader(pptx,slide,'Six clusters organise the shared challenges.',page);
+    pptHeader(pptx,slide,'Six clusters organise the shared challenges',page);
     pptText(slide,'Within Pillar II, each cluster opens a different route into international research and innovation collaboration.',.55,1.35,12,.38,{fontSize:13,color:C.muted});
     const labels=['Health','Culture, creativity &\ninclusive society','Civil security\nfor society','Digital, industry\n& space','Climate, energy\n& mobility','Food, bioeconomy\n& environment'];
     D.clusters.forEach((cluster,index)=>{
-      const col=index%3,row=Math.floor(index/3),x=1.0+col*4.0,y=1.92+row*2.38,d=1.95;
-      slide.addShape(pptx.ShapeType.ellipse,{x,y,w:d,h:d,fill:{color:hex(cluster.color)},line:{color:C.white,width:1.2}});
-      pptText(slide,`CLUSTER ${index+1}`,x+.22,y+.2,d-.44,.22,{fontSize:8.2,bold:true,color:'F4F8FC',align:'center',charSpacing:.55});
-      pptText(slide,labels[index],x+.22,y+.62,d-.44,.72,{fontSize:13.5,bold:true,color:C.white,align:'center'});
-      pptText(slide,'PILLAR II',x+.18,y+1.52,d-.36,.16,{fontSize:7.2,bold:true,color:'F4F8FC',align:'center',charSpacing:.7});
+      const col=index%2,row=Math.floor(index/2),x=.72+col*6.18,y=1.92+row*1.55,d=1.06;
+      slide.addShape(pptx.ShapeType.ellipse,{x,y,w:d,h:d,fill:{color:C.white},line:{color:hex(cluster.color),width:6}});
+      pptText(slide,String(index+1),x+.14,y+.2,d-.28,.52,{fontSize:24,bold:true,color:hex(cluster.color),align:'center'});
+      pptText(slide,`CLUSTER ${index+1}`,x+1.34,y+.08,1.18,.18,{fontSize:8,bold:true,color:hex(cluster.color),charSpacing:.65});
+      pptText(slide,labels[index],x+1.34,y+.31,4.42,.55,{fontSize:15,bold:true,color:C.ink,valign:'top'});
+      slide.addShape(pptx.ShapeType.line,{x:x+1.34,y:y+.94,w:4.42,h:0,line:{color:'DCE7F0',width:1}});
     });
     pptFooter(slide,data);
   }
@@ -232,17 +272,19 @@
 
   function pptAssociationMap(pptx,slide,data,page) {
     pptHeader(pptx,slide,'Horizon Europe connects Europe with partners worldwide.',page);
-    pptText(slide,'Twenty-two non-EU countries are associated to Horizon Europe. New Zealand is highlighted separately because its association covers Pillar II.',.55,1.35,12,.36,{fontSize:13,color:C.muted});
-    slide.addShape(pptx.ShapeType.roundRect,{x:.55,y:1.88,w:9.0,h:4.9,rectRadius:.08,fill:{color:C.white},line:{color:C.line,width:1}});
-    const map=renderAssociationMapPng();if(map)slide.addImage({data:map,x:.72,y:2.05,w:8.66,h:4.08});
-    const legend=[['EU27',C.blue],['Associated countries',C.teal],['New Zealand','E5A63B']];
-    legend.forEach((item,index)=>{slide.addShape(pptx.ShapeType.rect,{x:.92+index*2.68,y:6.28,w:.18,h:.18,fill:{color:item[1]},line:{color:item[1]}});pptText(slide,item[0],1.18+index*2.68,6.23,2.35,.28,{fontSize:9.2,bold:true,color:C.ink});});
-    pptMetric(pptx,slide,'EU MEMBER STATES',number(EU27_CODES.size),9.82,1.88,2.96,C.blue);
-    pptMetric(pptx,slide,'NON-EU ASSOCIATED COUNTRIES',number(ASSOCIATED_CODES.size),9.82,2.86,2.96,C.teal);
-    pptMetric(pptx,slide,'EU + ASSOCIATED COUNTRIES',number(EU27_CODES.size+ASSOCIATED_CODES.size),9.82,3.84,2.96,C.navy);
-    pptText(slide,'Association status',9.84,5.03,2.85,.28,{fontSize:12,bold:true});
-    pptText(slide,`The European Commission currently lists ${ASSOCIATED_CODES.size} associated non-EU countries, including New Zealand.`,9.84,5.38,2.78,.76,{fontSize:10.5,color:C.muted,valign:'top'});
-    pptButton(slide,'OFFICIAL COUNTRY LIST',associationSourceUrl,9.84,6.24,2.5);
+    slide.addShape(pptx.ShapeType.roundRect,{x:.55,y:1.48,w:9.0,h:5.3,rectRadius:.08,fill:{color:C.white},line:{color:C.line,width:1}});
+    const map=renderAssociationMapPng();if(map)slide.addImage({data:map,x:.72,y:1.62,w:8.66,h:4.1});
+    const legend=[
+      ['EU27',C.blue],['Associated countries',C.teal],['Low- or middle-income','EF6B61'],
+      ['Overseas countries and territories','79B8E8'],['New Zealand','E5A63B'],['Other countries','CBD4DC']
+    ];
+    legend.forEach((item,index)=>{const col=index%3,row=Math.floor(index/3),x=.92+col*2.82,y=5.91+row*.35;slide.addShape(pptx.ShapeType.rect,{x,y,w:.18,h:.18,fill:{color:item[1]},line:{color:item[1]}});pptText(slide,item[0],x+.26,y-.05,2.48,.28,{fontSize:7.8,bold:true,color:C.ink});});
+    pptMetric(pptx,slide,'EU MEMBER STATES',number(EU27_CODES.size),9.82,1.48,2.96,C.blue);
+    pptMetric(pptx,slide,'ASSOCIATED COUNTRIES (NZ INCLUDED)',number(ASSOCIATED_CODES.size),9.82,2.38,2.96,C.teal);
+    pptMetric(pptx,slide,'LOW- AND MIDDLE-INCOME',number(LMIC_STATUS_CODES.size),9.82,3.28,2.96,'EF6B61');
+    pptMetric(pptx,slide,'OVERSEAS COUNTRIES/TERRITORIES',number(OVERSEAS_TERRITORIES.length),9.82,4.18,2.96,'79B8E8');
+    pptButton(slide,'ASSOCIATION LIST',associationSourceUrl,9.84,5.27,2.5);
+    pptButton(slide,'ELIGIBILITY LIST',eligibilitySourceUrl,9.84,5.67,2.5);
     pptFooter(slide,data,{association:true});
   }
 
@@ -272,21 +314,21 @@
     const fit=(page,value,x,top,size,color,font,maxWidth,minSize=6,align='left')=>{let actual=size;while(actual>minSize&&font.widthOfTextAtSize(String(value),actual)>maxWidth)actual-=.5;return text(page,value,x,top,actual,color,font,maxWidth,1,align);};
     const addLink=(page,url,x,top,w,h)=>{const annotation=doc.context.register(doc.context.obj({Type:'Annot',Subtype:'Link',Rect:[x,y(top,h),x+w,y(top,h)+h],Border:[0,0,0],A:{Type:'Action',S:'URI',URI:PDFString.of(url)}}));if(typeof page.node.addAnnot==='function')page.node.addAnnot(annotation);else page.node.set(PDFName.of('Annots'),doc.context.obj([annotation]));};
     const button=(page,label,url,x,top,w)=>{rect(page,x,top,w,19,C.pale,'BBD2E5');fit(page,label,x+7,top+5,7.5,C.ink,bold,w-14,6.5,'center');addLink(page,url,x,top,w,19);};
-    const header=(page,title,num)=>{rect(page,0,0,W,42,C.navy);text(page,'HORIZON EUROPE IN NEW ZEALAND',36,13,9,C.white,bold,400,1);text(page,String(num).padStart(2,'0'),900,13,8,C.aqua,bold,24,1,'right');if(title)text(page,title,38,58,25,C.ink,bold,884,2);};
-    const footer=(page,{association=false}={})=>{text(page,association?`Source: European Commission · Association list checked: ${ASSOCIATION_CHECKED}`:`Source: CORDIS project records · Last update: ${data.updated}`,38,518,7.5,C.muted,regular,650,1);button(page,'OPEN STORY',storyUrl(),796,507,126);};
+    const header=(page,title,num)=>{rect(page,0,0,W,42,C.navy);text(page,'HORIZON EUROPE IN NEW ZEALAND',36,13,9,C.white,bold,400,1);text(page,String(num).padStart(2,'0'),900,13,8,C.aqua,bold,24,1,'right');if(title)text(page,slideTitle(title),38,58,25,C.ink,bold,884,2);};
+    const footer=(page,{association=false}={})=>{text(page,association?`Source: European Commission · Country-status lists checked: ${COUNTRY_STATUS_CHECKED}`:`Source: CORDIS project records · Last update: ${data.updated}`,38,518,7.5,C.muted,regular,650,1);button(page,'OPEN STORY',storyUrl(),796,507,126);};
     const metric=(page,label,value,x,top,w,color)=>{rect(page,x,top,w,56,C.white,C.line);rect(page,x,top,5,56,color);text(page,label.toUpperCase(),x+14,top+8,7,C.muted,bold,w-28,1);fit(page,value,x+14,top+25,17,C.ink,bold,w-28,11);};
 
     {
       const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.navyDeep);rect(page,0,0,W,6,C.aqua);text(page,'HORIZON EUROPE × AOTEAROA NEW ZEALAND',52,43,10,C.aqua,bold,440,1);text(page,'Association opened the door.',52,93,30,C.white,bold,500,2);text(page,'Collaboration creates the value.',52,158,30,C.white,bold,500,2);text(page,'Funding starts the work. Connections extend its value.',52,260,14,'D9EFFF',bold,470,2);text(page,'Pillar II associate country',52,316,10,C.aqua,bold,260,1);const image=renderNzPng();if(image){const png=await doc.embedPng(pngBytes(image));page.drawImage(png,{x:590,y:68,width:305,height:410});}text(page,'Aotearoa New Zealand',620,452,16,C.white,bold,250,1,'center');text(page,`Last update: ${data.updated}`,52,505,8,'A9BBCD',regular,250,1);button(page,'OPEN STORY',storyUrl(),756,495,128);text(page,'01',900,505,8,C.aqua,bold,22,1,'right');
     }
     {
-      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Three pillars shape Horizon Europe.',2);text(page,'Pillar II is the programme’s collaborative core—and the part to which New Zealand is associated.',38,104,10.5,C.muted,regular,880,2);
-      const pillars=[{cx:132,top:260,r:82,color:'BCD8EF',label:'Pillar I',value:programmeMoney(25e9)},{cx:380,top:258,r:132,color:C.blue,label:'Pillar II',value:programmeMoney(53.5e9)},{cx:662,top:260,r:83,color:'B9DCCE',label:'Pillar III',value:programmeMoney(13.6e9)},{cx:848,top:265,r:57,color:'D9E3EB',label:'Widening & ERA',value:programmeMoney(3.4e9)}];
-      pillars.forEach(item=>{circle(page,item.cx,item.top,item.r,item.color,C.white);text(page,item.label,item.cx-item.r,item.top-item.r*.35,item.r>70?13:8,item.r>70?C.white:C.ink,bold,item.r*2,1,'center');text(page,item.value,item.cx-item.r,item.top+item.r*.2,item.r>70?11:7,item.r>70?C.white:C.ink,bold,item.r*2,1,'center');});
-      text(page,'NEW ZEALAND',305,404,7,C.blue,bold,150,1,'center');text(page,'Associated to Pillar II',290,422,11,C.ink,bold,180,1,'center');text(page,`Original 2021–2027 allocation: ${programmeMoney(95.5e9)}`,52,478,9,C.muted,bold,400,1);footer(page);
+      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Three pillars shape Horizon Europe',2);text(page,'Pillar II is the programme’s collaborative core—and the part to which New Zealand is associated.',38,104,10.5,C.muted,regular,880,2);
+      const pillars=[{x:45,w:195,color:'BCD8EF',label:'Pillar I',sub:'Excellent Science',value:programmeMoney(25e9),dark:false},{x:250,w:360,color:C.blue,label:'Pillar II',sub:'Global Challenges and European Industrial Competitiveness',value:programmeMoney(53.5e9),dark:true},{x:620,w:180,color:'B9DCCE',label:'Pillar III',sub:'Innovative Europe',value:programmeMoney(13.6e9),dark:false},{x:810,w:105,color:'D9E3EB',label:'Widening and ERA',sub:'',value:programmeMoney(3.4e9),dark:false}];
+      pillars.forEach(item=>{rect(page,item.x,152,item.w,190,item.color,C.white);text(page,item.label,item.x+12,175,item.w<120?10:14,item.dark?C.white:C.ink,bold,item.w-24,2,'center');if(item.sub)text(page,item.sub,item.x+15,222,item.dark?11:8.5,item.dark?'EAF4FC':C.muted,item.dark?bold:regular,item.w-30,3,'center');text(page,item.value,item.x+12,300,item.dark?16:item.w<120?9:12,item.dark?C.white:C.ink,bold,item.w-24,1,'center');});
+      page.drawLine({start:{x:430,y:y(342)},end:{x:430,y:y(385)},thickness:2,color:col(C.blue)});rect(page,335,385,190,55,C.white,C.blue);text(page,'NEW ZEALAND',350,395,7,C.blue,bold,160,1,'center');text(page,'Associated to Pillar II',350,414,11,C.ink,bold,160,1,'center');text(page,`Original 2021–2027 allocation: ${programmeMoney(95.5e9)}`,45,474,9,C.muted,bold,400,1);footer(page);
     }
     {
-      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Six clusters organise the shared challenges.',3);text(page,'Within Pillar II, each cluster opens a different route into international research and innovation collaboration.',38,104,10.5,C.muted,regular,880,2);const labels=['Health','Culture, creativity & inclusive society','Civil security for society','Digital, industry & space','Climate, energy & mobility','Food, bioeconomy & environment'];D.clusters.forEach((cluster,index)=>{const colIndex=index%3,rowIndex=Math.floor(index/3),cx=150+colIndex*330,top=224+rowIndex*185;circle(page,cx,top,70,hex(cluster.color),C.white);text(page,`CLUSTER ${index+1}`,cx-50,top-47,6.3,C.white,bold,100,1,'center');text(page,labels[index],cx-57,top-14,10.5,C.white,bold,114,3,'center');text(page,'PILLAR II',cx-52,top+42,5.5,C.white,bold,104,1,'center');});footer(page);
+      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Six clusters organise the shared challenges',3);text(page,'Within Pillar II, each cluster opens a different route into international research and innovation collaboration.',38,104,10.5,C.muted,regular,880,2);const labels=['Health','Culture, creativity and inclusive society','Civil security for society','Digital, industry and space','Climate, energy and mobility','Food, bioeconomy and environment'];D.clusters.forEach((cluster,index)=>{const colIndex=index%2,rowIndex=Math.floor(index/2),cx=88+colIndex*455,top=170+rowIndex*112,colour=hex(cluster.color);page.drawCircle({x:cx,y:y(top),size:38,color:col(C.white),borderColor:col(colour),borderWidth:5});text(page,String(index+1),cx-24,top-15,18,colour,bold,48,1,'center');text(page,`CLUSTER ${index+1}`,cx+58,top-25,6.5,colour,bold,320,1);text(page,labels[index],cx+58,top-6,11.5,C.ink,bold,320,2);page.drawLine({start:{x:cx+58,y:y(top+33)},end:{x:cx+382,y:y(top+33)},thickness:1,color:col('DCE7F0')});});footer(page);
     }
     {
       const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,"New Zealand's path to Horizon Europe.",4);text(page,'A relationship built over time, from formal cooperation to projects on the ground.',38,104,10.5,C.muted,regular,880,1);const events=timeline(data),lineTop=278;page.drawLine({start:{x:54,y:y(lineTop)},end:{x:906,y:y(lineTop)},thickness:2,color:col('9BC8E8')});events.forEach((event,index)=>{const cx=74+index*162,above=index%2===0,cardTop=above?143:314,dateTop=above?244:286;circle(page,cx,lineTop,6,index===events.length-1?C.teal:C.blue,C.white);rect(page,cx-66,cardTop,132,91,C.white,C.line);text(page,event.title,cx-57,cardTop+8,8.2,C.ink,bold,114,2,'center');text(page,event.body,cx-57,cardTop+33,6.2,C.muted,regular,114,4,'center');text(page,'OFFICIAL SOURCE',cx-50,cardTop+75,5.4,C.blue,bold,100,1,'center');addLink(page,event.url,cx-50,cardTop+72,100,14);text(page,event.date,cx-66,dateTop,9,index===events.length-1?C.teal:C.blue,bold,132,2,'center');});footer(page);
@@ -295,7 +337,7 @@
       const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Association becomes a growing portfolio.',5);const metrics=[['SIGNED PROJECTS',data.projects,C.blue],['NZ ORGANISATIONS',data.nzOrganisations,C.teal],['ORGANISATIONS',data.organisations,'8D67CE'],['PARTNER COUNTRIES',data.partnerCountries,'77A84B']];metrics.forEach((item,index)=>metric(page,item[0],number(item[1]),38+index*222,104,207,item[2]));rect(page,38,174,438,314,C.white,C.line);text(page,'Portfolio by cluster',56,190,14,C.ink,bold,400,1);packCircles(data.clusters,{x:1.0,y:3.05,w:5.1,h:3.2}).forEach(item=>{const scale=72,cx=38+(item.cx-.55)*scale,top=174+(item.cy-2.48)*scale,r=item.r*scale*.83,cluster=clusterByCode.get(item.row.key);circle(page,cx,top,r,hex(cluster?.color||C.blue),C.white);text(page,cluster?.short||item.row.key,cx-r*.78,top-r*.27,Math.max(5.8,7.8*item.r),C.white,bold,r*1.56,3,'center');text(page,number(item.row.value),cx-r*.45,top+r*.2,Math.max(7,11*item.r),C.white,bold,r*.9,1,'center');});rect(page,490,174,432,314,C.white,C.line);text(page,'Projects by starting year',508,190,14,C.ink,bold,390,1);if(data.years.length){const max=Math.max(...data.years.map(row=>row.value),1),plot={x:530,top:235,w:350,h:190},slot=plot.w/data.years.length;data.years.forEach((row,index)=>{const h=plot.h*row.value/max,w=Math.min(48,slot*.58),x=plot.x+index*slot+(slot-w)/2,top=plot.top+plot.h-h;rect(page,x,top,w,h,[C.blue,C.teal,'E5A63B','EC6C5F'][index%4]);text(page,number(row.value),x-8,Math.max(216,top-14),8,C.ink,bold,w+16,1,'center');text(page,row.key,plot.x+index*slot,plot.top+plot.h+14,8,C.ink,regular,slot,1,'center');});}footer(page);
     }
     {
-      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Horizon Europe connects Europe with partners worldwide.',6);text(page,'Twenty-two non-EU countries are associated to Horizon Europe. New Zealand is highlighted separately because its association covers Pillar II.',38,104,10.5,C.muted,regular,880,2);rect(page,38,139,650,349,C.white,C.line);const image=renderAssociationMapPng();if(image){const png=await doc.embedPng(pngBytes(image));page.drawImage(png,{x:50,y:y(151,282),width:626,height:282});}const legend=[['EU27',C.blue],['Associated countries',C.teal],['New Zealand','E5A63B']];legend.forEach((item,index)=>{rect(page,58+index*176,446,11,11,item[1]);text(page,item[0],75+index*176,446,7.5,C.ink,bold,150,1);});metric(page,'EU MEMBER STATES',number(EU27_CODES.size),705,139,217,C.blue);metric(page,'NON-EU ASSOCIATED COUNTRIES',number(ASSOCIATED_CODES.size),705,207,217,C.teal);metric(page,'EU + ASSOCIATED COUNTRIES',number(EU27_CODES.size+ASSOCIATED_CODES.size),705,275,217,C.navy);text(page,'Association status',707,358,10,C.ink,bold,200,1);text(page,`The European Commission currently lists ${ASSOCIATED_CODES.size} associated non-EU countries, including New Zealand.`,707,382,8.2,C.muted,regular,200,4);button(page,'OFFICIAL COUNTRY LIST',associationSourceUrl,707,449,165);footer(page,{association:true});
+      const page=doc.addPage([W,H]);rect(page,0,0,W,H,C.page);header(page,'Horizon Europe connects Europe with partners worldwide.',6);rect(page,38,104,650,384,C.white,C.line);const image=renderAssociationMapPng();if(image){const png=await doc.embedPng(pngBytes(image));page.drawImage(png,{x:50,y:y(116,294),width:626,height:294});}const legend=[['EU27',C.blue],['Associated countries',C.teal],['Low- or middle-income','EF6B61'],['Overseas countries and territories','79B8E8'],['New Zealand','E5A63B'],['Other countries','CBD4DC']];legend.forEach((item,index)=>{const colIndex=index%3,rowIndex=Math.floor(index/3),x=58+colIndex*205,top=420+rowIndex*24;rect(page,x,top,11,11,item[1]);text(page,item[0],x+17,top,6.6,C.ink,bold,178,1);});metric(page,'EU MEMBER STATES',number(EU27_CODES.size),705,104,217,C.blue);metric(page,'ASSOCIATED COUNTRIES (NZ INCLUDED)',number(ASSOCIATED_CODES.size),705,172,217,C.teal);metric(page,'LOW- AND MIDDLE-INCOME',number(LMIC_STATUS_CODES.size),705,240,217,'EF6B61');metric(page,'OVERSEAS COUNTRIES/TERRITORIES',number(OVERSEAS_TERRITORIES.length),705,308,217,'79B8E8');button(page,'ASSOCIATION LIST',associationSourceUrl,707,392,165);button(page,'ELIGIBILITY LIST',eligibilitySourceUrl,707,421,165);footer(page,{association:true});
     }
     const bytes=await doc.save(),blob=new Blob([bytes],{type:'application/pdf'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='horizon-europe-in-new-zealand-story.pdf';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
   }

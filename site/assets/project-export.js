@@ -9,6 +9,7 @@
   const resultRecords=new Map((window.HE_PROJECT_RESULTS?.projects||[]).map(record=>[String(record.projectId),record]));
   const projectStageLabel=project=>({signed:'Signed',ongoing:'Ongoing',outputs:'Outputs available',completed:'Completed'}[resultRecords.get(String(project.id))?.stage]||project.status||'Status not reported');
   const hex=value=>String(value||'').replace('#','').toUpperCase();
+  const slideTitle=value=>String(value||'').replace(/\.+\s*$/,'');
   const number=value=>new Intl.NumberFormat('en-NZ',{maximumFractionDigits:0}).format(Number(value||0));
   const money=value=>Number(value)>0?HE.fmtMoney(value):'Not reported';
   const countryName=code=>D.countries.find(country=>country.code===code)?.name||({EL:'Greece',UK:'United Kingdom'}[code]||code);
@@ -139,7 +140,7 @@
     pptAccentLine(pptx,slide,accent);
     pptText(slide,'HORIZON EUROPE IN NEW ZEALAND',.55,.18,5.9,.26,{fontSize:13,bold:true,color:white});
     pptText(slide,String(page).padStart(2,'0'),12.25,.18,.5,.24,{fontSize:11,bold:true,color:aqua,align:'right'});
-    const safeTitle=truncate(title,78),titleSize=safeTitle.length>62?25:safeTitle.length>48?28:safeTitle.length>36?31:35;
+    const safeTitle=truncate(slideTitle(title),78),titleSize=safeTitle.length>62?25:safeTitle.length>48?28:safeTitle.length>36?31:35;
     pptText(slide,safeTitle,.55,.9,12.15,.4,{fontSize:titleSize,bold:true,color:ink,fit:'shrink'});
     if(subtitle){const safeSubtitle=truncate(subtitle,118),subtitleSize=safeSubtitle.length>94?11.5:safeSubtitle.length>72?12.5:14;pptText(slide,safeSubtitle,.55,1.38,12.15,.25,{fontSize:subtitleSize,color:muted,fit:'shrink'});}
   }
@@ -268,7 +269,7 @@
     const accentLine=(page,accent)=>{const colours=(Array.isArray(accent)?accent:[accent]).filter(Boolean),active=colours.length?colours:[aqua],segment=W/active.length;active.forEach((value,index)=>rect(page,index*segment,48,index===active.length-1?W-index*segment:segment,5,value));};
     const header=(page,title,subtitle,num,accent)=>{
       rect(page,0,0,W,48,navy);accentLine(page,accent);text(page,'HORIZON EUROPE IN NEW ZEALAND',40,16,10,white,bold);text(page,String(num).padStart(2,'0'),900,16,9,aqua,bold);
-      const safeTitle=truncate(title,78),titleSize=safeTitle.length>62?21:safeTitle.length>48?23.5:safeTitle.length>36?25.5:27;
+      const safeTitle=truncate(slideTitle(title),78),titleSize=safeTitle.length>62?21:safeTitle.length>48?23.5:safeTitle.length>36?25.5:27;
       fit(page,safeTitle,40,66,titleSize,ink,bold,880,18.5);
       if(subtitle){const safeSubtitle=truncate(subtitle,118),subtitleSize=safeSubtitle.length>94?9:safeSubtitle.length>72?10:11.5;fit(page,safeSubtitle,40,103,subtitleSize,muted,regular,880,8.2);}
     };
